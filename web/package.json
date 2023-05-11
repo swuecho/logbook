@@ -14,8 +14,9 @@
     "element-tiptap": "^1.27.1",
     "element-ui": "^2.15.13",
     "moment": "^2.29.4",
-    "tiptap": "^1.32.2",
-    "tiptap-extensions": "^1.35.2",
+    "tiptap": "1.30.0",
+    "tiptap-commands": "1.15.0",
+    "tiptap-extensions": "1.33.0",
     "vue": "^2.7.14",
     "vue-router": "^3.4.9",
     "vuewordcloud": "^18.7.12"
