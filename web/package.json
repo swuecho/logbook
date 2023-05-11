@@ -14,6 +14,7 @@
     "element-tiptap": "^1.27.1",
     "element-ui": "^2.15.13",
     "moment": "^2.29.4",
+    "prosemirror-utils": "^1.0.0-0",
     "tiptap": "1.30.0",
     "tiptap-commands": "1.15.0",
     "tiptap-extensions": "1.33.0",

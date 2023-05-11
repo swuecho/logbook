@@ -7752,6 +7752,11 @@ prosemirror-utils@^0.9.6:
   resolved "https://registry.npm.taobao.org/prosemirror-utils/download/prosemirror-utils-0.9.6.tgz#3d97bd85897e3b535555867dc95a51399116a973"
   integrity sha1-PZe9hYl+O1NVVYZ9yVpROZEWqXM=
 
+prosemirror-utils@^1.0.0-0:
+  version "1.0.0-0"
+  resolved "https://registry.yarnpkg.com/prosemirror-utils/-/prosemirror-utils-1.0.0-0.tgz#7dfd112abf69001508a76200f9c8660fda7fa85f"
+  integrity sha512-11hTMG4Qwqlux6Vwp/4m16mLDg6IwWb0/odsWXGtWvvRJo61SfG0RGYlA8H72vExmbnWpiXa7PNenZ6t12Rkqw==
+
 prosemirror-view@1.15.0:
   version "1.15.0"
   resolved "https://registry.npm.taobao.org/prosemirror-view/download/prosemirror-view-1.15.0.tgz#372102c91d05b3b0f371b3eb59aeacedb5011bba"
