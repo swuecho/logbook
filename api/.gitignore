@@ -1,0 +1,7 @@
+example.db
+bin/
+obj/
+.fake
+.ionide
+.DS_Store
+wwwroot

@@ -1,0 +1,65 @@
+{
+  "name": "qa-editor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "resolutions": {
+    "prosemirror-model": "1.9.1"
+  },
+  "dependencies": {
+    "@revolist/vue-datagrid": "^2.9.9",
+    "axios": "^0.18.0",
+    "debounce": "^1.2.0",
+    "element-tiptap": "^1.26.2",
+    "element-ui": "^2.14.1",
+    "moment": "^2.29.1",
+    "tiptap": "^1.31.0",
+    "tiptap-extensions": "^1.34.0",
+    "vue": "^2.6.12",
+    "vue-router": "^3.4.9",
+    "vuewordcloud": "^18.7.12"
+  },
+  "devDependencies": {
+    "@iconify/icons-material-symbols": "^1.2.40",
+    "@iconify/icons-mdi": "^1.2.45",
+    "@iconify/vue2": "^2.1.0",
+    "@vue/cli-plugin-babel": "^4.5.10",
+    "@vue/cli-plugin-eslint": "^4.5.10",
+    "@vue/cli-service": "^4.5.10",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.15.1",
+    "eslint-plugin-vue": "^6.2.2",
+    "node-sass": "^8.0.0",
+    "sass-loader": "^10.2.2",
+    "vue-cli-plugin-axios": "^0.0.4",
+    "vue-template-compiler": "^2.6.12"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
