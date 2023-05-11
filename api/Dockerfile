@@ -13,6 +13,6 @@ ENV TZ=Asia/Shanghai
 WORKDIR /app
 # copy Resource folder 
 COPY --from=build /src/Resources /src/Resources
-COPY --from=build /src/wwwroot ./wwwroot
+COPY --from=build /src/wwwroot/ .
 COPY --from=build /app .
 ENTRYPOINT ["./Notepad"]
