@@ -11,4 +11,5 @@ module.exports = {
         https: false,
         hotOnly: false,
     },
+    outputDir: '../api/wwwroot/'
 }
