@@ -1,0 +1,8 @@
+version: "3"
+services:
+  web:
+    image: echowuhao/logbook:latest
+    environment:
+      DATABASE_URL: db url
+    ports:
+      - "5000:5000"
