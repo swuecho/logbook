@@ -21,12 +21,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "20.x"
-        env:
-          NODE_OPTIONS: "--openssl-legacy-provider"
       - name: build web
         run: |
           yarn install
           yarn build
+        env:
+          NODE_OPTIONS: "--openssl-legacy-provider"
         working-directory: web
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
