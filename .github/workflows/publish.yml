@@ -16,8 +16,8 @@ jobs:
           node-version: "20.x"
       - name: build web
         run: |
-          npm install
-          npm run build
+          yarn install
+          yarn run build
         env:
           NODE_OPTIONS: "--openssl-legacy-provider"
         working-directory: web
