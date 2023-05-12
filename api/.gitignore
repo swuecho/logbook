@@ -6,3 +6,5 @@ obj/
 .DS_Store
 wwwroot
 env.sh
+output.json
+model.json

@@ -13,7 +13,7 @@ open System
 
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
-RETURNING id, note, last_updated
+RETURNING id, user_id, note, last_updated
 """
 
 
@@ -26,6 +26,7 @@ let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
   
   let reader = fun (read:RowReader) -> {
     Id = read.string "id"
+    UserId = read.int "user_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -71,7 +72,7 @@ let DeleteDiary (db: NpgsqlConnection)  (id: string)  =
 
 
 let diaryByID = """-- name: DiaryByID :one
-SELECT id, note, last_updated FROM diary WHERE id = @id
+SELECT id, user_id, note, last_updated FROM diary WHERE id = @id
 """
 
 
@@ -80,6 +81,7 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
   
   let reader = fun (read:RowReader) -> {
     Id = read.string "id"
+    UserId = read.int "user_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -102,7 +104,7 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
 
 
 let listDiaries = """-- name: ListDiaries :many
-SELECT id, note, last_updated FROM diary ORDER BY last_updated DESC
+SELECT id, user_id, note, last_updated FROM diary ORDER BY last_updated DESC
 """
 
 
@@ -111,6 +113,7 @@ SELECT id, note, last_updated FROM diary ORDER BY last_updated DESC
 let ListDiaries (db: NpgsqlConnection)  =
   let reader = fun (read:RowReader) -> {
     Id = read.string "id"
+    UserId = read.int "user_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   db 
@@ -129,7 +132,7 @@ let ListDiaries (db: NpgsqlConnection)  =
 
 let updateDiary = """-- name: UpdateDiary :one
 UPDATE diary SET note = @note, last_updated = NOW() WHERE id = @id
-RETURNING id, note, last_updated
+RETURNING id, user_id, note, last_updated
 """
 
 
@@ -142,6 +145,7 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   
   let reader = fun (read:RowReader) -> {
     Id = read.string "id"
+    UserId = read.int "user_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
