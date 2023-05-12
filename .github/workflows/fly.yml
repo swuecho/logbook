@@ -20,7 +20,6 @@ jobs:
         env:
           NODE_OPTIONS: "--openssl-legacy-provider"
         working-directory: web
-      - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
         env:
