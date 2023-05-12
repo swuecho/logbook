@@ -1,91 +1,51 @@
 module Auth
 
-open System
-open Microsoft.AspNetCore.Http
-open Microsoft.IdentityModel.Tokens
-open System.Security.Claims
-open System.IdentityModel.Tokens.Jwt
+open System.Security.Cryptography
 
-type JwtToken =
-    { UserId: int
-      Role: string
-      Secret: string
-      Audience: string
-      Expires: int64
-      IssuedAt: int64 }
+let iterations = 260000
+let saltSize = 16
+let keySize = 32
 
-let generateJwtSecretAndAudience () =
-    let secretBytes = Array.init 32 (fun _ -> uint8 (Random().Next(256)))
-    let secret = secretBytes |> Convert.ToBase64String
+let generateSalt () =
+    let salt = Array.zeroCreate saltSize
+    let rng = RandomNumberGenerator.Create()
+    rng.GetBytes(salt)
+    salt
 
-    let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    let audienceBytes = Array.init 32 (fun _ -> letters.[Random().Next(letters.Length)])
-    let audience = new String(audienceBytes)
-    secret, audience
-
-
-let generateToken (userId: int) (role: string) (secret: string) (audience: string) (issuer: string) =
-    let expires = Nullable(DateTime.UtcNow.AddHours(8.0))
-    let notBefore = Nullable(DateTime.UtcNow)
-
-    let securityKey =
-        secret |> System.Text.Encoding.UTF8.GetBytes |> SymmetricSecurityKey
-
-    let signingCredentials =
-        SigningCredentials(key = securityKey, algorithm = SecurityAlgorithms.HmacSha256)
-
-    let roleClaim = Claim("role", role)
-    let userIdClaim = Claim("user_id", userId |> string)
-
-    let token =
-        JwtSecurityToken(
-            issuer = issuer,
-            audience = audience,
-            claims = [ roleClaim; userIdClaim ],
-            expires = expires,
-            notBefore = notBefore,
-            signingCredentials = signingCredentials
-        )
-
-    {| AccessToken = JwtSecurityTokenHandler().WriteToken(token)
-       ExpiresIn = 60480 |}
-
-
-let validateJwt (token: string) (secretKey: string) =
-
-    let decodeJwt (key: string) (token: string) =
-        let jwt = JwtSecurityTokenHandler()
-        let keyBytes = System.Text.Encoding.UTF8.GetBytes(key)
-        let validationParameters = TokenValidationParameters()
-        //validationParameters.ValidateIssuer <- true
-        //validationParameters.ValidIssuer <- "myIssuer"
-        //validationParameters.ValidateAudience <- true
-        // validationParameters.ValidAudience <- "myAudience"
-        validationParameters.ValidateLifetime <- true
-        validationParameters.ValidateIssuerSigningKey <- true
-        validationParameters.IssuerSigningKey <- new SymmetricSecurityKey(keyBytes)
-        jwt.ValidateToken(token, validationParameters)
-
+let generatePasswordHash (password: string) =
     try
-        decodeJwt secretKey token |> ignore
-        true
-    with :? SecurityTokenValidationException ->
-        false
+        let salt = generateSalt ()
 
-let getJwtClaim (token: string) (claimType: string) =
-    let jwt = JwtSecurityTokenHandler()
-    let token = jwt.ReadJwtToken(token)
-    let claims = token.Claims
-    claims |> Seq.find (fun c -> c.Type = claimType)
+        let derivBytes =
+            new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
 
+        let hashBytes = derivBytes.GetBytes keySize
+        let encodedHash = System.Convert.ToBase64String hashBytes
+        let encodedSalt = System.Convert.ToBase64String salt
+        $"pbkdf2_sha256${iterations}${encodedSalt}${encodedHash}", null
+    with ex ->
+        null, ex
 
-let getExpireSecureCookie (value: string, isHttps: bool) =
-    let utcOffset = DateTimeOffset.UtcNow.AddDays(-1)
+let validatePassword (password: string) (hash: string) =
+    match hash.Split('$') with
+    | [| "pbkdf2_sha256"; n; encodedSalt; encodedHash |] when int n = iterations ->
+        let salt = System.Convert.FromBase64String encodedSalt
+        let decodedHash = System.Convert.FromBase64String encodedHash
 
-    {| Name = "jwt"
-       Value = value
-       Path = "/"
-       HttpOnly = true
-       Secure = isHttps
-       SameSite = SameSiteMode.Strict
-       Expires = utcOffset |}
+        let derivBytes =
+            new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
+
+        let computedHash = derivBytes.GetBytes keySize
+        if decodedHash = computedHash then true else false
+    | _ -> false
+
+let generateRandomPassword () =
+    let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+    let password = Array.zeroCreate 12
+    let rng = RandomNumberGenerator.Create()
+    rng.GetBytes password
+
+    password
+    |> Array.map (fun x -> letters.[int (x) % letters.Length])
+    |> Seq.toArray
+    |> System.String
