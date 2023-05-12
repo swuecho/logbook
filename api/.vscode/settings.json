@@ -1,4 +1,4 @@
 {
-    "FSharp.dotnetRoot": "/Users/hwu/app/",
-    "editor.inlayHints.enabled": "offUnlessPressed"
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "Fsharp.dotnetRoot": "/usr/local/bin/dotnet"
 }
