@@ -19,6 +19,8 @@ jobs:
         run: |
           npm install
           npm run build
+        env:
+          NODE_OPTIONS: "--openssl-legacy-provider"
         working-directory: web
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
