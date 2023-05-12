@@ -1,12 +1,11 @@
 
-CREATE TABLE public.diary (
+CREATE TABLE IF NOT EXISTS diary (
     id character varying(8) NOT NULL,
     note text
     last_updated timestamp with timezone DEFAULT NOW(),
 );
 
-ALTER TABLE diary ADD COLUMN IF NOT EXISTS     last_updated timestamp with time zone DEFAULT NOW();
-CREATE TABLE summary (
+CREATE TABLE IF NOT EXISTS summary (
     id character varying(8) NOT NULL,
     created_at timestamp with time zone DEFAULT NOW(),
     last_updated timestamp with time zone DEFAULT NOW(),
