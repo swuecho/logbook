@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Auth.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="Json.fs" />
@@ -17,5 +18,6 @@
     <PackageReference Include="FSharp.Data" Version="6.2.0" />
     <PackageReference Include="jieba.NET" Version="0.42.2" />
     <PackageReference Include="Npgsql.FSharp" Version="5.7.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.30.1" />
   </ItemGroup>
 </Project>
