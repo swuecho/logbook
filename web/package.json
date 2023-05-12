@@ -7,6 +7,9 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
+  "resolutions": {
+    "prosemirror-model": "1.13.1"
+  },
   "dependencies": {
     "@revolist/vue-datagrid": "^2.9.9",
     "axios": "^1.4.0",
