@@ -15,4 +15,5 @@ WORKDIR /app
 COPY --from=build /src/Resources /src/Resources
 COPY --from=build /src/wwwroot ./wwwroot
 COPY --from=build /app .
+EXPOSE 80
 ENTRYPOINT ["./Notepad"]
