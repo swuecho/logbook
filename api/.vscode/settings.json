@@ -1,4 +1,4 @@
 {
     "editor.inlayHints.enabled": "offUnlessPressed",
-    "Fsharp.dotnetRoot": "/usr/local/bin/dotnet"
+    "FSharp.dotnetRoot": "/usr/local/bin/"
 }
