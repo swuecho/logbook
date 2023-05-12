@@ -11,6 +11,7 @@ open System
 
 
 
+
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
 RETURNING id, user_id, note, last_updated
@@ -36,6 +37,9 @@ let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
   |> Sql.query createDiary
   |> Sql.parameters  [ "@id", Sql.string arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
+
+
+
 
 
 
@@ -103,6 +107,13 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
 
 
 
+
+
+
+
+
+
+
 let listDiaries = """-- name: ListDiaries :many
 SELECT id, user_id, note, last_updated FROM diary ORDER BY last_updated DESC
 """
@@ -120,6 +131,8 @@ let ListDiaries (db: NpgsqlConnection)  =
   |> Sql.existingConnection
   |> Sql.query listDiaries
   |> Sql.execute reader
+
+
 
 
 
@@ -155,6 +168,7 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   |> Sql.query updateDiary
   |> Sql.parameters  [ "@id", Sql.string arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
+
 
 
 
