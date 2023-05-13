@@ -3,7 +3,10 @@ open Falco.Routing
 open Falco.HostBuilder
 
 open Microsoft.AspNetCore.Builder
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Cors.Infrastructure
+open Microsoft.AspNetCore.Authentication.JwtBearer
+open Microsoft.IdentityModel.Tokens
 
 let corsPolicyName = "MyCorsPolicy"
 
@@ -21,18 +24,40 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseRouting() |> ignore
     app.UseDefaultFiles() |> ignore
     app.UseStaticFiles() |> ignore
-    app.UseEndpoints(fun endpoints ->
-        endpoints.MapFallbackToFile("/index.html") |> ignore)
+    app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
+let authService (services: IServiceCollection) =
+    let jwtKey = ""
+
+    let _ =
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(fun options ->
+                options.TokenValidationParameters <-
+                    new TokenValidationParameters(
+                        //ValidateIssuer = true,
+                        // ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        //ValidIssuer = Configuratio["Jwt:Issuer"],
+                        //ValidAudience = Configuration.["Jwt:Issuer"],
+                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
+                    ))
+
+    services
 
 webHost [||] {
     use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
     use_cors corsPolicyName corsOptions
+    add_service authService
+    use_authentication 
+    // use_authorization
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
         [ get "/api/diary" Service.Note.noteAllPart
           get "/api/diary/{id}" Service.Note.noteByIdPart
           put "/api/diary/{id}" Service.Note.addNotePart ]
+
     use_middleware serveVueFiles
 }
