@@ -12,7 +12,6 @@
     <Compile Include="summary.sql.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Json.fs" />
-    <Compile Include="NoteQ.fs" />
     <Compile Include="Summary.fs" />
     <Compile Include="Note.fs" />
     <Compile Include="Program.fs" />

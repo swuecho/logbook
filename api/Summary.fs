@@ -66,7 +66,7 @@ let updateNoteSummary conn (id: string) (user_id: int) =
         |> freqs
         |> Json.Convert.toJson
 
-    NoteQ.insertSummary id user_id summary |> ignore
+    Summary.InsertSummary conn { Id= id; UserId= user_id; Content=summary} |> ignore
 
 
 let refreshSummary conn user_id =
@@ -92,8 +92,7 @@ let noteSummary conn (note: Diary) =
         ignore (NoteQ.insertSummary nid note.UserId summary)
         summary
     | head :: _ ->
-        let staled = NoteQ.checkIdStale nid note.UserId
-
+        let staled = Diary.CheckIdStale conn { Id=nid; UserId = note.UserId}
         if staled then
             let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
             // update the summary and timestamp
