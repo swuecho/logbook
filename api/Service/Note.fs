@@ -32,7 +32,6 @@ module Note =
     let noteByIdPart: HttpHandler =
         let getSurvey (route: RouteCollectionReader) =
             route.GetString("id", "") |> getSurveyById
-
         Request.mapRoute getSurvey Json.Response.ofJsonTask
 
 
@@ -41,3 +40,12 @@ module Note =
 
     let addNotePart: HttpHandler =
         Request.mapJson (fun (note: Models.Note) -> putNote note |> Json.Response.ofJsonTask)
+
+    let noteByIdPartDebug: HttpHandler = fun ctx ->
+        let principal = ctx.User
+        for claim in principal.Claims do
+            printfn "%s" ("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value)
+        printfn "%A" ctx.User |> ignore
+        noteByIdPart ctx
+
+        
