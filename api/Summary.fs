@@ -89,14 +89,14 @@ let noteSummary conn (note: Diary) =
     | [] ->
         let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
         // insert new item
-        ignore (NoteQ.insertSummary nid note.UserId summary)
+        ignore (Summary.InsertSummary conn {Id=nid; Content=summary; UserId= note.UserId })
         summary
     | head :: _ ->
         let staled = Diary.CheckIdStale conn { Id=nid; UserId = note.UserId}
         if staled then
             let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
             // update the summary and timestamp
-            ignore (NoteQ.insertSummary nid note.UserId summary)
+            ignore (Summary.InsertSummary conn {Id=nid; Content=summary; UserId= note.UserId })
             summary
         else
             let summary =
