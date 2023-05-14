@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS diary (
     id character varying(8) NOT NULL,
     user_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id),
     note text DEFAULT '' NOT NULL,
-    last_updated timestamp with time zone DEFAULT NOW() NOT NULL
+    last_updated timestamp with time zone DEFAULT NOW() NOT NULL,
+    PRIMARY KEY(id)
 );
 
 CREATE TABLE IF NOT EXISTS summary (
