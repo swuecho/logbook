@@ -11,8 +11,6 @@ module Config =
         with _ ->
             raise (System.Exception "check if BESTQA_FS_PORT is set")
 
-    let connection () = postgresDSN |> Sql.connect
-
     let conn () =
         let connStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
         new Npgsql.NpgsqlConnection(connStr)
