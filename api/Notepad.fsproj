@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Auth.fs" />
+    <Compile Include="HttpAuth.fs" />
     <Compile Include="Token.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Models.fs" />
