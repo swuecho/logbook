@@ -28,7 +28,7 @@ let serveVueFiles (app: IApplicationBuilder) =
 
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
-    let audience ="gDsc2WD8F2qNfHK5a84jjJkwzDkh9h2f"
+    let audience = "gDsc2WD8F2qNfHK5a84jjJkwzDkh9h2f"
 
     let _ =
         services
@@ -37,7 +37,7 @@ let authService (services: IServiceCollection) =
                 options.TokenValidationParameters <-
                     new TokenValidationParameters(
                         ValidateLifetime = true,
-                        //ValidateIssuer = true,
+                        ValidateIssuer = false,
                         //ValidIssuer = Configuratio["Jwt:Issuer"],
                         ValidateAudience = true,
                         ValidAudience = audience,
@@ -51,13 +51,13 @@ webHost [||] {
     use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
     use_cors corsPolicyName corsOptions
     add_service authService
-    use_authentication 
+    use_authentication
     // use_authorization
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
         [ get "/api/diary" Service.Note.noteAllPart
-          get "/api/diary/{id}" Service.Note.noteByIdPart
+          get "/api/diary/{id}" Service.Note.noteByIdPartDebug
           put "/api/diary/{id}" Service.Note.addNotePart ]
 
     use_middleware serveVueFiles
