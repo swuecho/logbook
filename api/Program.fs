@@ -26,6 +26,9 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
+let authUser (app: IApplicationBuilder) =
+    app.UseMiddleware(HttpAuth.Authentication.Middleware)
+
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
     let audience = "gDsc2WD8F2qNfHK5a84jjJkwzDkh9h2f"
@@ -56,9 +59,10 @@ webHost [||] {
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
-        [ get "/api/diary" (HttpAuth.AuthRequired Note.noteAllPart)
-          get "/api/diary/{id}" (HttpAuth.AuthRequired Note.noteByIdPartDebug)
-          put "/api/diary/{id}" (HttpAuth.AuthRequired Note.addNotePart) ]
+        [ get "/api/diary" Note.noteAllPart
+          get "/api/diary/{id}" Note.noteByIdPartDebug
+          put "/api/diary/{id}" Note.addNotePart ]
 
     use_middleware serveVueFiles
+    use_middleware authUser
 }
