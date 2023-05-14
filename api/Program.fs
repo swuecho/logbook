@@ -26,6 +26,9 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
+let stashConnteciton (app: IApplicationBuilder) =
+    app.UseMiddleware(Database.Connection.UseNpgsqlConnection Database.Config.connStr)
+
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
     let audience = "gDsc2WD8F2qNfHK5a84jjJkwzDkh9h2f"
@@ -53,7 +56,7 @@ webHost [||] {
     add_service authService
     use_authentication
     // use_authorization
-
+    use_middleware stashConnteciton
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
         [ get "/api/diary" (HttpAuth.AuthRequired Note.noteAllPart)
