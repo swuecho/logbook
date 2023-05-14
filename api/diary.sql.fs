@@ -149,8 +149,8 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
 
 let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
 SELECT d.id, d.user_id, d.note, d.last_updated
-FROM (select id, user_id, note, last_updated from diary d0 where d0.user_id = @user_id)  d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id
+FROM diary d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id
 WHERE s.id IS NULL OR d.last_updated > s.last_updated
 """
 
