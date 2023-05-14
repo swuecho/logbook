@@ -25,7 +25,7 @@ let AuthRequired h = Request.ifAuthenticated h forbidden
 let noteAllPartSlow: HttpHandler =
     fun ctx ->
         let user_id = getUserId ctx.User
-        let conn = Database.Config.conn ()
+        use conn = Database.Config.conn ()
 
         Request.mapRoute
             (ignore)
@@ -39,7 +39,7 @@ let noteAllPart: HttpHandler =
     fun ctx ->
         // refresh note summary
         let user_id = int (ctx.User.FindFirst("user_id").Value)
-        let conn = Database.Config.conn ()
+        use conn = Database.Config.conn ()
 
         Request.mapRoute
             (ignore)
@@ -55,7 +55,7 @@ let getNoteById conn id user_id =
 
 let noteByIdPart: HttpHandler =
     fun ctx ->
-        let conn = Database.Config.conn ()
+        use conn = Database.Config.conn ()
 
         let getSurvey (route: RouteCollectionReader) =
             let user_id = getUserId ctx.User
@@ -69,7 +69,7 @@ let addNotePart: HttpHandler =
         Request.mapJson
             (fun (note: Diary) ->
                 let user_id = int (ctx.User.FindFirst("user_id").Value)
-                let conn = Database.Config.conn ()
+                use conn = Database.Config.conn ()
 
                 Diary.AddNote
                     conn
