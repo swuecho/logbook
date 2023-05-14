@@ -11,6 +11,35 @@ open System
 
 
 
+let addNote = """-- name: AddNote :exec
+INSERT INTO diary (id, user_id, note, last_updated) VALUES (@id, @user_id, @note, now())  
+ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+"""
+
+
+type AddNoteParams = {
+  Id: string;
+  UserId: int32;
+  Note: string;
+}
+
+
+
+
+let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  = 
+  db 
+  |> Sql.existingConnection
+  |> Sql.query addNote
+  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId; "@note", Sql.string arg.Note ]
+  |> Sql.executeNonQuery
+
+
+
+
+
+
+
+
 
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
@@ -168,6 +197,8 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
   |> Sql.query getStaleIdsOfUserId
   |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
+
+
 
 
 

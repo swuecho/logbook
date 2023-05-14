@@ -81,7 +81,9 @@ let noteSummary conn (note: Diary) =
     // check summary is exits
     let nid = note.Id
     printfn "%s" nid
-    let noteDt = NoteQ.getSummaryLastUpdated nid note.UserId
+    let updateP: Summary.LastUpdatedParams = { Id = nid; UserId = note.UserId }
+    
+    let noteDt = [Summary.LastUpdated conn updateP ]
 
     match noteDt with
     | [] ->

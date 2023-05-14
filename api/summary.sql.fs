@@ -24,6 +24,7 @@ open System
 
 
 
+
 let getSummaryByUserIDAndID = """-- name: GetSummaryByUserIDAndID :one
 SELECT id, user_id, created_at, last_updated, content FROM summary WHERE user_id = @user_id and id=@id
 """
@@ -81,6 +82,67 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
   |> Sql.query getSummaryByUserId
   |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
+
+
+let insertSummary = """-- name: InsertSummary :exec
+insert INTO summary (id, user_id, content, last_updated) 
+VALUES (@id, @user_id, @content, now()) 
+ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, last_updated =  EXCLUDED.last_updated
+"""
+
+
+type InsertSummaryParams = {
+  Id: string;
+  UserId: int32;
+  Content: string;
+}
+
+
+
+
+let InsertSummary (db: NpgsqlConnection)  (arg: InsertSummaryParams)  = 
+  db 
+  |> Sql.existingConnection
+  |> Sql.query insertSummary
+  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId; "@content", Sql.string arg.Content ]
+  |> Sql.executeNonQuery
+
+
+
+
+
+
+
+
+let lastUpdated = """-- name: LastUpdated :one
+select last_updated from summary where id = @id and user_id = @user_id
+"""
+
+
+type LastUpdatedParams = {
+  Id: string;
+  UserId: int32;
+}
+
+let LastUpdated (db: NpgsqlConnection)  (arg: LastUpdatedParams)  =
+  
+  let reader = fun (read:RowReader) -> read.dateTime "last_updated"
+
+  db
+  |> Sql.existingConnection
+  |> Sql.query lastUpdated
+  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId ]
+  |> Sql.executeRow reader
 
 
 

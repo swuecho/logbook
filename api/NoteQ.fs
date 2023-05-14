@@ -10,12 +10,6 @@ let checkIdStale (id: string) (user_id: int) =
     |> Sql.parameters [ "note_id", Sql.string id; "user_id", Sql.int user_id ]
     |> Sql.executeRow (fun read -> read.bool "stale")
 
-let getSummaryLastUpdated (id: string) user_id =
-    Database.Config.connection ()
-    |> Sql.query "select last_updated from summary where id = @id and user_id = @user_id"
-    |> Sql.parameters [ "id", Sql.string id; "user_id", Sql.int user_id ]
-    |> Sql.execute (fun read -> read.dateTime "last_updated")
-
 let insertSummary (id: string) (user_id: int) (summary: string) =
     Database.Config.connection ()
     |> Sql.query
@@ -26,16 +20,3 @@ let insertSummary (id: string) (user_id: int) (summary: string) =
           "content", Sql.jsonb summary
           "last_updated", Sql.timestamptz (DateTime.UtcNow) ]
     |> Sql.executeNonQuery
-
-
-/// upsert note
-let AddNote (note: Diary) =
-    Database.Config.connection ()
-    |> Sql.query
-        "INSERT INTO diary (id, user_id, note, last_updated) VALUES (@id, @user_id, @note, @last_updated)  ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated"
-    |> Sql.parameters
-        [ "id", Sql.string note.Id
-          "user_id", Sql.int note.UserId
-          "note", Sql.string note.Note
-          "last_updated", Sql.timestamptz (DateTime.UtcNow) ]
-    |> Sql.executeNonQueryAsync

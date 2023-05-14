@@ -13,6 +13,7 @@ open System
 
 
 
+
 let createJwtSecret = """-- name: CreateJwtSecret :one
 INSERT INTO jwt_secrets (name, secret, audience)
 VALUES (@name, @secret, @audience) RETURNING id, name, secret, audience
@@ -100,6 +101,8 @@ let GetJwtSecret (db: NpgsqlConnection)  (name: string)  =
   |> Sql.query getJwtSecret
   |> Sql.parameters  [ "@name", Sql.string name ]
   |> Sql.executeRow reader
+
+
 
 
 

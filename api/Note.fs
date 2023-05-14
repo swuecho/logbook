@@ -64,17 +64,19 @@ let noteByIdPart: HttpHandler =
 
         Request.mapRoute getSurvey Json.Response.ofJson ctx
 
-
-let putNote note = NoteQ.AddNote note
-
-
 let addNotePart: HttpHandler =
     fun ctx ->
         Request.mapJson
             (fun (note: Diary) ->
                 let user_id = int (ctx.User.FindFirst("user_id").Value)
-                let noteWithUser = { note with UserId = user_id }
-                putNote noteWithUser |> Json.Response.ofJsonTask)
+                let conn = Database.Config.conn ()
+
+                Diary.AddNote
+                    conn
+                    { Id = note.Id
+                      UserId = user_id
+                      Note = note.Note }
+                |> Json.Response.ofJson)
             ctx
 
 let noteByIdPartDebug: HttpHandler =
