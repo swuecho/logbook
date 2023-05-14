@@ -8,11 +8,13 @@ open Falco
 module Note =
     let forbidden =
         let message = "Access to the resource is forbidden."
+
         Response.ofJson
-                {| code = HttpStatusCode.Forbidden
-                   message = message |}
-    let AuthRequired h =
-        Request.ifAuthenticated h forbidden
+            {| code = HttpStatusCode.Forbidden
+               message = message |}
+
+    let AuthRequired h = Request.ifAuthenticated h forbidden
+
     /// from async objec to json response
 
 
@@ -27,17 +29,17 @@ module Note =
     let noteAllPart: HttpHandler =
         // refresh note summary
         Request.mapRoute (ignore) (fun _ ->
-                Summary.Jieba.refreshSummary ()
-                Query.Note.getSummaryAll () |> Json.Response.ofJson)
+            Summary.Jieba.refreshSummary ()
+            Query.Note.getSummaryAll () |> Json.Response.ofJson)
 
 
 
-    let getSurveyById id = Query.Note.getNoteById id
+    let getNoteById id = Query.Note.getNoteById id
 
 
     let noteByIdPart: HttpHandler =
         let getSurvey (route: RouteCollectionReader) =
-            route.GetString("id", "") |> getSurveyById
+            route.GetString("id", "") |> getNoteById
 
         Request.mapRoute getSurvey Json.Response.ofJsonTask
 
@@ -46,7 +48,13 @@ module Note =
 
 
     let addNotePart: HttpHandler =
-        Request.mapJson (fun (note: Models.Note) -> putNote note |> Json.Response.ofJsonTask)
+        fun ctx ->
+            Request.mapJson
+                (fun (note: Models.Note) ->
+                    let user_id = int (ctx.User.FindFirst("user_id").Value)
+                    let noteWithUser = { note with UserId = user_id }
+                    putNote noteWithUser |> Json.Response.ofJsonTask)
+                ctx
 
     let noteByIdPartDebug: HttpHandler =
         fun ctx ->

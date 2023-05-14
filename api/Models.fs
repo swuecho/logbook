@@ -1,3 +1,6 @@
 namespace Models
 
-type Note = { Id: string; Note: string }
+type Note =
+    { Id: string
+      Note: string
+      UserId: int }

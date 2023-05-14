@@ -67,8 +67,9 @@ module Note =
     let AddNote (note: Note) =
         Database.Config.connection ()
         |> Sql.query
-            "INSERT INTO diary (id, note, last_updated) VALUES (@id, @note, @last_updated)  ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated"
+            "INSERT INTO diary (id, user_id, note, last_updated) VALUES (@id, @user_id, @note, @last_updated)  ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated"
         |> Sql.parameters [ "@id", Sql.string note.Id
+                            "@user_id", Sql.int note.UserId
                             "@note", Sql.string note.Note 
                             "@last_updated", Sql.timestamptz (DateTime.UtcNow)
                             ]
