@@ -177,7 +177,7 @@ export default {
         });
     },
     onUpdate(output, options) {
-      debounce(this.update_doc(output, options), 500);
+      debounce(this.update_doc(output, options), 1000);
     },
     onInit({ editor }) {
       let app = this;

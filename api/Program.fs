@@ -56,9 +56,9 @@ webHost [||] {
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
-        [ get "/api/diary" (HttpAuth.AuthRequired Service.Note.noteAllPart)
-          get "/api/diary/{id}" (HttpAuth.AuthRequired Service.Note.noteByIdPartDebug)
-          put "/api/diary/{id}" (HttpAuth.AuthRequired Service.Note.addNotePart) ]
+        [ get "/api/diary" (HttpAuth.AuthRequired Note.noteAllPart)
+          get "/api/diary/{id}" (HttpAuth.AuthRequired Note.noteByIdPartDebug)
+          put "/api/diary/{id}" (HttpAuth.AuthRequired Note.addNotePart) ]
 
     use_middleware serveVueFiles
 }

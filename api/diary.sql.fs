@@ -107,6 +107,74 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
 
 
 
+let diaryByUserIDAndID = """-- name: DiaryByUserIDAndID :one
+SELECT id, user_id, note, last_updated FROM diary WHERE user_id = @user_id and id=@id
+"""
+
+
+type DiaryByUserIDAndIDParams = {
+  UserId: int32;
+  Id: string;
+}
+
+let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  =
+  
+  let reader = fun (read:RowReader) -> {
+    Id = read.string "id"
+    UserId = read.int "user_id"
+    Note = read.string "note"
+    LastUpdated = read.dateTime "last_updated"}
+  
+
+  db
+  |> Sql.existingConnection
+  |> Sql.query diaryByUserIDAndID
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@id", Sql.string arg.Id ]
+  |> Sql.executeRow reader
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
+SELECT d.id, d.user_id, d.note, d.last_updated
+FROM diary d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated
+"""
+
+
+
+
+let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
+  let reader = fun (read:RowReader) -> {
+    Id = read.string "id"
+    UserId = read.int "user_id"
+    Note = read.string "note"
+    LastUpdated = read.dateTime "last_updated"}
+  db 
+  |> Sql.existingConnection
+  |> Sql.query getStaleIdsOfUserId
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
 
 
 
@@ -130,6 +198,33 @@ let ListDiaries (db: NpgsqlConnection)  =
   db 
   |> Sql.existingConnection
   |> Sql.query listDiaries
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
+let listDiaryByUserID = """-- name: ListDiaryByUserID :many
+SELECT id, user_id, note, last_updated FROM diary WHERE user_id = @user_id
+"""
+
+
+
+
+let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
+  let reader = fun (read:RowReader) -> {
+    Id = read.string "id"
+    UserId = read.int "user_id"
+    Note = read.string "note"
+    LastUpdated = read.dateTime "last_updated"}
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listDiaryByUserID
   |> Sql.execute reader
 
 
