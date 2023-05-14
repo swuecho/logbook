@@ -7,6 +7,8 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.IdentityModel.Tokens
+open Microsoft.AspNetCore.Http
+open System.Threading.Tasks
 
 let corsPolicyName = "MyCorsPolicy"
 
@@ -26,8 +28,29 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
+
 let stashConnteciton (app: IApplicationBuilder) =
     app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
+
+let authUserMiddleware (app: IApplicationBuilder) =
+    let isAuthenticated (context: HttpContext) =
+        context.User.Identity.IsAuthenticated = true
+
+    let middleware (context: HttpContext) (next: RequestDelegate) : Task =
+        // check path start with /api
+        printfn "%A" context.Request.Path
+
+        if context.Request.Path.StartsWithSegments(PathString("/api")) then
+            if isAuthenticated context then
+                next.Invoke context
+            else
+                context.Response.StatusCode <- 401
+                context.Response.WriteAsync "Unauthorized"
+        else
+            next.Invoke context
+
+    app.Use(middleware)
+
 
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
@@ -55,13 +78,16 @@ webHost [||] {
     use_cors corsPolicyName corsOptions
     add_service authService
     use_authentication
-    // use_authorization
+
     use_middleware stashConnteciton
+
+    use_middleware authUserMiddleware
+
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
-        [ get "/api/diary" (HttpAuth.AuthRequired Note.noteAllPart)
-          get "/api/diary/{id}" (HttpAuth.AuthRequired Note.noteByIdPartDebug)
-          put "/api/diary/{id}" (HttpAuth.AuthRequired Note.addNotePart) ]
+        [ get "/api/diary" Note.noteAllPart
+          get "/api/diary/{id}" Note.noteByIdPartDebug
+          put "/api/diary/{id}" Note.addNotePart ]
 
     use_middleware serveVueFiles
 }
