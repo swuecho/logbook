@@ -27,7 +27,7 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
 let stashConnteciton (app: IApplicationBuilder) =
-    app.UseMiddleware(Database.Connection.UseNpgsqlConnection Database.Config.connStr)
+    app.UseMiddleware(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
 
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="

@@ -19,7 +19,7 @@ module Connection =
     open Microsoft.AspNetCore.Http
     open Npgsql
 
-    let UseNpgsqlConnection (connectionString: string) (next: RequestDelegate) (context: HttpContext) =
+    let UseNpgsqlConnectionMiddleware (connectionString: string) (next: RequestDelegate) (context: HttpContext) =
 
         let openConn (httpContext: HttpContext) (next: RequestDelegate) =
             let connection = new NpgsqlConnection(connectionString)
