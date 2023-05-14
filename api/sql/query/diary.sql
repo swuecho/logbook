@@ -23,6 +23,6 @@ DELETE FROM diary WHERE id = $1;
 
 -- name: GetStaleIdsOfUserId :many
 SELECT d.*
-FROM diary d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = $1
+FROM (select * from diary d0 where d0.user_id = $1)  d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id
 WHERE s.id IS NULL OR d.last_updated > s.last_updated;
