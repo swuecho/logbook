@@ -89,6 +89,7 @@ let DeleteAuthUser (db: NpgsqlConnection)  (email: string)  =
 
 
 
+
 let getAllAuthUsers = """-- name: GetAllAuthUsers :many
 SELECT id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined FROM auth_user ORDER BY id
 """
@@ -202,6 +203,8 @@ let GetAuthUserByID (db: NpgsqlConnection)  (id: int32)  =
 
 
 
+
+
 let getTotalActiveUserCount = """-- name: GetTotalActiveUserCount :one
 SELECT COUNT(*) FROM auth_user WHERE is_active = true
 """
@@ -296,6 +299,7 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
   |> Sql.existingConnection
   |> Sql.query listAuthUsers
   |> Sql.execute reader
+
 
 
 

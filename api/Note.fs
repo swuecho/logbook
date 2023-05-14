@@ -1,0 +1,79 @@
+module Note
+
+open System.Net
+open Microsoft.AspNetCore.Http
+open Falco
+
+let forbidden =
+    let message = "Access to the resource is forbidden."
+
+    Response.ofJson
+        {| code = HttpStatusCode.Forbidden
+           message = message |}
+
+let AuthRequired h = Request.ifAuthenticated h forbidden
+
+/// from async objec to json response
+
+
+// https://github.com/pimbrouwers/Falco/pull/41
+// do not cache result
+let noteAllPartSlow: HttpHandler =
+    let user_id = 1
+    let conn = Database.Config.conn ()
+
+    Request.mapRoute (ignore) (fun _ ->
+        Diary.ListDiaryByUserID conn user_id
+        |> List.map (Jieba.freqsOfNote conn)
+        |> Json.Response.ofJson)
+
+let noteAllPart: HttpHandler =
+    fun ctx ->
+        // refresh note summary
+        let user_id = int (ctx.User.FindFirst("user_id").Value)
+        let conn = Database.Config.conn ()
+
+        Request.mapRoute
+            (ignore)
+            (fun _ ->
+                Jieba.refreshSummary conn user_id
+                Summary.GetSummaryByUserId conn user_id |> Json.Response.ofJson)
+            ctx
+
+
+let getNoteById conn id user_id =
+    Diary.DiaryByUserIDAndID conn { Id = id; UserId = user_id }
+
+
+let noteByIdPart: HttpHandler =
+    let conn = Database.Config.conn ()
+
+    let getSurvey (route: RouteCollectionReader) =
+        let user_id = 1
+        let note_id = route.GetString("id", "")
+        getNoteById conn note_id user_id
+
+    Request.mapRoute getSurvey Json.Response.ofJson
+
+
+let putNote note = NoteQ.AddNote note
+
+
+let addNotePart: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (note: Diary) ->
+                let user_id = int (ctx.User.FindFirst("user_id").Value)
+                let noteWithUser = { note with UserId = user_id }
+                putNote noteWithUser |> Json.Response.ofJsonTask)
+            ctx
+
+let noteByIdPartDebug: HttpHandler =
+    fun ctx ->
+        let principal = ctx.User
+
+        for claim in principal.Claims do
+            printfn "%s" ("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value)
+
+        printfn "%A" ctx.User |> ignore
+        noteByIdPart ctx

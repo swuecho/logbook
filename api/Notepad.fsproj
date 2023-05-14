@@ -7,12 +7,14 @@
     <Compile Include="Auth.fs" />
     <Compile Include="HttpAuth.fs" />
     <Compile Include="Token.fs" />
+    <Compile Include="model_from_schema.fs" />
+    <Compile Include="diary.sql.fs" />
+    <Compile Include="summary.sql.fs" />
     <Compile Include="Database.fs" />
-    <Compile Include="Models.fs" />
     <Compile Include="Json.fs" />
-    <Compile Include="Query/Note.fs" />
+    <Compile Include="NoteQ.fs" />
     <Compile Include="Summary.fs" />
-    <Compile Include="Service/Note.fs" />
+    <Compile Include="Note.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

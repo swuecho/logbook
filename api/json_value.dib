@@ -23,7 +23,7 @@ open Models
 #!fsharp
 
 let noteAsync = async {
-                let! queryResult = Query.Note.getNoteById "20210109"
+                let! queryResult = NoteQ.getNoteById "20210109"
 
                 let queryResultJson =
                     match queryResult with

@@ -80,6 +80,7 @@ let DeleteAllJwtSecrets (db: NpgsqlConnection)  =
 
 
 
+
 let getJwtSecret = """-- name: GetJwtSecret :one
 SELECT id, name, secret, audience FROM jwt_secrets WHERE name = @name
 """
@@ -100,6 +101,9 @@ let GetJwtSecret (db: NpgsqlConnection)  (name: string)  =
   |> Sql.query getJwtSecret
   |> Sql.parameters  [ "@name", Sql.string name ]
   |> Sql.executeRow reader
+
+
+
 
 
 
