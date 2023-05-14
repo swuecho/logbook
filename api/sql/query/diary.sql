@@ -31,3 +31,9 @@ WHERE s.id IS NULL OR d.last_updated > s.last_updated;
 -- name: AddNote :exec
 INSERT INTO diary (id, user_id, note, last_updated) VALUES ($1, $2, $3, now())  
 ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated;
+
+-- name: CheckIdStale :one
+SELECT count(*)  > 0 as stale
+FROM diary d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = $1 AND d.id = $2
+WHERE s.id IS NULL OR d.last_updated > s.last_updated;

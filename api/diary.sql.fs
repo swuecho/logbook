@@ -40,6 +40,40 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
 
 
 
+let checkIdStale = """-- name: CheckIdStale :one
+SELECT count(*)  > 0 as stale
+FROM diary d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id AND d.id = @id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated
+"""
+
+
+type CheckIdStaleParams = {
+  UserId: int32;
+  Id: string;
+}
+
+let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
+  
+  let reader = fun (read:RowReader) -> read.bool "stale"
+
+  db
+  |> Sql.existingConnection
+  |> Sql.query checkIdStale
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@id", Sql.string arg.Id ]
+  |> Sql.executeRow reader
+
+
+
+
+
+
+
+
+
+
+
+
 
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
