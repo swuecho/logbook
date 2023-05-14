@@ -27,7 +27,8 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
 let authService (services: IServiceCollection) =
-    let jwtKey = ""
+    let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
+    let audience ="gDsc2WD8F2qNfHK5a84jjJkwzDkh9h2f"
 
     let _ =
         services
@@ -35,12 +36,12 @@ let authService (services: IServiceCollection) =
             .AddJwtBearer(fun options ->
                 options.TokenValidationParameters <-
                     new TokenValidationParameters(
-                        //ValidateIssuer = true,
-                        // ValidateAudience = true,
                         ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
+                        //ValidateIssuer = true,
                         //ValidIssuer = Configuratio["Jwt:Issuer"],
-                        //ValidAudience = Configuration.["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = audience,
+                        ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
                     ))
 
