@@ -2,6 +2,9 @@ namespace Database
 
 open System
 open Npgsql.FSharp
+open Microsoft.AspNetCore.Http
+
+
 
 module Config =
     /// Custom operator for combining paths
@@ -18,8 +21,13 @@ module Config =
 module Connection =
     open Microsoft.AspNetCore.Http
     open Npgsql
+    let getConn (httpContext: HttpContext) =
+        match httpContext.Items.["NpgsqlConnection"] with
+            | :? NpgsqlConnection as connection -> connection
+            | _ -> failwith "can not get connection"
 
-    let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate)  =
+
+    let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) =
 
         let openConn (httpContext: HttpContext) (next: RequestDelegate) =
             let connection = new NpgsqlConnection(connectionString)
