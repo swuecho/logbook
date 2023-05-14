@@ -3,6 +3,7 @@ module Note
 open System.Net
 open Microsoft.AspNetCore.Http
 open Falco
+open System.Security.Claims
 
 let forbidden =
     let message = "Access to the resource is forbidden."
@@ -10,6 +11,9 @@ let forbidden =
     Response.ofJson
         {| code = HttpStatusCode.Forbidden
            message = message |}
+
+let getUserId (user: ClaimsPrincipal) = int (user.FindFirst("user_id").Value)
+
 
 let AuthRequired h = Request.ifAuthenticated h forbidden
 
@@ -19,13 +23,17 @@ let AuthRequired h = Request.ifAuthenticated h forbidden
 // https://github.com/pimbrouwers/Falco/pull/41
 // do not cache result
 let noteAllPartSlow: HttpHandler =
-    let user_id = 1
-    let conn = Database.Config.conn ()
+    fun ctx ->
+        let user_id = getUserId ctx.User
+        let conn = Database.Config.conn ()
 
-    Request.mapRoute (ignore) (fun _ ->
-        Diary.ListDiaryByUserID conn user_id
-        |> List.map (Jieba.freqsOfNote conn)
-        |> Json.Response.ofJson)
+        Request.mapRoute
+            (ignore)
+            (fun _ ->
+                Diary.ListDiaryByUserID conn user_id
+                |> List.map (Jieba.freqsOfNote conn)
+                |> Json.Response.ofJson)
+            ctx
 
 let noteAllPart: HttpHandler =
     fun ctx ->
@@ -46,14 +54,15 @@ let getNoteById conn id user_id =
 
 
 let noteByIdPart: HttpHandler =
-    let conn = Database.Config.conn ()
+    fun ctx ->
+        let conn = Database.Config.conn ()
 
-    let getSurvey (route: RouteCollectionReader) =
-        let user_id = 1
-        let note_id = route.GetString("id", "")
-        getNoteById conn note_id user_id
+        let getSurvey (route: RouteCollectionReader) =
+            let user_id = getUserId ctx.User
+            let note_id = route.GetString("id", "")
+            getNoteById conn note_id user_id
 
-    Request.mapRoute getSurvey Json.Response.ofJson
+        Request.mapRoute getSurvey Json.Response.ofJson ctx
 
 
 let putNote note = NoteQ.AddNote note
