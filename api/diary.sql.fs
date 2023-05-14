@@ -166,6 +166,7 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
   db 
   |> Sql.existingConnection
   |> Sql.query getStaleIdsOfUserId
+  |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
 
 
@@ -225,6 +226,7 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
   db 
   |> Sql.existingConnection
   |> Sql.query listDiaryByUserID
+  |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
 
 

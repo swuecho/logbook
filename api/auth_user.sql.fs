@@ -219,7 +219,6 @@ let GetTotalActiveUserCount (db: NpgsqlConnection)   =
   db
   |> Sql.existingConnection
   |> Sql.query getTotalActiveUserCount
-  |> Sql.parameters  [  ]
   |> Sql.executeRow reader
 
 
@@ -299,6 +298,7 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
   db 
   |> Sql.existingConnection
   |> Sql.query listAuthUsers
+  |> Sql.parameters  [ "@limit", Sql.int arg.Limit; "@offset", Sql.int arg.Offset ]
   |> Sql.execute reader
 
 

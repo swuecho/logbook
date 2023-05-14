@@ -66,7 +66,6 @@ let DeleteAllJwtSecrets (db: NpgsqlConnection)  =
   db 
   |> Sql.existingConnection
   |> Sql.query deleteAllJwtSecrets
-  |> Sql.parameters  [  ]
   |> Sql.executeNonQuery
 
 
