@@ -70,7 +70,7 @@ let updateNoteSummary conn (id: string) (user_id: int) =
 
 
 let refreshSummary conn user_id =
-    let staledIds = NoteQ.getStaledIds user_id
+    let staledIds = Diary.GetStaleIdsOfUserId conn user_id |> List.map (fun x -> x.Id)
     printfn "%A" staledIds
 
     staledIds

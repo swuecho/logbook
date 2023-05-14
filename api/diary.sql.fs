@@ -147,6 +147,36 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
 
 
 
+let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
+SELECT d.id, d.user_id, d.note, d.last_updated
+FROM diary d
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated
+"""
+
+
+
+
+let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
+  let reader = fun (read:RowReader) -> {
+    Id = read.string "id"
+    UserId = read.int "user_id"
+    Note = read.string "note"
+    LastUpdated = read.dateTime "last_updated"}
+  db 
+  |> Sql.existingConnection
+  |> Sql.query getStaleIdsOfUserId
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -205,6 +205,7 @@ let GetAuthUserByID (db: NpgsqlConnection)  (id: int32)  =
 
 
 
+
 let getTotalActiveUserCount = """-- name: GetTotalActiveUserCount :one
 SELECT COUNT(*) FROM auth_user WHERE is_active = true
 """

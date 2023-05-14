@@ -2,7 +2,6 @@ namespace Database
 
 open System
 open Npgsql.FSharp
-open FSharp.Reflection
 
 module Config =
     /// Custom operator for combining paths
@@ -15,5 +14,5 @@ module Config =
     let connection () = postgresDSN |> Sql.connect
 
     let conn () =
-        new Npgsql.NpgsqlConnection(postgresDSN)
-
+        let connStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
+        new Npgsql.NpgsqlConnection(connStr)
