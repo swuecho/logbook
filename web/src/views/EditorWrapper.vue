@@ -176,9 +176,9 @@ export default {
           console.log(error);
         });
     },
-    onUpdate(output, options) {
-      debounce(this.update_doc(output, options), 1000);
-    },
+    onUpdate: debounce(function(output, options) {
+      this.update_doc(output, options)
+    }, 500),
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;

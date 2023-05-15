@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS auth_user_email_idx ON auth_user (email);
 
 CREATE TABLE IF NOT EXISTS diary (
     id character varying(8) NOT NULL,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id),
+    user_id INTEGER NOT NULL REFERENCES auth_user(id),
     note text DEFAULT '' NOT NULL,
     last_updated timestamp with time zone DEFAULT NOW() NOT NULL,
     PRIMARY KEY(id)
