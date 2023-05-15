@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS diary (
 
 CREATE TABLE IF NOT EXISTS summary (
     id character varying(8) NOT NULL,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id),
+    user_id INTEGER NOT NULL REFERENCES auth_user(id),
     created_at timestamp with time zone DEFAULT NOW() NOT NULL,
     last_updated timestamp with time zone DEFAULT NOW() NOT NULL,
     content jsonb DEFAULT '{}' NOT NULL,
