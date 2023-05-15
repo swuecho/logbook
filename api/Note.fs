@@ -59,20 +59,33 @@ let noteAllPart: HttpHandler =
             ctx
 
 
-let getNoteById conn id user_id =
-    Diary.DiaryByUserIDAndID conn { Id = id; UserId = user_id }
-
 
 let noteByIdPart: HttpHandler =
     fun ctx ->
+        let route = Request.getRoute ctx
+        let note_id = route.GetString("id", "")
+        let user_id = getUserId ctx.User
+
         let conn = ctx.getNpgsql ()
 
-        let getSurvey (route: RouteCollectionReader) =
-            let user_id = getUserId ctx.User
-            let note_id = route.GetString("id", "")
-            getNoteById conn note_id user_id
 
-        Request.mapRoute getSurvey Json.Response.ofJson ctx
+        try
+            let diary = Diary.DiaryByUserIDAndID conn { Id = note_id; UserId = user_id }
+            Response.ofJson diary ctx
+        with :? NoResultsException as ex ->
+            Response.ofJson
+                (Diary.AddNote
+                    conn
+                    { Id = note_id
+                      UserId = user_id
+                      Note = "" })
+                ctx
+// Response.withStatusCode 404 ctx |>
+// Response.ofJson
+//     {| code = 401
+//        message = sprintf "No diary found for user %d with id %s" user_id note_id |}
+
+//Request.mapRoute getSurvey Json.Response.ofJson ctx
 
 let addNotePart: HttpHandler =
     fun ctx ->

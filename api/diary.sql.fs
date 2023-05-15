@@ -11,9 +11,10 @@ open System
 
 
 
-let addNote = """-- name: AddNote :exec
+let addNote = """-- name: AddNote :one
 INSERT INTO diary (id, user_id, note, last_updated) VALUES (@id, @user_id, @note, now())  
 ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+returning id, user_id, note, last_updated
 """
 
 
@@ -23,15 +24,24 @@ type AddNoteParams = {
   Note: string;
 }
 
+let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
+  
+  let reader = fun (read:RowReader) -> {
+    Id = read.string "id"
+    UserId = read.int "user_id"
+    Note = read.string "note"
+    LastUpdated = read.dateTime "last_updated"}
+  
 
-
-
-let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  = 
-  db 
+  db
   |> Sql.existingConnection
   |> Sql.query addNote
   |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId; "@note", Sql.string arg.Note ]
-  |> Sql.executeNonQuery
+  |> Sql.executeRow reader
+
+
+
+
 
 
 
