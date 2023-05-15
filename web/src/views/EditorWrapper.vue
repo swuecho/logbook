@@ -112,40 +112,9 @@ export default {
   },
   created() {
 
-    // set interval.
-    // this update date `now` and trigger `today` , `time`
     // eslint-disable-next-line no-unused-vars
     var interval = setInterval(() => this.now = moment(), 1000);
     // this.date = this.$route.query.date;
-    /*
-    let app = this;
-    let date = this.date;
-    this.axios
-      .get(`${base_url}/diary/${date}`)
-      .then(function(response) {
-        // handle success
-        console.log(response.data)
-        let last_note = response.data;
-        console.log(last_note)
-        if (last_note) {
-          console.log(last_note.note)
-          let last_note_json = JSON.parse(last_note.note);
-          // set content should trigger OnUpdate?
-          app.last_note_json = last_note_json;
-          //editor.setContent(last_note_json);
-        } else {
-          app.$message({message: `welcome to start your new diary of ${date}` })
-        }
-      })
-      .catch(function(error) {
-        // handle error
-        console.log(error)
-        app.$message({message: "error send request to db" + error })
-      })
-      .finally(function() {
-        // always executed
-      });
-      */
   },
   computed: {
     today() {
