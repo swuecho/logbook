@@ -146,12 +146,9 @@ export default {
         });
     },
 
-    onUpdate(output, options) {
-      debounce(() => {
-        this.update_doc(output, options);
-      }, 500, { leading: true });
-    },
-
+    onUpdate: debounce((output, options) => {
+      this.update_doc(output, options);
+    }, 500, { leading: true }),
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;
