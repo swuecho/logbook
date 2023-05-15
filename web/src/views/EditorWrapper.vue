@@ -9,7 +9,7 @@
       </a>
     </div>
     <div class="editor">
-      <el-tiptap :content="content" :extensions="extensions" @onUpdate="onUpdate" @onInit="onInit"></el-tiptap>
+      <el-tiptap :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
     </div>
   </div>
 </template>
@@ -126,7 +126,7 @@ export default {
 
   },
   methods: {
-    update_doc(output, options) {
+    onUpdate(output, options) {
       const { getJSON, getHTML } = options;
       console.log(this.date);
       this.json = getJSON();
@@ -145,10 +145,9 @@ export default {
           console.log(error);
         });
     },
-
-    onUpdate: debounce((output, options) => {
-      this.update_doc(output, options);
-    }, 500, { leading: true }),
+    debouncedOnUpdate: debounce(function(output, options) {
+      this.onUpdate(output, options);
+    }, 500),
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;
