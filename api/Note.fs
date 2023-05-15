@@ -71,9 +71,9 @@ let noteByIdPart: HttpHandler =
 
         try
             let diary = Diary.DiaryByUserIDAndID conn { Id = note_id; UserId = user_id }
-            Response.ofJson diary ctx
+            Json.Response.ofJson diary ctx
         with :? NoResultsException as ex ->
-            Response.ofJson
+            Json.Response.ofJson
                 (Diary.AddNote
                     conn
                     { Id = note_id
