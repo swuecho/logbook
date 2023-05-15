@@ -14,7 +14,7 @@
   </div>
 </template>
 <script>
-import { debounce } from "debounce";
+import { debounce } from 'lodash';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
@@ -176,11 +176,13 @@ export default {
           console.log(error);
         });
     },
+
     onUpdate(output, options) {
       debounce(() => {
         this.update_doc(output, options);
-      }, 500);
+      }, 500, { leading: true });
     },
+
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;
