@@ -28,6 +28,10 @@ let serveVueFiles (app: IApplicationBuilder) =
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
 
+
+let stashConnteciton (app: IApplicationBuilder) =
+    app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
+
 let authUserMiddleware (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity.IsAuthenticated = true
@@ -46,6 +50,7 @@ let authUserMiddleware (app: IApplicationBuilder) =
             next.Invoke context
 
     app.Use(middleware)
+
 
 let authService (services: IServiceCollection) =
     let jwtKey = "Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk="
@@ -73,6 +78,9 @@ webHost [||] {
     use_cors corsPolicyName corsOptions
     add_service authService
     use_authentication
+
+    use_middleware stashConnteciton
+
     use_middleware authUserMiddleware
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
