@@ -29,22 +29,22 @@ module Connection =
 
     let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) =
 
-        let openConn (httpContext: HttpContext) (next: RequestDelegate) =
+        let openConn () =
             let connection = new NpgsqlConnection(connectionString)
-            httpContext.Items.["NpgsqlConnection"] <- connection
+            context.Items.["NpgsqlConnection"] <- connection
             connection.Open()
-            next.Invoke httpContext
 
-        let closeConn (httpContext: HttpContext) =
-            match httpContext.Items.["NpgsqlConnection"] with
-            | :? NpgsqlConnection as connection -> connection.Close()
+        let closeConn () =
+            match context.Items.["NpgsqlConnection"] with
+            | :? NpgsqlConnection as connection -> connection.Close() //; connection.Dispose()
             | _ -> ()
 
         let cleanup =
             { new System.IDisposable with
-                member this.Dispose() = closeConn context }
+                member this.Dispose() = closeConn () }
 
         try
-            openConn context next
+            openConn ()
+            next.Invoke context
         finally
             cleanup.Dispose()
