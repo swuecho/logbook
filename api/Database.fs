@@ -1,10 +1,7 @@
 namespace Database
 
 open System
-open Npgsql.FSharp
 open Microsoft.AspNetCore.Http
-
-
 
 module Config =
     /// Custom operator for combining paths
@@ -13,13 +10,10 @@ module Config =
             System.Environment.GetEnvironmentVariable("DATABASE_URL")
         with _ ->
             raise (System.Exception "check if BESTQA_FS_PORT is set")
-
     let connStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
-    let conn () = new Npgsql.NpgsqlConnection(connStr)
 
 
 module Connection =
-    open Microsoft.AspNetCore.Http
     open Npgsql
     let getConn (httpContext: HttpContext) =
         match httpContext.Items.["NpgsqlConnection"] with
@@ -29,22 +23,22 @@ module Connection =
 
     let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) =
 
-        let openConn (httpContext: HttpContext) (next: RequestDelegate) =
+        let openConn () =
             let connection = new NpgsqlConnection(connectionString)
-            httpContext.Items.["NpgsqlConnection"] <- connection
+            context.Items.["NpgsqlConnection"] <- connection
             connection.Open()
-            next.Invoke httpContext
 
-        let closeConn (httpContext: HttpContext) =
-            match httpContext.Items.["NpgsqlConnection"] with
-            | :? NpgsqlConnection as connection -> connection.Close()
+        let closeConn () =
+            match context.Items.["NpgsqlConnection"] with
+            | :? NpgsqlConnection as connection -> connection.Close() //; connection.Dispose()
             | _ -> ()
 
         let cleanup =
             { new System.IDisposable with
-                member this.Dispose() = closeConn context }
+                member this.Dispose() = closeConn () }
 
         try
-            openConn context next
+            openConn ()
+            next.Invoke context
         finally
             cleanup.Dispose()
