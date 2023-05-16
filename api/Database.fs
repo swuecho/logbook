@@ -1,10 +1,7 @@
 namespace Database
 
 open System
-open Npgsql.FSharp
 open Microsoft.AspNetCore.Http
-
-
 
 module Config =
     /// Custom operator for combining paths
@@ -13,9 +10,7 @@ module Config =
             System.Environment.GetEnvironmentVariable("DATABASE_URL")
         with _ ->
             raise (System.Exception "check if BESTQA_FS_PORT is set")
-
     let connStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
-    let conn () = new Npgsql.NpgsqlConnection(connStr)
 
 
 module Connection =
