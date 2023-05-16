@@ -14,7 +14,6 @@ module Config =
 
 
 module Connection =
-    open Microsoft.AspNetCore.Http
     open Npgsql
     let getConn (httpContext: HttpContext) =
         match httpContext.Items.["NpgsqlConnection"] with
