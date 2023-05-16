@@ -21,6 +21,7 @@
     <PackageReference Include="FSharp.Data" Version="6.2.0" />
     <PackageReference Include="jieba.NET" Version="0.42.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
+    <PackageReference Include="Npgsql" Version="7.0.4" />
     <PackageReference Include="Npgsql.FSharp" Version="5.7.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.30.1" />
   </ItemGroup>
