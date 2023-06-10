@@ -131,6 +131,7 @@ export default {
       const { getJSON, getHTML } = options;
       console.log(this.date);
       this.json = getJSON();
+      let app = this;
       this.axios
         .put(
           `${base_url}/diary/${this.date}`,
@@ -141,26 +142,26 @@ export default {
         )
         .then(function (response) {
           console.log(response);
-          this.loading = false;
+          app.loading = false;
         })
         .catch(function (error) {
-          this.loading = false;
+          app.loading = false;
           console.log(error);
         });
     },
-    debouncedOnUpdate: debounce(function(output, options) {
+    debouncedOnUpdate: debounce(function (output, options) {
       this.onUpdate(output, options);
     }, 500),
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;
       let date = this.date;
-      this.loading = true;
+      app.loading = true;
       this.axios
         .get(`${base_url}/diary/${date}`)
         .then(function (response) {
           // handle success
-          this.loading = false;
+          app.loading = false;
           let last_note = response.data;
           if (last_note) {
             let last_note_json = JSON.parse(last_note.note);
