@@ -6,6 +6,7 @@
       <a v-if="date != today" :href="'/view?date=' + today">Today</a>
       <a href="content">
         <Icon :icon="icons.tableOfContents" />
+        <Icon v-if="loading" icon="line-md:loading-alt-loop" />
       </a>
     </div>
     <div class="editor">
@@ -18,7 +19,6 @@ import { debounce } from 'lodash';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
-
 import { DB_URL } from '@/config.js'
 
 var base_url = DB_URL;
@@ -68,6 +68,7 @@ export default {
   data() {
     return {
       now: moment(),
+      loading: true,
       timeFormat: 'h:mm:ss a',
       last_note_json: null,
       content: null,
@@ -140,8 +141,10 @@ export default {
         )
         .then(function (response) {
           console.log(response);
+          this.loading = false;
         })
         .catch(function (error) {
+          this.loading = false;
           console.log(error);
         });
     },
@@ -152,10 +155,12 @@ export default {
       let app = this;
       // this.date = this.$route.query.date;
       let date = this.date;
+      this.loading = true;
       this.axios
         .get(`${base_url}/diary/${date}`)
         .then(function (response) {
           // handle success
+          this.loading = false;
           let last_note = response.data;
           if (last_note) {
             let last_note_json = JSON.parse(last_note.note);
