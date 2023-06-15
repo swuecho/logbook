@@ -30,6 +30,7 @@
 
 <script>
 import axios from "axios";
+import parseJwt from "@/util";
 
 export default {
   name: "Login",
@@ -91,7 +92,7 @@ export default {
           let jwt = accessToken["accessToken"];
           if (jwt) {
             let jwtMap = parseJwt(jwt);
-            localStorage.setItem("jwtToken", jwt);
+            localStorage.setItem("JWT_TOKEN", jwt);
             localStorage.setItem("username", name);
             localStorage.setItem("user_id", jwtMap["user_id"]);
             localStorage.setItem("exp", jwtMap["exp"]);
