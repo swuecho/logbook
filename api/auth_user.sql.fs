@@ -13,6 +13,33 @@ open System
 
 
 
+let checkUserExists = """-- name: CheckUserExists :one
+SELECT EXISTS(SELECT 1 FROM auth_user WHERE email = @email)
+"""
+
+
+
+let CheckUserExists (db: NpgsqlConnection)  (email: string)  =
+  
+  let reader = fun (read:RowReader) -> read.bool "exists"
+
+  db
+  |> Sql.existingConnection
+  |> Sql.query checkUserExists
+  |> Sql.parameters  [ "@email", Sql.string email ]
+  |> Sql.executeRow reader
+
+
+
+
+
+
+
+
+
+
+
+
 let createAuthUser = """-- name: CreateAuthUser :one
 INSERT INTO auth_user (email, "password", first_name, last_name, username, is_staff, is_superuser)
 VALUES (@email, @password, @first_name, @last_name, @username, @is_staff, @is_superuser)

@@ -149,7 +149,7 @@ let login: HttpHandler =
                 let email = login.Username
                 let password = login.Password
                 // try get user if not exist create one
-                try
+                if AuthUser.CheckUserExists conn email then
                     let user = AuthUser.GetUserByEmail conn email
                     let hash = user.Password
                     // check if password matches
@@ -169,10 +169,8 @@ let login: HttpHandler =
                         // return failure
                         Json.Response.ofJson
                             {| code = HttpStatusCode.Unauthorized
-                               message = "Login failed." |}
-                with ex ->
+                               message = "Login failed. password or email is wrong" |}
+                else
                     let jwt = createNewUser conn email password
                     Json.Response.ofJson jwt)
-
-
             ctx

@@ -85,6 +85,7 @@ let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
 
 
 
+
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
 RETURNING id, user_id, note, last_updated

@@ -32,6 +32,9 @@ DELETE FROM auth_user WHERE email = $1;
 -- name: GetUserByEmail :one
 SELECT * FROM auth_user WHERE email = $1;
 
+-- name: CheckUserExists :one
+SELECT EXISTS(SELECT 1 FROM auth_user WHERE email = $1);
+
 -- name: UpdateUserPassword :exec
 UPDATE auth_user SET "password" = $2 WHERE email = $1;
 
