@@ -99,7 +99,7 @@ export default {
             // localStorage.setItem("username", name);
             // localStorage.setItem("user_id", jwtMap["user_id"]);
             // localStorage.setItem("exp", jwtMap["exp"]);
-            app.$router.push({ path: "/" });
+            app.$router.push({ path: "/" })
           }
         })
         .catch(function (error) {

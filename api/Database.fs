@@ -14,6 +14,7 @@ module Config =
         let pgConnStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
         //https://stackoverflow.com/questions/40364449/npgsql-exception-while-reading-from-stream-postgres
         // wait longger
+        printfn "pgConnStr: %s" pgConnStr
         pgConnStr + ";Timeout=300;CommandTimeout=300"
 
 
