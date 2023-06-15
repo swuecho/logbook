@@ -66,19 +66,19 @@ let GetSummaryByUserIDAndID (db: NpgsqlConnection)  (arg: GetSummaryByUserIDAndI
 
 
 let getSummaryByUserId = """-- name: GetSummaryByUserId :many
-select id, content as note from summary where user_id = @user_id order by id desc
+select note_id, content as note from summary where user_id = @user_id order by id desc
 """
 
 
 type GetSummaryByUserIdRow = {
-  Id: int32;
+  NoteId: string;
   Note: string;
 }
 
 
 let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
   let reader = fun (read:RowReader) -> {
-    Id = read.int "id"
+    NoteId = read.string "note_id"
     Note = read.string "note"}
   db 
   |> Sql.existingConnection
