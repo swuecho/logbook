@@ -24,7 +24,7 @@
     "tiptap-commands": "1.17.1",
     "tiptap-extensions": "1.35.2",
     "vue": "^2.7.14",
-    "vue-router": "^4.2.2",
+    "vue-router": "^3.4.9",
     "vuewordcloud": "^18.7.12"
   },
   "devDependencies": {
