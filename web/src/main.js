@@ -20,11 +20,8 @@ Vue.config.productionTip = false
 function IsAuthenticatedValid() {
   const isAuthenticated = localStorage.getItem('JWT_TOKEN'); // Check if the JWT token is stored
   const expiresAt = localStorage.getItem('JWT_EXPIRES_AT'); // Check if the JWT token is stored
-  console.log(expiresAt)
   let seconds = new Date() / 1000;
-  console.log(seconds)
   let expired = expiresAt - seconds < 0 
-  console.log(expired)
   return isAuthenticated && !expired
 }
 
