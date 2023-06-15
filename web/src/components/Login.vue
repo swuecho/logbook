@@ -79,8 +79,8 @@ export default {
         },
         data: {
           //ClientId: "bc442bb2b1d848fba5be2aa24312e711",
-          userName: name,
-          passWord: pwd,
+          Username: name,
+          Password: pwd,
         },
       };
       let app = this;
