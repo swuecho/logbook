@@ -90,8 +90,11 @@ export default {
         .then(function (response) {
           let data = response.data;
           let jwt = data["accessToken"];
+          var seconds = new Date() / 1000;
+          let jwt_expired = data["expiresIn"] + seconds;
           if (jwt) {
             localStorage.setItem("JWT_TOKEN", jwt);
+            localStorage.setItem("JWT_EXPIRES_AT", jwt_expired)
             // let jwtMap = parseJwt(jwt);
             // localStorage.setItem("username", name);
             // localStorage.setItem("user_id", jwtMap["user_id"]);
