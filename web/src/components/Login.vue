@@ -73,7 +73,7 @@ export default {
       // bestqa_fs
       const options = {
         method: "POST",
-        url: "/login",
+        url: "/api/login",
         headers: {
           "Content-Type": "application/json",
         },
