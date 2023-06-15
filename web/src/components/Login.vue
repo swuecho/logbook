@@ -89,7 +89,6 @@ export default {
         .request(options)
         .then(function (response) {
           let data = response.data;
-          console.log(accessToken)
           let jwt = data["accessToken"];
           if (jwt) {
             localStorage.setItem("JWT_TOKEN", jwt);
@@ -102,7 +101,6 @@ export default {
         })
         .catch(function (error) {
           console.error(error);
-          app.errors.push(error.response.data);
         });
     },
   },
