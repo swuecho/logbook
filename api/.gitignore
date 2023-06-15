@@ -8,3 +8,4 @@ wwwroot
 env.sh
 output.json
 model.json
+diary_db.sh
