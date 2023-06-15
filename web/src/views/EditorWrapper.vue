@@ -19,9 +19,6 @@ import { debounce } from 'lodash';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
-import { DB_URL } from '@/config.js'
-
-var base_url = DB_URL;
 
 import {
   Doc,
@@ -134,7 +131,7 @@ export default {
       let app = this;
       this.axios
         .put(
-          `${base_url}/diary/${this.date}`,
+          `/api/diary/${this.date}`,
           {
             id: this.date,
             note: JSON.stringify(this.json)
@@ -158,7 +155,7 @@ export default {
       let date = this.date;
       app.loading = true;
       this.axios
-        .get(`${base_url}/diary/${date}`)
+        .get(`/api/diary/${date}`)
         .then(function (response) {
           // handle success
           app.loading = false;

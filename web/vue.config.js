@@ -1,3 +1,4 @@
+
 module.exports = {
     // https://github.com/vuejs/vue-cli/issues/1040
     runtimeCompiler: true,
@@ -6,16 +7,16 @@ module.exports = {
     },
     devServer: {
         open: process.platform === 'darwin',
+        open: process.platform === 'darwin',
         host: '0.0.0.0',
         port: 9099, // CHANGE YOUR PORT HERE!
         https: false,
         hotOnly: false,
-        // 
-        // proxy: {
-        //     "/api/*": {
-        //       target: "http://localhost:5000",
-        //     }
-        //   }
+        proxy: {
+                "/api/*": {
+                    target: "http://localhost:5000",
+                }
     },
+},
     outputDir: '../api/wwwroot/'
 }

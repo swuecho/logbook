@@ -2,8 +2,8 @@
   <el-container>
     <el-header style="text-align: right">
       <div @click="backHome">
-      <Icon :icon="icons.homeIcon" height="28"  />
-</div>
+        <Icon :icon="icons.homeIcon" height="28" />
+      </div>
     </el-header>
     <el-main>
       <div class="content">
@@ -33,11 +33,9 @@
 </template>
 
 <script lang="js">
-import { DB_URL } from "@/config.js";
 import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
-var base_url = DB_URL;
 export default {
   components: {
     [VueWordCloud.name]: VueWordCloud,
@@ -85,7 +83,7 @@ export default {
   created() {
     let app = this;
     this.axios
-      .get(`${base_url}/diary`)
+      .get(`/api/diary`)
       .then(function (response) {
         // handle success
         let notes = response.data
