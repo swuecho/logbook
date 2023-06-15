@@ -10,11 +10,12 @@ module.exports = {
         port: 9099, // CHANGE YOUR PORT HERE!
         https: false,
         hotOnly: false,
-        proxy: {
-            "/api/*": {
-              target: "http://localhost:5000",
-            }
-          }
+        // 
+        // proxy: {
+        //     "/api/*": {
+        //       target: "http://localhost:5000",
+        //     }
+        //   }
     },
     outputDir: '../api/wwwroot/'
 }
