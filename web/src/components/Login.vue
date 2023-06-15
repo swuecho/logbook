@@ -88,21 +88,22 @@ export default {
       axios
         .request(options)
         .then(function (response) {
-          let accessToken = response.data;
-          let jwt = accessToken["accessToken"];
+          let data = response.data;
+          console.log(accessToken)
+          let jwt = data["accessToken"];
           if (jwt) {
-            let jwtMap = parseJwt(jwt);
             localStorage.setItem("JWT_TOKEN", jwt);
-            localStorage.setItem("username", name);
-            localStorage.setItem("user_id", jwtMap["user_id"]);
-            localStorage.setItem("exp", jwtMap["exp"]);
+            // let jwtMap = parseJwt(jwt);
+            // localStorage.setItem("username", name);
+            // localStorage.setItem("user_id", jwtMap["user_id"]);
+            // localStorage.setItem("exp", jwtMap["exp"]);
             app.$router.push({ path: "/" });
           }
         })
         .catch(function (error) {
           console.error(error);
+          app.errors.push(error.response.data);
         });
-
     },
   },
 };
