@@ -70,22 +70,16 @@ let noteByIdPart: HttpHandler =
 
 
         try
-            let diary = Diary.DiaryByUserIDAndID conn { Id = note_id; UserId = user_id }
+            let diary = Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
             Json.Response.ofJson diary ctx
         with :? NoResultsException as ex ->
             Json.Response.ofJson
                 (Diary.AddNote
                     conn
-                    { Id = note_id
+                    { NoteId = note_id
                       UserId = user_id
                       Note = "" })
                 ctx
-// Response.withStatusCode 404 ctx |>
-// Response.ofJson
-//     {| code = 401
-//        message = sprintf "No diary found for user %d with id %s" user_id note_id |}
-
-//Request.mapRoute getSurvey Json.Response.ofJson ctx
 
 let addNotePart: HttpHandler =
     fun ctx ->
@@ -96,7 +90,7 @@ let addNotePart: HttpHandler =
 
                 Diary.AddNote
                     conn
-                    { Id = note.Id
+                    { NoteId = note.NoteId
                       UserId = user_id
                       Note = note.Note }
                 |> Json.Response.ofJson)

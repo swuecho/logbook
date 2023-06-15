@@ -21,8 +21,9 @@ type AuthUser = {
 }
 
 type Diary = {
-     Id: string
+     Id: int32
      UserId: int32
+     NoteId: string
      Note: string
      LastUpdated: DateTime
 }
@@ -35,7 +36,8 @@ type JwtSecret = {
 }
 
 type Summary = {
-     Id: string
+     Id: int32
+     NoteId: string
      UserId: int32
      CreatedAt: DateTime
      LastUpdated: DateTime

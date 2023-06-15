@@ -8,7 +8,7 @@ SELECT * FROM diary WHERE id = $1;
 SELECT * FROM diary WHERE user_id = $1;
 
 -- name: DiaryByUserIDAndID :one
-SELECT * FROM diary WHERE user_id = $1 and id=$2;
+SELECT * FROM diary WHERE user_id = $1 and note_id=$2;
 
 -- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES ($1, $2)
@@ -29,12 +29,12 @@ WHERE s.id IS NULL OR d.last_updated > s.last_updated;
 
 
 -- name: AddNote :one
-INSERT INTO diary (id, user_id, note, last_updated) VALUES ($1, $2, $3, now())  
-ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+INSERT INTO diary (note_id, user_id, note, last_updated) VALUES ($1, $2, $3, now())  
+ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
 returning *;
 
 -- name: CheckIdStale :one
 SELECT count(*)  > 0 as stale
 FROM diary d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = $1 AND d.id = $2
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = $1 AND d.note_id = $2
 WHERE s.id IS NULL OR d.last_updated > s.last_updated;

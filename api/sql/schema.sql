@@ -26,21 +26,26 @@ CREATE TABLE IF NOT EXISTS auth_user (
 CREATE INDEX IF NOT EXISTS auth_user_email_idx ON auth_user (email);
 
 CREATE TABLE IF NOT EXISTS diary (
-    id character varying(8) NOT NULL,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES auth_user(id),
+    note_id character varying(8) NOT NULL,
     note text DEFAULT '' NOT NULL,
-    last_updated timestamp with time zone DEFAULT NOW() NOT NULL,
-    PRIMARY KEY(id)
+    last_updated timestamp with time zone DEFAULT NOW() NOT NULL
 );
 
+-- note_id and user_id are unique together
+CREATE UNIQUE INDEX IF NOT EXISTS diary_id_user_id_idx ON diary (note_id, user_id);
+
 CREATE TABLE IF NOT EXISTS summary (
-    id character varying(8) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    note_id character varying(8) NOT NULL,
     user_id INTEGER NOT NULL REFERENCES auth_user(id),
     created_at timestamp with time zone DEFAULT NOW() NOT NULL,
     last_updated timestamp with time zone DEFAULT NOW() NOT NULL,
-    content jsonb DEFAULT '{}' NOT NULL,
-    PRIMARY KEY(id),
-    CONSTRAINT fk_diary FOREIGN KEY(id)  REFERENCES diary(id)
+    content jsonb DEFAULT '{}' NOT NULL
 );
+
+-- note_id and user_id are unique together
+CREATE UNIQUE INDEX IF NOT EXISTS summary_id_user_id_idx ON summary (note_id, user_id);
 
 

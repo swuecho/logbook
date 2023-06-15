@@ -87,7 +87,7 @@ export default {
       .then(function (response) {
         // handle success
         let notes = response.data
-        let changed = notes.map((note) => ({ id: note.id, note: app.dict_to_lol(note.note) })).filter((doc) => doc.note.length > 0);
+        let changed = notes.map((note) => ({ id: note.noteId, note: app.dict_to_lol(note.note) })).filter((doc) => doc.note.length > 0);
         app.notes = changed;
         app.dates = app.notes
       })
