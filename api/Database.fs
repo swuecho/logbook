@@ -15,7 +15,7 @@ module Config =
         //https://stackoverflow.com/questions/40364449/npgsql-exception-while-reading-from-stream-postgres
         // wait longger
         printfn "pgConnStr: %s" pgConnStr
-        pgConnStr + ";Timeout=300;CommandTimeout=300"
+        pgConnStr + ";Timeout=3000;CommandTimeout=3000"
 
 
 module Connection =
