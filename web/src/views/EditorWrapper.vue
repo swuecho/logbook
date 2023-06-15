@@ -133,7 +133,7 @@ export default {
         .put(
           `/api/diary/${this.date}`,
           {
-            id: this.date,
+            noteId: this.date,
             note: JSON.stringify(this.json)
           },
         )

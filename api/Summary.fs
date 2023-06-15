@@ -59,18 +59,25 @@ let insertSummary (note: Diary) =
     // store as jsonb
     summaryJson
 
-let updateNoteSummary conn (id: string) (user_id: int) =
+let updateNoteSummary conn (note_id: string) (user_id: int) =
     let summary =
-        Diary.DiaryByUserIDAndID conn { Id = id; UserId = user_id }
+        Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
         |> getTextFromNote
         |> freqs
         |> Json.Convert.toJson
 
-    Summary.InsertSummary conn { Id= id; UserId= user_id; Content=summary} |> ignore
+    Summary.InsertSummary
+        conn
+        { NoteId = note_id
+          UserId = user_id
+          Content = summary }
+    |> ignore
 
 
 let refreshSummary conn user_id =
-    let staledIds = Diary.GetStaleIdsOfUserId conn user_id |> List.map (fun x -> x.Id)
+    let staledIds =
+        Diary.GetStaleIdsOfUserId conn user_id |> List.map (fun x -> x.NoteId)
+
     printfn "%A" staledIds
 
     staledIds
@@ -79,28 +86,43 @@ let refreshSummary conn user_id =
 let noteSummary conn (note: Diary) =
     // get summary directly from note
     // check summary is exits
-    let nid = note.Id
+    let nid = note.NoteId
     printfn "%s" nid
-    let updateP: Summary.LastUpdatedParams = { Id = nid; UserId = note.UserId }
-    
-    let noteDt = [Summary.LastUpdated conn updateP ]
+    let updateP: Summary.LastUpdatedParams = { NoteId = nid; UserId = note.UserId }
+
+    let noteDt = [ Summary.LastUpdated conn updateP ]
 
     match noteDt with
     | [] ->
         let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
         // insert new item
-        ignore (Summary.InsertSummary conn {Id=nid; Content=summary; UserId= note.UserId })
+        ignore (
+            Summary.InsertSummary
+                conn
+                { NoteId = nid
+                  Content = summary
+                  UserId = note.UserId }
+        )
+
         summary
     | head :: _ ->
-        let staled = Diary.CheckIdStale conn { Id=nid; UserId = note.UserId}
+        let staled = Diary.CheckIdStale conn { NoteId = nid; UserId = note.UserId }
+
         if staled then
             let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
             // update the summary and timestamp
-            ignore (Summary.InsertSummary conn {Id=nid; Content=summary; UserId= note.UserId })
+            ignore (
+                Summary.InsertSummary
+                    conn
+                    { NoteId = nid
+                      Content = summary
+                      UserId = note.UserId }
+            )
+
             summary
         else
             let summary =
-                Summary.GetSummaryByUserIDAndID conn { Id = nid; UserId = note.UserId }
+                Summary.GetSummaryByUserIDAndID conn { NoteId = nid; UserId = note.UserId }
 
             summary.Content
 // fetch summary directly
@@ -119,9 +141,8 @@ let noteSummary conn (note: Diary) =
 // note |> getTextFromNote |> freqs
 
 let freqsOfNote conn (note: Diary) =
-    { Id = note.Id
+    { Id = note.Id 
+      NoteId = note.NoteId
       Note = note |> noteSummary conn
       UserId = note.UserId
-      LastUpdated = note.LastUpdated
-
-    }
+      LastUpdated = note.LastUpdated }

@@ -28,19 +28,20 @@ open System
 
 
 let getSummaryByUserIDAndID = """-- name: GetSummaryByUserIDAndID :one
-SELECT id, user_id, created_at, last_updated, content FROM summary WHERE user_id = @user_id and id=@id
+SELECT id, note_id, user_id, created_at, last_updated, content FROM summary WHERE user_id = @user_id and note_id=@note_id
 """
 
 
 type GetSummaryByUserIDAndIDParams = {
   UserId: int32;
-  Id: string;
+  NoteId: string;
 }
 
 let GetSummaryByUserIDAndID (db: NpgsqlConnection)  (arg: GetSummaryByUserIDAndIDParams)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
+    NoteId = read.string "note_id"
     UserId = read.int "user_id"
     CreatedAt = read.dateTime "created_at"
     LastUpdated = read.dateTime "last_updated"
@@ -50,7 +51,7 @@ let GetSummaryByUserIDAndID (db: NpgsqlConnection)  (arg: GetSummaryByUserIDAndI
   db
   |> Sql.existingConnection
   |> Sql.query getSummaryByUserIDAndID
-  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@id", Sql.string arg.Id ]
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@note_id", Sql.string arg.NoteId ]
   |> Sql.executeRow reader
 
 
@@ -70,14 +71,14 @@ select id, content as note from summary where user_id = @user_id order by id des
 
 
 type GetSummaryByUserIdRow = {
-  Id: string;
+  Id: int32;
   Note: string;
 }
 
 
 let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     Note = read.string "note"}
   db 
   |> Sql.existingConnection
@@ -97,14 +98,14 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 let insertSummary = """-- name: InsertSummary :exec
-insert INTO summary (id, user_id, content, last_updated) 
-VALUES (@id, @user_id, @content, now()) 
-ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, last_updated =  EXCLUDED.last_updated
+insert INTO summary (note_id, user_id, content, last_updated) 
+VALUES (@note_id, @user_id, @content, now()) 
+ON CONFLICT (note_id, user_id) DO UPDATE SET content = EXCLUDED.content, last_updated =  EXCLUDED.last_updated
 """
 
 
 type InsertSummaryParams = {
-  Id: string;
+  NoteId: string;
   UserId: int32;
   Content: string;
 }
@@ -116,7 +117,7 @@ let InsertSummary (db: NpgsqlConnection)  (arg: InsertSummaryParams)  =
   db 
   |> Sql.existingConnection
   |> Sql.query insertSummary
-  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId; "@content", Sql.jsonb arg.Content ]
+  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@content", Sql.jsonb arg.Content ]
   |> Sql.executeNonQuery
 
 
@@ -127,12 +128,12 @@ let InsertSummary (db: NpgsqlConnection)  (arg: InsertSummaryParams)  =
 
 
 let lastUpdated = """-- name: LastUpdated :one
-select last_updated from summary where id = @id and user_id = @user_id
+select last_updated from summary where note_id = @note_id and user_id = @user_id
 """
 
 
 type LastUpdatedParams = {
-  Id: string;
+  NoteId: string;
   UserId: int32;
 }
 
@@ -143,7 +144,7 @@ let LastUpdated (db: NpgsqlConnection)  (arg: LastUpdatedParams)  =
   db
   |> Sql.existingConnection
   |> Sql.query lastUpdated
-  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId ]
+  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId ]
   |> Sql.executeRow reader
 
 

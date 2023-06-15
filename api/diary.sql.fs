@@ -12,14 +12,14 @@ open System
 
 
 let addNote = """-- name: AddNote :one
-INSERT INTO diary (id, user_id, note, last_updated) VALUES (@id, @user_id, @note, now())  
-ON CONFLICT (id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
-returning id, user_id, note, last_updated
+INSERT INTO diary (note_id, user_id, note, last_updated) VALUES (@note_id, @user_id, @note, now())  
+ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+returning id, user_id, note_id, note, last_updated
 """
 
 
 type AddNoteParams = {
-  Id: string;
+  NoteId: string;
   UserId: int32;
   Note: string;
 }
@@ -27,8 +27,9 @@ type AddNoteParams = {
 let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -36,7 +37,7 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
   db
   |> Sql.existingConnection
   |> Sql.query addNote
-  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@user_id", Sql.int arg.UserId; "@note", Sql.string arg.Note ]
+  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
 
 
@@ -53,14 +54,14 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
 let checkIdStale = """-- name: CheckIdStale :one
 SELECT count(*)  > 0 as stale
 FROM diary d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id AND d.id = @id
+LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id AND d.note_id = @note_id
 WHERE s.id IS NULL OR d.last_updated > s.last_updated
 """
 
 
 type CheckIdStaleParams = {
   UserId: int32;
-  Id: string;
+  NoteId: string;
 }
 
 let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
@@ -70,7 +71,7 @@ let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
   db
   |> Sql.existingConnection
   |> Sql.query checkIdStale
-  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@id", Sql.string arg.Id ]
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@note_id", Sql.string arg.NoteId ]
   |> Sql.executeRow reader
 
 
@@ -88,20 +89,21 @@ let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
 
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
-RETURNING id, user_id, note, last_updated
+RETURNING id, user_id, note_id, note, last_updated
 """
 
 
 type CreateDiaryParams = {
-  Id: string;
+  Id: int32;
   Note: string;
 }
 
 let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -109,7 +111,7 @@ let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
   db
   |> Sql.existingConnection
   |> Sql.query createDiary
-  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@note", Sql.string arg.Note ]
+  |> Sql.parameters  [ "@id", Sql.int arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
 
 
@@ -135,11 +137,11 @@ DELETE FROM diary WHERE id = @id
 
 
 
-let DeleteDiary (db: NpgsqlConnection)  (id: string)  = 
+let DeleteDiary (db: NpgsqlConnection)  (id: int32)  = 
   db 
   |> Sql.existingConnection
   |> Sql.query deleteDiary
-  |> Sql.parameters  [ "@id", Sql.string id ]
+  |> Sql.parameters  [ "@id", Sql.int id ]
   |> Sql.executeNonQuery
 
 
@@ -150,16 +152,17 @@ let DeleteDiary (db: NpgsqlConnection)  (id: string)  =
 
 
 let diaryByID = """-- name: DiaryByID :one
-SELECT id, user_id, note, last_updated FROM diary WHERE id = @id
+SELECT id, user_id, note_id, note, last_updated FROM diary WHERE id = @id
 """
 
 
 
-let DiaryByID (db: NpgsqlConnection)  (id: string)  =
+let DiaryByID (db: NpgsqlConnection)  (id: int32)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -167,7 +170,7 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
   db
   |> Sql.existingConnection
   |> Sql.query diaryByID
-  |> Sql.parameters  [ "@id", Sql.string id ]
+  |> Sql.parameters  [ "@id", Sql.int id ]
   |> Sql.executeRow reader
 
 
@@ -182,20 +185,21 @@ let DiaryByID (db: NpgsqlConnection)  (id: string)  =
 
 
 let diaryByUserIDAndID = """-- name: DiaryByUserIDAndID :one
-SELECT id, user_id, note, last_updated FROM diary WHERE user_id = @user_id and id=@id
+SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id and note_id=@note_id
 """
 
 
 type DiaryByUserIDAndIDParams = {
   UserId: int32;
-  Id: string;
+  NoteId: string;
 }
 
 let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -203,7 +207,7 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
   db
   |> Sql.existingConnection
   |> Sql.query diaryByUserIDAndID
-  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@id", Sql.string arg.Id ]
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@note_id", Sql.string arg.NoteId ]
   |> Sql.executeRow reader
 
 
@@ -222,7 +226,7 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
 
 
 let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
-SELECT d.id, d.user_id, d.note, d.last_updated
+SELECT d.id, d.user_id, d.note_id, d.note, d.last_updated
 FROM diary d
 LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id
 WHERE s.id IS NULL OR d.last_updated > s.last_updated
@@ -233,8 +237,9 @@ WHERE s.id IS NULL OR d.last_updated > s.last_updated
 
 let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   db 
@@ -260,7 +265,7 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 let listDiaries = """-- name: ListDiaries :many
-SELECT id, user_id, note, last_updated FROM diary ORDER BY last_updated DESC
+SELECT id, user_id, note_id, note, last_updated FROM diary ORDER BY last_updated DESC
 """
 
 
@@ -268,8 +273,9 @@ SELECT id, user_id, note, last_updated FROM diary ORDER BY last_updated DESC
 
 let ListDiaries (db: NpgsqlConnection)  =
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   db 
@@ -287,7 +293,7 @@ let ListDiaries (db: NpgsqlConnection)  =
 
 
 let listDiaryByUserID = """-- name: ListDiaryByUserID :many
-SELECT id, user_id, note, last_updated FROM diary WHERE user_id = @user_id
+SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id
 """
 
 
@@ -295,8 +301,9 @@ SELECT id, user_id, note, last_updated FROM diary WHERE user_id = @user_id
 
 let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   db 
@@ -318,20 +325,21 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 let updateDiary = """-- name: UpdateDiary :one
 UPDATE diary SET note = @note, last_updated = NOW() WHERE id = @id
-RETURNING id, user_id, note, last_updated
+RETURNING id, user_id, note_id, note, last_updated
 """
 
 
 type UpdateDiaryParams = {
-  Id: string;
+  Id: int32;
   Note: string;
 }
 
 let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   
   let reader = fun (read:RowReader) -> {
-    Id = read.string "id"
+    Id = read.int "id"
     UserId = read.int "user_id"
+    NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
   
@@ -339,7 +347,7 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   db
   |> Sql.existingConnection
   |> Sql.query updateDiary
-  |> Sql.parameters  [ "@id", Sql.string arg.Id; "@note", Sql.string arg.Note ]
+  |> Sql.parameters  [ "@id", Sql.int arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
 
 
