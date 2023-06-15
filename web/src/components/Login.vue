@@ -1,52 +1,109 @@
 <template>
   <el-container>
-    <el-header>
-      <h3>用户登陆</h3>
-    </el-header>
-    <el-main>
-      <el-row>
-        <el-col :xs="{span: 18, offset: 3}" :sm="{span: 10, offset: 7}" :span="4" :offset="10">
+    <el-card shadow="never">
+      <div slot="header" class="clearfix">好问</div>
+      <el-main>
+        <el-row>
+          <el-form ref="ruleForm" label-position="left" :model="form" status-icon :rules="rules" label-width="60px">
+            <el-form-item label="邮箱" prop="name">
+              <el-input v-model="form.name" type="text" autocomplete="off" />
+            </el-form-item>
+
+            <el-form-item label="密码" prop="pwd">
+              <el-input v-model="form.pwd" type="password" autocomplete="off" />
+            </el-form-item>
+          </el-form>
+          <el-button type="primary" size="medium" round @click="submit_form('ruleForm')">注册/登录</el-button>
+        </el-row>
+        <el-row class="alert-row">
           <div v-if="errors.length">
-            <div v-for="(error,key) in errors" :key="key">
-              <el-alert v-bind:title="error" type="error"></el-alert>
+            <div v-for="(error, key) in errors" :key="key">
+              <el-alert :closable="false" :title="error" type="error" />
             </div>
           </div>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :xs="{span: 18, offset: 3}" :sm="{span: 8, offset: 8}" :span="4" :offset="10">
-          <el-input type="text" v-model="name" placeholder="请输入用户名"/>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :xs="{span: 18, offset: 3}" :sm="{span: 8, offset: 8}" :span="4" :offset="10">
-          <el-input type="password" v-model="pwd" placeholder="请输入密码"/>
-        </el-col>
-      </el-row>
-    </el-main>
-    <el-footer>
-      <el-button type="basic" size="medium" @click="login">提交</el-button>
-    </el-footer>
+          <el-alert v-if="success" :closable="false" :title="success" type="success" />
+        </el-row>
+      </el-main>
+    </el-card>
   </el-container>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
-  name: "login",
+  name: "Login",
   data() {
     return {
-      name: "",
-      pwd: "",
-      errors: []
+      success: "",
+      form: {
+        name: "",
+        pwd: "",
+      },
+      errors: [],
+      rules: {
+        name: [
+          { required: true, message: "请输入邮箱", trigger: "blur" },
+          { type: "email", message: "不是正确的邮箱格式", trigger: "blur" },
+        ],
+        pwd: [
+          { required: true, message: "请输入密码", trigger: "blur" },
+          { min: 5, max: 100, message: "密码最少5个字符", trigger: "blur" },
+        ],
+      },
     };
   },
   methods: {
-    // use yup to handle the validation
-    login() {
-      // check user and pass, if they are in table
-      // the return the token
-    }
-  }
+    submit_form(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          this.login();
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    async login() {
+      // TODO: verify $router is avaliable
+      // clear error
+      this.errors = [];
+
+      let { name, pwd } = this.form;
+      // bestqa_fs
+      const options = {
+        method: "POST",
+        url: "/login",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: {
+          //ClientId: "bc442bb2b1d848fba5be2aa24312e711",
+          userName: name,
+          passWord: pwd,
+        },
+      };
+      let app = this;
+      axios
+        .request(options)
+        .then(function (response) {
+          let accessToken = response.data;
+          let jwt = accessToken["AccessToken"];
+          if (jwt) {
+            let jwtMap = parseJwt(jwt);
+            localStorage.setItem("jwtToken", jwt);
+            localStorage.setItem("username", name);
+            localStorage.setItem("user_id", jwtMap["user_id"]);
+            localStorage.setItem("exp", jwtMap["exp"]);
+            app.$router.push({ path: "/" });
+          }
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+
+    },
+  },
 };
 </script>
 
@@ -54,5 +111,20 @@ export default {
 <style scoped>
 .el-container {
   margin: 10% auto;
+  text-align: center;
+}
+
+.el-main {
+  min-width: 400px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.el-card {
+  border: none;
+}
+
+.el-card__header div {
+  font-size: 1.5rem;
 }
 </style>

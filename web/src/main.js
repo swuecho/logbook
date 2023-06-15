@@ -17,6 +17,17 @@ Vue.use(ElementTiptapPlugin);
 
 Vue.config.productionTip = false
 
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('jwtToken'); // Check if the JWT token is stored
+
+  if (to.path !== '/login' && !isAuthenticated) {
+    next('/login'); // Redirect to the login page if not authenticated
+  } else {
+    next();
+  }
+});
+
 new Vue({
   router,
   render: h => h(App),
