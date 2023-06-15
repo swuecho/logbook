@@ -40,7 +40,10 @@ let authUserMiddleware (app: IApplicationBuilder) =
         // check path start with /api
         printfn "%A" context.Request.Path
 
-        if context.Request.Path.StartsWithSegments(PathString("/api")) then
+        if
+            context.Request.Path.StartsWithSegments(PathString("/api"))
+            && context.Request.Path.ToString() <> "/api/login"
+        then
             if isAuthenticated context then
                 next.Invoke context
             else
@@ -85,7 +88,8 @@ webHost [||] {
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
-        [ get "/api/diary" Note.noteAllPart
+        [ post "/api/login" Note.login
+          get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart ]
 

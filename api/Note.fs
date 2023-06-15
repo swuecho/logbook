@@ -111,3 +111,67 @@ let noteByIdPartDebug: HttpHandler =
 
         printfn "%A" ctx.User |> ignore
         noteByIdPart ctx
+
+type Login = { Username: string; Password: string }
+
+
+let createNewUser conn email password =
+    // User does not exist, create a new user
+    let newUser: AuthUser.CreateAuthUserParams =
+        { Email = email
+          Password = password
+          FirstName = ""
+          LastName = ""
+          Username = email
+          IsStaff = false
+          IsSuperuser = false }
+
+    let authUser = AuthUser.CreateAuthUser conn newUser
+
+    // Set the role for the new user
+    let role = "user"
+
+    let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+    let issuer = "logbook-swuecho.github.com"
+
+    let jwt =
+        Token.generateToken authUser.Id role jwtSecret.Secret jwtSecret.Audience issuer
+
+    jwt
+
+let login: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (login: Login) ->
+                let conn = ctx.getNpgsql ()
+                let email = login.Username
+                let password = login.Password
+                // try get user if not exist create one
+                try 
+                    let user = AuthUser.GetUserByEmail conn email
+                    let hash = user.Password
+                    // check if password matches
+                    let passwordMatches = Auth.validatePassword password hash
+                    // check if user is admin
+                    let role = if user.IsSuperuser then "admin" else "user"
+
+                    let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+                    let issuer = "logbook-swuecho.github.com"
+
+                    if passwordMatches then
+                        let jwt =
+                            Token.generateToken user.Id role jwtSecret.Secret jwtSecret.Audience issuer
+
+                        Json.Response.ofJson jwt
+                    else
+                        // return failure
+                        Json.Response.ofJson {| code = HttpStatusCode.Unauthorized
+                                                message = "Login failed." |}
+                with
+                |  ex ->
+                    let jwt = createNewUser conn email password
+                    Json.Response.ofJson jwt
+            )
+
+
+            ctx
