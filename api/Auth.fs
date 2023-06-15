@@ -13,18 +13,15 @@ let generateSalt () =
     salt
 
 let generatePasswordHash (password: string) =
-    try
-        let salt = generateSalt ()
+    let salt = generateSalt ()
 
-        let derivBytes =
-            new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
+    let derivBytes =
+        new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
 
-        let hashBytes = derivBytes.GetBytes keySize
-        let encodedHash = System.Convert.ToBase64String hashBytes
-        let encodedSalt = System.Convert.ToBase64String salt
-        $"pbkdf2_sha256${iterations}${encodedSalt}${encodedHash}", null
-    with ex ->
-        null, ex
+    let hashBytes = derivBytes.GetBytes keySize
+    let encodedHash = System.Convert.ToBase64String hashBytes
+    let encodedSalt = System.Convert.ToBase64String salt
+    $"pbkdf2_sha256${iterations}${encodedSalt}${encodedHash}"
 
 let validatePassword (password: string) (hash: string) =
     match hash.Split('$') with

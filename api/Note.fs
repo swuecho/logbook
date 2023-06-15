@@ -117,9 +117,11 @@ type Login = { Username: string; Password: string }
 
 let createNewUser conn email password =
     // User does not exist, create a new user
+    let passwordHash = Auth.generatePasswordHash password
+
     let newUser: AuthUser.CreateAuthUserParams =
         { Email = email
-          Password = password
+          Password = passwordHash
           FirstName = ""
           LastName = ""
           Username = email
@@ -147,7 +149,7 @@ let login: HttpHandler =
                 let email = login.Username
                 let password = login.Password
                 // try get user if not exist create one
-                try 
+                try
                     let user = AuthUser.GetUserByEmail conn email
                     let hash = user.Password
                     // check if password matches
@@ -165,13 +167,12 @@ let login: HttpHandler =
                         Json.Response.ofJson jwt
                     else
                         // return failure
-                        Json.Response.ofJson {| code = HttpStatusCode.Unauthorized
-                                                message = "Login failed." |}
-                with
-                |  ex ->
+                        Json.Response.ofJson
+                            {| code = HttpStatusCode.Unauthorized
+                               message = "Login failed." |}
+                with ex ->
                     let jwt = createNewUser conn email password
-                    Json.Response.ofJson jwt
-            )
+                    Json.Response.ofJson jwt)
 
 
             ctx

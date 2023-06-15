@@ -88,7 +88,7 @@ export default {
         .request(options)
         .then(function (response) {
           let accessToken = response.data;
-          let jwt = accessToken["AccessToken"];
+          let jwt = accessToken["accessToken"];
           if (jwt) {
             let jwtMap = parseJwt(jwt);
             localStorage.setItem("jwtToken", jwt);
