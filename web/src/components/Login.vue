@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-card shadow="never">
-      <div slot="header" class="clearfix">好问</div>
+      <div slot="header" class="clearfix">Logbook</div>
       <el-main>
         <el-row>
           <el-form ref="ruleForm" label-position="left" :model="form" status-icon :rules="rules" label-width="60px">
@@ -112,6 +112,9 @@ export default {
 .el-container {
   margin: 10% auto;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .el-main {
