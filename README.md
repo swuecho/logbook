@@ -3,14 +3,6 @@
 1. yarn build in /web
 2. fly deploy in /api
 
-for token:
+# Develop
 
-<https://chat.bestqa.net/token_10years>
-
-# qa-editor
-
-This is the frontend of logbook editor. The backend is writen in F#.
-
-frontend need to know to backend url.
-
-1. add the url to `.env` (`.env.development`)
+set DATABASE_URL base on env.sh
