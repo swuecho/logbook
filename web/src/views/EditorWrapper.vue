@@ -143,6 +143,9 @@ export default {
         })
         .catch(function (error) {
           app.loading = false;
+          if (error.response.status == 401 ) {
+            app.$router.push({ name: 'login' });
+          }
           console.log(error);
         });
     },

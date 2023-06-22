@@ -25,7 +25,7 @@ let generateJwtSecretAndAudience () =
 
 
 let generateToken (userId: int) (role: string) (secret: string) (audience: string) (issuer: string) =
-    let expires = Nullable(DateTime.UtcNow.AddHours(8.0))
+    let expires = Nullable(DateTime.UtcNow.AddHours(168.0))
     let notBefore = Nullable(DateTime.UtcNow)
 
     let securityKey =
