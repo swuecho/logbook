@@ -48,7 +48,7 @@ let generateToken (userId: int) (role: string) (secret: string) (audience: strin
         )
 
     {| AccessToken = JwtSecurityTokenHandler().WriteToken(token)
-       ExpiresIn = 60480 |}
+       ExpiresIn = 604800 |}
 
 
 let validateJwt (token: string) (secretKey: string) =
