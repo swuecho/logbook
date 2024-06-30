@@ -4,5 +4,7 @@ services:
     image: echowuhao/logbook:latest
     environment:
       DATABASE_URL: db url
+      JWT_AUDIENCE: audience_xxx
+      JWT_SECRET: jwt_secret_xxx
     ports:
       - "5000:5000"
