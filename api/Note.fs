@@ -129,17 +129,8 @@ let createNewUser conn email password =
 
     //let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
 
-        // Get the JWT key from the environment variable
-    let jwtKey = 
-        match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
-        | null -> failwith "JWT_SECRET environment variable not found"
-        | key -> key
-
-    // Get the audience from the environment variable
-    let audience = 
-        match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
-        | null -> failwith "JWT_AUDIENCE environment variable not found"
-        | aud -> aud
+    let jwtKey = Util.getEnvVar "JWT_SECRET"
+    let audience = Util.getEnvVar "JWT_AUDIENCE"
 
 
     let issuer = "logbook-swuecho.github.com"
@@ -148,6 +139,7 @@ let createNewUser conn email password =
         Token.generateToken authUser.Id role jwtKey audience issuer
 
     jwt
+
 
 let login: HttpHandler =
     fun ctx ->
@@ -165,19 +157,8 @@ let login: HttpHandler =
                     // check if user is admin
                     let role = if user.IsSuperuser then "admin" else "user"
 
-                    // let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
-
-                    let jwtKey = 
-                        match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
-                        | null -> failwith "JWT_SECRET environment variable not found"
-                        | key -> key
-
-                    // Get the audience from the environment variable
-                    let audience = 
-                        match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
-                        | null -> failwith "JWT_AUDIENCE environment variable not found"
-                        | aud -> aud
-
+                    let jwtKey = Util.getEnvVar "JWT_SECRET"
+                    let audience = Util.getEnvVar "JWT_AUDIENCE"
                     let issuer = "logbook-swuecho.github.com"
 
                     if passwordMatches then

@@ -55,19 +55,11 @@ let authUserMiddleware (app: IApplicationBuilder) =
     app.Use(middleware)
 
 
-let authService (services: IServiceCollection) =
-   
-    // Get the JWT key from the environment variable
-    let jwtKey = 
-        match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
-        | null -> failwith "JWT_SECRET environment variable not found"
-        | key -> key
 
-    // Get the audience from the environment variable
-    let audience = 
-        match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
-        | null -> failwith "JWT_AUDIENCE environment variable not found"
-        | aud -> aud
+
+let authService (services: IServiceCollection) =
+    let jwtKey = Util.getEnvVar "JWT_SECRET"
+    let audience = Util.getEnvVar "JWT_AUDIENCE"
 
 
     let _ =
