@@ -1,5 +1,5 @@
 # build stage
-FROM 192.168.0.100:5555/node:12 as build-stage
+FROM 192.168.0.100:5555/node:16 as build-stage
 
 WORKDIR /app
 
