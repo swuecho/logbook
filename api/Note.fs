@@ -127,11 +127,25 @@ let createNewUser conn email password =
     // Set the role for the new user
     let role = "user"
 
-    let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+    //let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+
+        // Get the JWT key from the environment variable
+    let jwtKey = 
+        match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
+        | null -> failwith "JWT_SECRET environment variable not found"
+        | key -> key
+
+    // Get the audience from the environment variable
+    let audience = 
+        match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
+        | null -> failwith "JWT_AUDIENCE environment variable not found"
+        | aud -> aud
+
+
     let issuer = "logbook-swuecho.github.com"
 
     let jwt =
-        Token.generateToken authUser.Id role jwtSecret.Secret jwtSecret.Audience issuer
+        Token.generateToken authUser.Id role jwtKey audience issuer
 
     jwt
 
@@ -151,12 +165,24 @@ let login: HttpHandler =
                     // check if user is admin
                     let role = if user.IsSuperuser then "admin" else "user"
 
-                    let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+                    // let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
+
+                    let jwtKey = 
+                        match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
+                        | null -> failwith "JWT_SECRET environment variable not found"
+                        | key -> key
+
+                    // Get the audience from the environment variable
+                    let audience = 
+                        match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
+                        | null -> failwith "JWT_AUDIENCE environment variable not found"
+                        | aud -> aud
+
                     let issuer = "logbook-swuecho.github.com"
 
                     if passwordMatches then
                         let jwt =
-                            Token.generateToken user.Id role jwtSecret.Secret jwtSecret.Audience issuer
+                            Token.generateToken user.Id role jwtKey audience issuer
 
                         Json.Response.ofJson jwt
                     else

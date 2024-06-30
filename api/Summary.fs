@@ -60,6 +60,8 @@ let insertSummary (note: Diary) =
     summaryJson
 
 let updateNoteSummary conn (note_id: string) (user_id: int) =
+    printfn "%s" note_id
+    printfn "%d" user_id
     let summary =
         Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
         |> getTextFromNote
@@ -78,7 +80,7 @@ let refreshSummary conn user_id =
     let staledIds =
         Diary.GetStaleIdsOfUserId conn user_id |> List.map (fun x -> x.NoteId)
 
-    printfn "%A" staledIds
+    printfn "staledIds:%A" staledIds
 
     staledIds
     |> List.iter (fun stale_diary_id -> updateNoteSummary conn stale_diary_id user_id)
