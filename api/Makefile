@@ -22,4 +22,4 @@ serve:
 	echo $(JWT_SECRET)
 	echo $(JWT_AUDIENCE)
 	echo $(DATABASE_URL)
-	dotnet run
+	dotnet watch run
