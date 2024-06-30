@@ -3,8 +3,10 @@
 import Vue from 'vue';
 import axios from "axios";
 
-let jwtToken = localStorage.getItem('JWT_TOKEN')
-console.log(jwtToken)
+function getJwtToken() {
+  let jwtToken = localStorage.getItem('JWT_TOKEN')
+  return jwtToken
+}
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -16,7 +18,7 @@ let config = {
   // timeout: 60 * 1000, // Timeout
   // withCredentials: true, // Check cross-site Access-Control
   headers: {
-    'Authorization' : `Bearer ${jwtToken}`
+    'Authorization' : `Bearer ${getJwtToken()}`
   }
 };
 
