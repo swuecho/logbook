@@ -11,7 +11,6 @@ module.exports = {
         host: '0.0.0.0',
         port: 9099, // CHANGE YOUR PORT HERE!
         https: false,
-        hotOnly: false,
         proxy: {
                 "/api/*": {
                     target: "http://localhost:5000",
