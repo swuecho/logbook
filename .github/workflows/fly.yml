@@ -17,8 +17,6 @@ jobs:
         run: |
           yarn install
           yarn build
-        env:
-          NODE_OPTIONS: "--openssl-legacy-provider"
         working-directory: web
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
