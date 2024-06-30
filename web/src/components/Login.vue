@@ -95,10 +95,6 @@ export default {
           if (jwt) {
             localStorage.setItem("JWT_TOKEN", jwt);
             localStorage.setItem("JWT_EXPIRES_AT", jwt_expired)
-            // let jwtMap = parseJwt(jwt);
-            // localStorage.setItem("username", name);
-            // localStorage.setItem("user_id", jwtMap["user_id"]);
-            // localStorage.setItem("exp", jwtMap["exp"]);
             app.$router.push({ path: "/" })
           }
         })
