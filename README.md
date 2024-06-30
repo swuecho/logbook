@@ -5,9 +5,17 @@
 
 # How to depoy
 
-1. yarn build in /web
-2. fly deploy in /api
+## set env var
+
+```sh
+DATABASE_URL: db url
+JWT_AUDIENCE: audience_xxx
+JWT_SECRET: jwt_secret_xxx
+```
+## check docker-compose.yaml
+
+docker-compose up -d
 
 # Develop
 
-set DATABASE_URL base on env.sh
+set env var DATABASE_URL, JWT_AUDIENCE, JWT_SECRET
