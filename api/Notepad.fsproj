@@ -8,11 +8,11 @@
     <Compile Include="Auth.fs" />
     <Compile Include="HttpAuth.fs" />
     <Compile Include="Token.fs" />
-    <Compile Include="model_from_schema.fs" />
-    <Compile Include="jwt_secrets.sql.fs" />
-    <Compile Include="auth_user.sql.fs" />
-    <Compile Include="diary.sql.fs" />
-    <Compile Include="summary.sql.fs" />
+    <Compile Include="queries/model_from_schema.fs" />
+    <Compile Include="queries/jwt_secrets.sql.fs" />
+    <Compile Include="queries/auth_user.sql.fs" />
+    <Compile Include="queries/diary.sql.fs" />
+    <Compile Include="queries/summary.sql.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Summary.fs" />
