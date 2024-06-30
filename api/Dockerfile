@@ -15,5 +15,6 @@ WORKDIR /app
 COPY --from=build /src/Resources /src/Resources
 COPY --from=build /src/wwwroot ./wwwroot
 COPY --from=build /app .
+ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 80
 ENTRYPOINT ["./Notepad"]
