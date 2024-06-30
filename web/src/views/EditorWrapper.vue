@@ -183,7 +183,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style>
 .content {
   max-width: 65rem;
   margin: auto;
