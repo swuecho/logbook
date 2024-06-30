@@ -46,6 +46,7 @@ let generateToken (userId: int) (role: string) (secret: string) (audience: strin
             notBefore = notBefore,
             signingCredentials = signingCredentials
         )
+    
 
     {| AccessToken = JwtSecurityTokenHandler().WriteToken(token)
        ExpiresIn = 604800 |}
@@ -57,12 +58,11 @@ let validateJwt (token: string) (secretKey: string) =
         let jwt = JwtSecurityTokenHandler()
         let keyBytes = System.Text.Encoding.UTF8.GetBytes(key)
         let validationParameters = TokenValidationParameters()
-        //validationParameters.ValidateIssuer <- true
         //validationParameters.ValidIssuer <- "myIssuer"
-        //validationParameters.ValidateAudience <- true
         // validationParameters.ValidAudience <- "myAudience"
         validationParameters.ValidateLifetime <- true
         validationParameters.ValidateIssuerSigningKey <- true
+        validationParameters.ValidateLifetime <- true
         validationParameters.IssuerSigningKey <- new SymmetricSecurityKey(keyBytes)
         jwt.ValidateToken(token, validationParameters)
 

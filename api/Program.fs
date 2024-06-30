@@ -60,13 +60,13 @@ let authService (services: IServiceCollection) =
     // Get the JWT key from the environment variable
     let jwtKey = 
         match System.Environment.GetEnvironmentVariable("JWT_SECRET") with
-        | null -> failwith "JWT_KEY environment variable not found"
+        | null -> failwith "JWT_SECRET environment variable not found"
         | key -> key
 
     // Get the audience from the environment variable
     let audience = 
         match System.Environment.GetEnvironmentVariable("JWT_AUDIENCE") with
-        | null -> failwith "AUDIENCE environment variable not found"
+        | null -> failwith "JWT_AUDIENCE environment variable not found"
         | aud -> aud
 
 

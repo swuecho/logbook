@@ -15,3 +15,11 @@ push:
 	docker tag $(local_registry)/notepad:$(version) $(github_pkg_registry_surveyresearch)/notepad:$(version)
 	docker tag $(local_registry)/notepad:$(version) $(aliyun_registry_bestqa)/notepad:$(version)
 	docker push $(aliyun_registry_bestqa)/notepad:$(version)
+
+serve:
+	dotnet restore
+	dotnet build
+	echo $(JWT_SECRET)
+	echo $(JWT_AUDIENCE)
+	echo $(DATABASE_URL)
+	dotnet run
