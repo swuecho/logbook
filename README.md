@@ -1,4 +1,7 @@
-# 介绍
+
+# demo:
+
+https://diary-log.fly.dev/ (try with a random email is ok)
 
 <img width="1161" alt="image" src="https://github.com/swuecho/logbook/assets/666683/e7626318-4a83-480e-9305-366cf61bd60a">
 
