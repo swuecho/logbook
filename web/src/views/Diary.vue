@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import EditorWrapper from "@/views/EditorWrapper";
+import EditorWrapper from "./EditorWrapper";
 
 export default {
   date() {

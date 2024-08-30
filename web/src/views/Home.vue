@@ -3,8 +3,8 @@
 </template>
 
 <script>
-import EditorWrapper from "@/views/EditorWrapper";
-import { get_date_of_today } from "@/util.js";
+import EditorWrapper from "./EditorWrapper";
+import { get_date_of_today } from "../util.js";
 
 export default {
   date() {

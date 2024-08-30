@@ -2,10 +2,10 @@
   "name": "qa-editor",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "serve": "rsbuild dev",
+    "build": "rsbuild build"
   },
   "resolutions": {
     "prosemirror-model": "1.13.1"
@@ -29,13 +29,15 @@
     "@iconify/icons-material-symbols": "^1.2.40",
     "@iconify/icons-mdi": "^1.2.45",
     "@iconify/vue2": "^2.1.0",
-    "@vue/cli-plugin-babel": "^4.5.10",
-    "@vue/cli-plugin-eslint": "^4.5.10",
-    "@vue/cli-service": "^4.5.10",
+    "@rsbuild/core": "^1.0.1-rc.0",
+    "@rsbuild/plugin-less": "^1.0.1-rc.0",
+    "@rsbuild/plugin-vue2": "^1.0.1-rc.0",
+    "autoprefixer": "^10.4.20",
     "babel-eslint": "^10.0.1",
     "eslint": "^5.15.1",
     "eslint-plugin-vue": "^6.2.2",
-    "vue-cli-plugin-axios": "^0.0.4",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
     "vue-template-compiler": "^2.7.14"
   },
   "eslintConfig": {
