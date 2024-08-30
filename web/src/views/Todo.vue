@@ -8,7 +8,7 @@
         <Icon v-if="loading" icon="line-md:loading-alt-loop" />
       </a>
     </div>
-    <div class="editor">
+    <div class="todo">
       <el-tiptap :content="content" :extensions="extensions" :readonly=true @onInit="onInit" :enableCharCount="false"></el-tiptap>
     </div>
   </div>
@@ -144,17 +144,17 @@ export default {
 };
 </script>
 
-<style scoped>
-.el-tiptap-editor__content {
+<style>
+.todo .el-tiptap-editor__content {
   border-bottom: 1px solid #ebeef5 !important;
   border-top: 1px solid #ebeef5 !important;
   border-radius: 5px !important;
 }
-.el-tiptap-editor__menu-bar {
+.todo .el-tiptap-editor__menu-bar {
   display: none;
 }
 
-.el-tiptap-editor__footer {
+.todo .el-tiptap-editor__footer {
   display: none;
 }
 .content {
