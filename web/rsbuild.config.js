@@ -24,7 +24,7 @@ export default defineConfig({
     server: {
         open: process.platform === 'darwin',
         host: '0.0.0.0',
-        port: 9099, // CHANGE YOUR PORT HERE!
+        port: 9099, 
         https: false,
         hotOnly: false,
         proxy: {
