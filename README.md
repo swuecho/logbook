@@ -20,4 +20,4 @@ docker-compose up -d
 
 # Develop
 
-set env var DATABASE_URL, JWT_AUDIENCE, JWT_SECRET
+set env var DATABASE_URL
