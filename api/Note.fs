@@ -223,10 +223,12 @@ let todoListsHandler : HttpHandler =
                 ``type`` = "doc"
                 content = [|
                     for todoList in todoLists do
+
                         yield JsonSerializer.Deserialize<JsonElement>($"""
                         {{
                             "type": "heading",
                             "attrs": {{
+
                                 "textAlign": null,
                                 "indent": null,
                                 "lineHeight": null,
