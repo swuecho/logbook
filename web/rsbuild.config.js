@@ -28,7 +28,7 @@ export default defineConfig({
         https: false,
         hotOnly: false,
         proxy: {
-            "/api/*": {
+            "/api": {
                 target: "http://localhost:5000",
             }
         },
