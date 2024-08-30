@@ -11,6 +11,9 @@ export default defineConfig({
         entry: {
             index: './src/main.js',
         },
+        alias: {
+            '@': './src/',
+        },
     },
     output: {
         distPath: {
