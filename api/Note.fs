@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Http
 open Falco
 open System.Security.Claims
 open Npgsql
+open System.Text.Json
 
 let forbidden =
     let message = "Access to the resource is forbidden."
@@ -175,3 +176,74 @@ let login: HttpHandler =
                     let jwt = createNewUser conn email password
                     Json.Response.ofJson jwt)
             ctx
+
+open System.Text.Json
+
+// find all todo_list in note and return todo_list as json str
+let extractTodoList (note: string) =
+    let jsonDocument = JsonDocument.Parse(note)
+    let root = jsonDocument.RootElement
+
+    let rec extractTodoItems (element: JsonElement) =
+        seq {
+            match element.ValueKind with
+            | JsonValueKind.Object ->
+                match element.TryGetProperty("type") with
+                | true, typeProperty when typeProperty.GetString() = "todo_list" ->
+                   yield element
+                | _ ->
+                    for property in element.EnumerateObject() do
+                        yield! extractTodoItems property.Value
+            | JsonValueKind.Array ->
+                for item in element.EnumerateArray() do
+                    yield! extractTodoItems item
+            | _ -> ()
+        }
+
+    extractTodoItems root |> Seq.toList
+
+
+let getAllTodoLists conn userId =
+    let diaries = Diary.ListDiaryByUserID conn userId
+    diaries
+    |> List.map (fun diary ->
+        {| noteId = diary.NoteId; todoList = extractTodoList diary.Note |})
+
+
+let todoListsHandler : HttpHandler =
+    fun ctx ->
+        let conn = ctx.getNpgsql ()
+        let userId = int (ctx.User.FindFirst("user_id").Value)
+        let todoLists = getAllTodoLists conn userId
+        // print todolists
+        printfn "%A" todoLists
+        // construct a tiptap doc with todoLists and note_id
+        let tiptapDoc =
+            {|
+                ``type`` = "doc"
+                content = [|
+                    for todoList in todoLists do
+                        yield JsonSerializer.Deserialize<JsonElement>("""
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "textAlign": null,
+                                "indent": null,
+                                "lineHeight": null,
+                                "level": 3
+      },
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": """ + todoList.noteId + """
+                                }
+                            ]
+                        }
+                        """)
+                        yield! todoList.todoList
+                |]
+            |}
+
+        printfn "%A" tiptapDoc
+
+        Json.Response.ofJson tiptapDoc ctx

@@ -145,7 +145,9 @@ webHost [||] {
         [ post "/api/login" Note.login
           get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
-          put "/api/diary/{id}" Note.addNotePart ]
+          put "/api/diary/{id}" Note.addNotePart
+          get "/api/todo"  Note.todoListsHandler
+        ]
 
     use_middleware serveVueFiles
 }
