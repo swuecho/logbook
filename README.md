@@ -11,10 +11,9 @@ https://diary-log.fly.dev/ (try with a random email is ok)
 ## set env var
 
 ```sh
-DATABASE_URL: db url
-JWT_AUDIENCE: audience_xxx
-JWT_SECRET: jwt_secret_xxx
+DATABASE_URL: postgresql://etc
 ```
+
 ## check docker-compose.yaml
 
 docker-compose up -d

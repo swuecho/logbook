@@ -54,13 +54,56 @@ let authenticateRouteMiddleware (app: IApplicationBuilder) =
 
     app.Use(middleware)
 
+let getOrCreateJwtSecret pgConn jwtAudienceName =
+    let getExistingSecret () =
+        try
+            let secret = JwtSecrets.GetJwtSecret pgConn jwtAudienceName
+            printfn "Existing JWT Secret found for %s" jwtAudienceName
+            Some secret
+        with :? NoResultsException -> None
 
+    let generateRandomKey () =
+        System.Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
 
+    let getJwtKey () =
+        match Util.getEnvVar "JWT_SECRET" with
+        | null -> 
+            let randomKey = generateRandomKey()
+            printfn "Warning: JWT_SECRET not set. Using randomly generated key: %s" randomKey
+            randomKey
+        | key -> key
+
+    let getAudience () =
+        match Util.getEnvVar "JWT_AUDIENCE" with
+        | null -> 
+            let defaultAudience = "http://localhost:5000"
+            printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
+            defaultAudience
+        | aud -> aud
+
+    let createNewSecret () =
+        let jwtSecretParams: JwtSecrets.CreateJwtSecretParams = 
+            { Name = jwtAudienceName
+              Secret = getJwtKey()
+              Audience = getAudience() }
+        let createdSecret = JwtSecrets.CreateJwtSecret pgConn jwtSecretParams
+        printfn "New JWT Secret created for %s" jwtAudienceName
+        createdSecret
+
+    match getExistingSecret() with
+    | Some secret -> secret
+    | None -> createNewSecret()
 
 let authService (services: IServiceCollection) =
-    let jwtKey = Util.getEnvVar "JWT_SECRET"
-    let audience = Util.getEnvVar "JWT_AUDIENCE"
+    let connectionString = Database.Config.connStr
+    use pgConn = new Npgsql.NpgsqlConnection(connectionString)
+    pgConn.Open()
 
+    let jwtAudienceName = "logbook"
+
+    let jwtSecret = getOrCreateJwtSecret pgConn jwtAudienceName
+    
+    pgConn.Close()
 
     let _ =
         services
@@ -72,9 +115,9 @@ let authService (services: IServiceCollection) =
                         ValidateIssuer = false,
                         //ValidIssuer = Configuratio["Jwt:Issuer"],
                         ValidateAudience = true,
-                        ValidAudience = audience,
+                        ValidAudience = jwtSecret.Audience,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
+                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
                     ))
 
     services
@@ -102,7 +145,9 @@ webHost [||] {
         [ post "/api/login" Note.login
           get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
-          put "/api/diary/{id}" Note.addNotePart ]
+          put "/api/diary/{id}" Note.addNotePart
+          get "/api/todo"  Note.todoListsHandler
+        ]
 
     use_middleware serveVueFiles
 }
