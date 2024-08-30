@@ -223,22 +223,33 @@ let todoListsHandler : HttpHandler =
                 ``type`` = "doc"
                 content = [|
                     for todoList in todoLists do
-                        yield JsonSerializer.Deserialize<JsonElement>("""
-                        {
+
+                        yield JsonSerializer.Deserialize<JsonElement>($"""
+                        {{
                             "type": "heading",
-                            "attrs": {
+                            "attrs": {{
+
                                 "textAlign": null,
                                 "indent": null,
                                 "lineHeight": null,
                                 "level": 3
-      },
+                            }},
                             "content": [
-                                {
+                                {{
                                     "type": "text",
-                                    "text": """ + todoList.noteId + """
-                                }
+                                     "marks": [
+                                        {{
+                                            "type": "link",
+                                            "attrs": {{
+                                                "href": "/view?date={todoList.noteId}",
+                                                "openInNewTab": true    
+                                            }}
+                                        }}
+                                    ],  
+                                    "text": "{todoList.noteId}"
+                                }}
                             ]
-                        }
+                        }}
                         """)
                         yield! todoList.todoList
                 |]
