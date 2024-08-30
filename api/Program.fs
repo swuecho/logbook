@@ -82,8 +82,8 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
         | aud -> aud
 
     let createNewSecret () =
-        let jwtSecretParams = 
-            { JwtSecrets.CreateJwtSecretParams.Name = jwtAudienceName
+        let jwtSecretParams: JwtSecrets.CreateJwtSecretParams = 
+            { Name = jwtAudienceName
               Secret = getJwtKey()
               Audience = getAudience() }
         let createdSecret = JwtSecrets.CreateJwtSecret pgConn jwtSecretParams
