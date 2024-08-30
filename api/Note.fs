@@ -181,8 +181,6 @@ open System.Text.Json
 
 // find all todo_list in note and return todo_list as json str
 let extractTodoList (note: string) =
-    let jsonDocument = JsonDocument.Parse(note)
-    let root = jsonDocument.RootElement
 
     let rec extractTodoItems (element: JsonElement) =
         seq {
@@ -200,7 +198,14 @@ let extractTodoList (note: string) =
             | _ -> ()
         }
 
-    extractTodoItems root |> Seq.toList
+    try
+        let jsonDocument = JsonDocument.Parse(note)
+        let root = jsonDocument.RootElement
+        extractTodoItems root |> Seq.toList
+    with
+    | ex ->
+        printfn "%A" ex
+        []
 
 
 let getAllTodoLists conn userId =
