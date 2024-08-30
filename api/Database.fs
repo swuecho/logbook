@@ -1,7 +1,7 @@
 namespace Database
 
-open System
 open Microsoft.AspNetCore.Http
+
 
 module Config =
     /// Custom operator for combining paths
@@ -11,7 +11,7 @@ module Config =
         with _ ->
             raise (System.Exception "check if BESTQA_FS_PORT is set")
     let connStr = 
-        let pgConnStr = Npgsql.FSharp.Sql.fromUri (Uri postgresDSN)
+        let pgConnStr = Npgsql.FSharp.Sql.fromUri (System.Uri postgresDSN)
         //https://stackoverflow.com/questions/40364449/npgsql-exception-while-reading-from-stream-postgres
         // wait longger
         printfn "pgConnStr: %s" pgConnStr
