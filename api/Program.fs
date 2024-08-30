@@ -55,12 +55,46 @@ let authenticateRouteMiddleware (app: IApplicationBuilder) =
     app.Use(middleware)
 
 
+let getOrCreateJwtSecret pgconn jwtAudienceName =
+        try
+            let existingSecret = JwtSecrets.GetJwtSecret pgconn jwtAudienceName
+            printfn "Existing JWT Secret found for %s" jwtAudienceName
+            existingSecret
+        with :? NoResultsException ->
+            let jwtKey =
+                match Util.getEnvVar "JWT_SECRET" with
+                | null -> 
+                    let randomKey = System.Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
+                    printfn "Warning: JWT_SECRET not set. Using randomly generated key: %s" randomKey
+                    randomKey
+                | key -> key
 
+            let audience =
+                match Util.getEnvVar "JWT_AUDIENCE" with
+                | null -> 
+                    let defaultAudience = "http://localhost:5000"
+                    printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
+                    defaultAudience
+                | aud -> aud
+
+            let jwtSecretParams: JwtSecrets.CreateJwtSecretParams = 
+                { Name = jwtAudienceName
+                  Secret = jwtKey
+                  Audience = audience }
+            let createdSecret = JwtSecrets.CreateJwtSecret pgconn jwtSecretParams
+            printfn "New JWT Secret created for %s" jwtAudienceName
+            createdSecret
 
 let authService (services: IServiceCollection) =
-    let jwtKey = Util.getEnvVar "JWT_SECRET"
-    let audience = Util.getEnvVar "JWT_AUDIENCE"
+    let connectionString = Database.Config.connStr
+    use pgconn = new Npgsql.NpgsqlConnection(connectionString)
+    pgconn.Open()
 
+    let jwtAudienceName = "logbook"
+
+    let jwtSecret = getOrCreateJwtSecret pgconn jwtAudienceName
+    
+    pgconn.Close()
 
     let _ =
         services
@@ -72,9 +106,9 @@ let authService (services: IServiceCollection) =
                         ValidateIssuer = false,
                         //ValidIssuer = Configuratio["Jwt:Issuer"],
                         ValidateAudience = true,
-                        ValidAudience = audience,
+                        ValidAudience = jwtSecret.Audience,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
+                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
                     ))
 
     services
