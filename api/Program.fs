@@ -54,36 +54,45 @@ let authenticateRouteMiddleware (app: IApplicationBuilder) =
 
     app.Use(middleware)
 
-
 let getOrCreateJwtSecret pgconn jwtAudienceName =
+    let getExistingSecret () =
         try
-            let existingSecret = JwtSecrets.GetJwtSecret pgconn jwtAudienceName
+            let secret = JwtSecrets.GetJwtSecret pgconn jwtAudienceName
             printfn "Existing JWT Secret found for %s" jwtAudienceName
-            existingSecret
-        with :? NoResultsException ->
-            let jwtKey =
-                match Util.getEnvVar "JWT_SECRET" with
-                | null -> 
-                    let randomKey = System.Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
-                    printfn "Warning: JWT_SECRET not set. Using randomly generated key: %s" randomKey
-                    randomKey
-                | key -> key
+            Some secret
+        with :? NoResultsException -> None
 
-            let audience =
-                match Util.getEnvVar "JWT_AUDIENCE" with
-                | null -> 
-                    let defaultAudience = "http://localhost:5000"
-                    printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
-                    defaultAudience
-                | aud -> aud
+    let generateRandomKey () =
+        System.Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
 
-            let jwtSecretParams: JwtSecrets.CreateJwtSecretParams = 
-                { Name = jwtAudienceName
-                  Secret = jwtKey
-                  Audience = audience }
-            let createdSecret = JwtSecrets.CreateJwtSecret pgconn jwtSecretParams
-            printfn "New JWT Secret created for %s" jwtAudienceName
-            createdSecret
+    let getJwtKey () =
+        match Util.getEnvVar "JWT_SECRET" with
+        | null -> 
+            let randomKey = generateRandomKey()
+            printfn "Warning: JWT_SECRET not set. Using randomly generated key: %s" randomKey
+            randomKey
+        | key -> key
+
+    let getAudience () =
+        match Util.getEnvVar "JWT_AUDIENCE" with
+        | null -> 
+            let defaultAudience = "http://localhost:5000"
+            printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
+            defaultAudience
+        | aud -> aud
+
+    let createNewSecret () =
+        let jwtSecretParams = 
+            { JwtSecrets.CreateJwtSecretParams.Name = jwtAudienceName
+              Secret = getJwtKey()
+              Audience = getAudience() }
+        let createdSecret = JwtSecrets.CreateJwtSecret pgconn jwtSecretParams
+        printfn "New JWT Secret created for %s" jwtAudienceName
+        createdSecret
+
+    match getExistingSecret() with
+    | Some secret -> secret
+    | None -> createNewSecret()
 
 let authService (services: IServiceCollection) =
     let connectionString = Database.Config.connStr
