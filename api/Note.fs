@@ -235,7 +235,7 @@ let todoListsHandler : HttpHandler =
                             "content": [
                                 {
                                     "type": "text",
-                                    "text": """ + todoList.noteId + """
+                                    "text": " """ +  todoList.noteId.ToString() + """ "
                                 }
                             ]
                         }

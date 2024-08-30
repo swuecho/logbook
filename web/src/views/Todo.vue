@@ -2,21 +2,18 @@
   <div class="content">
     <div class="nav">
       {{ time }}
-      <a href="#">{{ date }}</a>
-      <a v-if="date != today" :href="'/view?date=' + today">Today</a>
-      <a v-if="date == today" href="/todo">Todo</a>
+      <a v-if="date != today" :href="'/view?date=' + today">Diary</a>
       <a href="content">
         <Icon :icon="icons.tableOfContents" />
         <Icon v-if="loading" icon="line-md:loading-alt-loop" />
       </a>
     </div>
     <div class="editor">
-      <el-tiptap :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
+      <el-tiptap :content="content" :extensions="extensions" :readonly=true @onInit="onInit" :enableCharCount="false"></el-tiptap>
     </div>
   </div>
 </template>
 <script>
-import { debounce } from 'lodash';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
@@ -109,12 +106,6 @@ export default {
       ]
     };
   },
-  created() {
-
-    // eslint-disable-next-line no-unused-vars
-    var interval = setInterval(() => this.now = moment(), 1000);
-    // this.date = this.$route.query.date;
-  },
   computed: {
     today() {
       return this.now.format('YYYYMMDD');
@@ -125,51 +116,20 @@ export default {
 
   },
   methods: {
-    onUpdate(output, options) {
-      const { getJSON, getHTML } = options;
-      console.log(this.date);
-      this.json = getJSON();
-      let app = this;
-      this.axios
-        .put(
-          `/api/diary/${this.date}`,
-          {
-            noteId: this.date,
-            note: JSON.stringify(this.json)
-          },
-        )
-        .then(function (response) {
-          console.log(response);
-          app.loading = false;
-        })
-        .catch(function (error) {
-          app.loading = false;
-          if (error.response.status == 401 ) {
-            app.$router.push({ name: 'login' });
-          }
-          console.log(error);
-        });
-    },
-    debouncedOnUpdate: debounce(function (output, options) {
-      this.onUpdate(output, options);
-    }, 500),
     onInit({ editor }) {
       let app = this;
       // this.date = this.$route.query.date;
       let date = this.date;
       app.loading = true;
       this.axios
-        .get(`/api/diary/${date}`)
+        .get(`/api/todo`)
         .then(function (response) {
           // handle success
           app.loading = false;
           let last_note = response.data;
           if (last_note) {
-            let last_note_json = JSON.parse(last_note.note);
-            // set content should trigger OnUpdate?
-            console.log(last_note_json);
-            app.last_note_json = last_note_json;
-            editor.setContent(last_note_json);
+            app.last_note= last_note;
+            editor.setContent(last_note);
           }
         })
         .catch(function (error) {
@@ -184,7 +144,19 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.el-tiptap-editor__content {
+  border-bottom: 1px solid #ebeef5 !important;
+  border-top: 1px solid #ebeef5 !important;
+  border-radius: 5px !important;
+}
+.el-tiptap-editor__menu-bar {
+  display: none;
+}
+
+.el-tiptap-editor__footer {
+  display: none;
+}
 .content {
   max-width: 65rem;
   margin: auto;
