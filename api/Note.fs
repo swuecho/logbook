@@ -209,10 +209,13 @@ let extractTodoList (note: string) =
 
 
 let getAllTodoLists conn userId =
-    let diaries = Diary.ListDiaryByUserID conn userId
-    diaries
-    |> List.map (fun diary ->
-        {| noteId = diary.NoteId; todoList = extractTodoList diary.Note |})
+    Diary.ListDiaryByUserID conn userId
+    |> List.choose (fun diary ->
+        let todoList = extractTodoList diary.Note
+        if List.isEmpty todoList then
+            None
+        else
+            Some {| noteId = diary.NoteId; todoList = todoList |})
 
 
 let todoListsHandler : HttpHandler =
@@ -259,7 +262,5 @@ let todoListsHandler : HttpHandler =
                         yield! todoList.todoList
                 |]
             |}
-
-        printfn "%A" tiptapDoc
 
         Json.Response.ofJson tiptapDoc ctx
