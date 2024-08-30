@@ -32,7 +32,7 @@ let serveVueFiles (app: IApplicationBuilder) =
 let stashConnteciton (app: IApplicationBuilder) =
     app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
 
-let authUserMiddleware (app: IApplicationBuilder) =
+let authenticateRouteMiddleware (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity.IsAuthenticated = true
 
@@ -79,15 +79,23 @@ let authService (services: IServiceCollection) =
 
     services
 
+// let config = configuration [||] { add_env }
+
 webHost [||] {
+    // Use the specified middleware if the provided predicate is "true".
     use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
+
     use_cors corsPolicyName corsOptions
     add_service authService
+
+    // Use authorization middleware. Call before any middleware that depends on users being authenticated.
+    // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
     use_authentication
 
     use_middleware stashConnteciton
 
-    use_middleware authUserMiddleware
+    // check user is authorized
+    use_middleware authenticateRouteMiddleware
 
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints

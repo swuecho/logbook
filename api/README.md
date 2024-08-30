@@ -1,12 +1,12 @@
 # F# project
 
-# project structure
+## project structure
 
 *.fsproj: This is your project file, defining project settings, dependencies, and build configurations.
 
 Program.fs: This is the main entry point of your F# ASP.NET Core application
 
-# develop
+## develop
 
 ```sh
 dotnet restore
