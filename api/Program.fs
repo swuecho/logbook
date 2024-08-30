@@ -54,10 +54,10 @@ let authenticateRouteMiddleware (app: IApplicationBuilder) =
 
     app.Use(middleware)
 
-let getOrCreateJwtSecret pgconn jwtAudienceName =
+let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getExistingSecret () =
         try
-            let secret = JwtSecrets.GetJwtSecret pgconn jwtAudienceName
+            let secret = JwtSecrets.GetJwtSecret pgConn jwtAudienceName
             printfn "Existing JWT Secret found for %s" jwtAudienceName
             Some secret
         with :? NoResultsException -> None
@@ -86,7 +86,7 @@ let getOrCreateJwtSecret pgconn jwtAudienceName =
             { JwtSecrets.CreateJwtSecretParams.Name = jwtAudienceName
               Secret = getJwtKey()
               Audience = getAudience() }
-        let createdSecret = JwtSecrets.CreateJwtSecret pgconn jwtSecretParams
+        let createdSecret = JwtSecrets.CreateJwtSecret pgConn jwtSecretParams
         printfn "New JWT Secret created for %s" jwtAudienceName
         createdSecret
 
@@ -96,14 +96,14 @@ let getOrCreateJwtSecret pgconn jwtAudienceName =
 
 let authService (services: IServiceCollection) =
     let connectionString = Database.Config.connStr
-    use pgconn = new Npgsql.NpgsqlConnection(connectionString)
-    pgconn.Open()
+    use pgConn = new Npgsql.NpgsqlConnection(connectionString)
+    pgConn.Open()
 
     let jwtAudienceName = "logbook"
 
-    let jwtSecret = getOrCreateJwtSecret pgconn jwtAudienceName
+    let jwtSecret = getOrCreateJwtSecret pgConn jwtAudienceName
     
-    pgconn.Close()
+    pgConn.Close()
 
     let _ =
         services
