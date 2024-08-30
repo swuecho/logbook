@@ -15,7 +15,6 @@
                   <span style="float: left; padding: 0 0 5px 0">
                     <a :href="'/view?date=' + item.id">{{ item.id }}</a>
                   </span>
-                  <el-button style="float: right; padding: 3px 0" type="text">Open</el-button>
                 </div>
                 <vue-word-cloud style="
         height: 240px;
