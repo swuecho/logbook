@@ -7,12 +7,12 @@
     </el-header>
     <el-main>
       <div class="content">
-        <div v-for="(column, row_idx) in rows(this.dates, this.cols)" :key="row_idx">
+        <div v-for="(column, row_idx) in this.summaries" :key="row_idx">
           <el-row>
             <el-col :span="12" v-for="(item, col_index) in column" :key="col_index">
               <el-card class="box-card">
-                <div slot="header" class="clearfix">
-                  <span style="float: left; padding: 0 0 5px 0">
+                <div slot="header">
+                  <span>
                     <a :href="'/view?date=' + item.id">{{ item.id }}</a>
                   </span>
                 </div>
@@ -42,13 +42,14 @@ export default {
   },
   data() {
     return {
-      dates: [],
-      cols: 2,
-      content: {},
+      summaries: [],
       icons: {
         homeIcon,
       },
     };
+  },
+  async created() {
+    await this.fetchDiaryNotes();
   },
   methods: {
     dict_to_lol(dict) {
@@ -61,15 +62,6 @@ export default {
     backHome() {
       this.$router.push('/')
     },
-    rows(dates, cols) {
-      return dates.reduce((rows, date, index) => {
-        if (index % cols === 0) {
-          rows.push([]);
-        }
-        rows[rows.length - 1].push(date);
-        return rows;
-      }, []);
-    },
     async fetchDiaryNotes() {
       try {
         const response = await this.axios.get('/api/diary');
@@ -81,19 +73,18 @@ export default {
     },
     processNotes(notes) {
       const processedNotes = notes
-        .map(note => ({
-          id: note.noteId,
-          note: this.dict_to_lol(note.note)
-        }))
-        .filter(doc => doc.note.length > 0);
-
-      this.notes = processedNotes;
-      this.dates = processedNotes;
+        .map(note_list => 
+          note_list.map(note => ({
+            id: note.noteId,
+            note: this.dict_to_lol(note.note)
+          }))
+        );
+      console.log('Original notes:', notes);
+      console.log('Processed notes:', processedNotes);
+      this.summaries = processedNotes;
     }
   },
-  async created() {
-    await this.fetchDiaryNotes();
-  },
+
 };
 </script>
 
