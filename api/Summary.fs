@@ -20,20 +20,13 @@ let freqs text =
     |> dict
 
 
-
-
-let insertSummary (note: Diary) =
-    let summaryJson = note.Note |> TipTap.getTextFromNote |> freqs |> Json.Convert.toJson
-    // store as jsonb
-    summaryJson
+let summaryJson (note: Diary) =
+    note.Note |> TipTap.getTextFromNote |> freqs |> Json.Convert.toJson
 
 let updateNoteSummary conn (note_id: string) (user_id: int) =
     let summary =
         Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
-        |> _.Note
-        |> TipTap.getTextFromNote
-        |> freqs
-        |> Json.Convert.toJson
+        |> summaryJson
 
     Summary.InsertSummary
         conn
@@ -61,7 +54,7 @@ let noteSummary conn (note: Diary) =
 
     match noteDt with
     | [] ->
-        let summary = note.Note |> TipTap.getTextFromNote |> freqs |> Json.Convert.toJson
+        let summary = summaryJson note
         // insert new item
         ignore (
             Summary.InsertSummary
@@ -76,7 +69,7 @@ let noteSummary conn (note: Diary) =
         let staled = Diary.CheckIdStale conn { NoteId = nid; UserId = note.UserId }
 
         if staled then
-            let summary = note.Note |> TipTap.getTextFromNote |> freqs |> Json.Convert.toJson
+            let summary = summaryJson note
             // update the summary and timestamp
             ignore (
                 Summary.InsertSummary
@@ -108,7 +101,7 @@ let noteSummary conn (note: Diary) =
 // note |> getTextFromNote |> freqs
 
 let freqsOfNote conn (note: Diary) =
-    { Id = note.Id 
+    { Id = note.Id
       NoteId = note.NoteId
       Note = note |> noteSummary conn
       UserId = note.UserId

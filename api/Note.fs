@@ -33,13 +33,13 @@ type HttpContext with
 // do not cache result
 let noteAllPartSlow: HttpHandler =
     fun ctx ->
-        let user_id = getUserId ctx.User
+        let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
 
         Request.mapRoute
             (ignore)
             (fun _ ->
-                Diary.ListDiaryByUserID conn user_id
+                Diary.ListDiaryByUserID conn userId
                 |> List.map (Jieba.freqsOfNote conn)
                 |> Json.Response.ofJson)
             ctx
@@ -67,18 +67,18 @@ let noteAllPart: HttpHandler =
 let noteByIdPart: HttpHandler =
     fun ctx ->
         let route = Request.getRoute ctx
-        let note_id = route.GetString("id", "")
+        let noteId = route.GetString("id", "")
         let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
 
         try
-            let diary = Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = userId }
+            let diary = Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
             Json.Response.ofJson diary ctx
         with :? NoResultsException as ex ->
             Json.Response.ofJson
                 (Diary.AddNote
                     conn
-                    { NoteId = note_id
+                    { NoteId = noteId
                       UserId = userId
                       Note = "" })
                 ctx
