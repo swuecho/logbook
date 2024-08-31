@@ -70,25 +70,29 @@ export default {
         return rows;
       }, []);
     },
+    async fetchDiaryNotes() {
+      try {
+        const response = await this.axios.get('/api/diary');
+        const notes = response.data;
+        this.processNotes(notes);
+      } catch (error) {
+        console.error('Error fetching diary notes:', error);
+      }
+    },
+    processNotes(notes) {
+      const processedNotes = notes
+        .map(note => ({
+          id: note.noteId,
+          note: this.dict_to_lol(note.note)
+        }))
+        .filter(doc => doc.note.length > 0);
+
+      this.notes = processedNotes;
+      this.dates = processedNotes;
+    }
   },
-  created() {
-    let app = this;
-    this.axios
-      .get(`/api/diary`)
-      .then(function (response) {
-        // handle success
-        let notes = response.data
-        let changed = notes.map((note) => ({ id: note.noteId, note: app.dict_to_lol(note.note) })).filter((doc) => doc.note.length > 0);
-        app.notes = changed;
-        app.dates = app.notes
-      })
-      .catch(function (error) {
-        // handle error
-        console.log(error);
-      })
-      .then(function () {
-        // always executed
-      });
+  async created() {
+    await this.fetchDiaryNotes();
   },
 };
 </script>
