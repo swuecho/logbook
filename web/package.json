@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "serve": "rsbuild dev",
+    "dev": "rsbuild dev",
     "build": "rsbuild build"
   },
   "resolutions": {
     "prosemirror-model": "1.13.1"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^5.53.1",
     "axios": "^1.4.0",
     "element-tiptap": "1.27.1",
     "element-ui": "^2.15.13",
@@ -22,7 +23,7 @@
     "tiptap-commands": "1.17.1",
     "tiptap-extensions": "1.35.2",
     "vue": "^2.7.14",
-    "vue-router": "^3.4.9",
+    "vue-router": "^3.6.5",
     "vuewordcloud": "^18.7.12"
   },
   "devDependencies": {

@@ -1,9 +1,9 @@
 <template>
-  <editor-wrapper :date="date"></editor-wrapper>
+  <DiaryEditor :date="date"></DiaryEditor>
 </template>
 
 <script>
-import EditorWrapper from "./EditorWrapper";
+import DiaryEditor from "@/components/DiaryEditor";
 
 export default {
   date() {
@@ -15,8 +15,7 @@ export default {
     this.date = this.$route.query.date;
   },
   components: {
-    EditorWrapper
+    DiaryEditor
   }
 };
 </script>
-

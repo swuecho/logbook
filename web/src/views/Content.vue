@@ -35,6 +35,7 @@
 import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
+import axios from '@/axiosConfig.js';
 export default {
   components: {
     [VueWordCloud.name]: VueWordCloud,
@@ -64,7 +65,7 @@ export default {
     },
     async fetchDiaryNotes() {
       try {
-        const response = await this.axios.get('/api/diary');
+        const response = await axios.get('/api/diary');
         const notes = response.data;
         this.processNotes(notes);
       } catch (error) {

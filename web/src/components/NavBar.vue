@@ -25,20 +25,20 @@ export default {
 
 <style scoped>
 .nav {
-  margin: 1em 1em 1rem 1em;
-  display: flex;
-  justify-content: space-between;
+        margin: 1em 1em 1rem 1em;
+        display: flex;
+        justify-content: space-between;
 }
 
 .nav a {
-  display: inline-block;
-  text-decoration: none;
-  border-radius: 5%;
+        display: inline-block;
+        text-decoration: none;
+        border-radius: 5%;
 }
 
 /* Change the link color on hover */
 .nav a:hover {
-  background-color: rgb(223, 214, 214);
-  color: white;
+        background-color: rgb(223, 214, 214);
+        color: white;
 }
 </style>

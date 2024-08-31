@@ -1,9 +1,9 @@
 <template>
-  <editor-wrapper :date="date"></editor-wrapper>
+  <DiaryEditor :date="date"></DiaryEditor>
 </template>
 
 <script>
-import EditorWrapper from "./EditorWrapper";
+import DiaryEditor from "@/components/DiaryEditor";
 import { get_date_of_today } from "../util.js";
 
 export default {
@@ -16,8 +16,7 @@ export default {
     this.date = get_date_of_today();
   },
   components: {
-    EditorWrapper
+    DiaryEditor
   }
 };
 </script>
-

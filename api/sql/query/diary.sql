@@ -5,7 +5,7 @@ SELECT * FROM diary ORDER BY last_updated DESC;
 SELECT * FROM diary WHERE id = $1;
 
 -- name: ListDiaryByUserID :many
-SELECT * FROM diary WHERE user_id = $1;
+SELECT * FROM diary WHERE user_id = $1 order by note_id DESC;
 
 -- name: DiaryByUserIDAndID :one
 SELECT * FROM diary WHERE user_id = $1 and note_id=$2;

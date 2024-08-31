@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import './plugins/axios'
 import router from './router'
 import App from './App.vue'
 
@@ -16,6 +15,11 @@ Vue.use(Element)
 Vue.use(ElementTiptapPlugin);
 
 Vue.config.productionTip = false
+
+import { VueQueryPlugin } from '@tanstack/vue-query'
+
+Vue.use(VueQueryPlugin)
+
 
 function IsAuthenticatedValid() {
   const isAuthenticated = localStorage.getItem('JWT_TOKEN'); // Check if the JWT token is stored
