@@ -2,20 +2,18 @@
   <DiaryEditor :date="date"></DiaryEditor>
 </template>
 
-<script>
+<script setup>
+import { ref, watch } from 'vue';
+import router from '@/router';
 import DiaryEditor from "@/components/DiaryEditor";
 
-export default {
-  date() {
-    return {
-      date: null
-    };
+const date = ref(router.currentRoute.query.date);
+
+watch(
+  () => router.currentRoute.query.date,
+  (newDate) => {
+    date.value = newDate;
   },
-  created() {
-    this.date = this.$route.query.date;
-  },
-  components: {
-    DiaryEditor
-  }
-};
+  { immediate: true }
+);
 </script>
