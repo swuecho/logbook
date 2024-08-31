@@ -58,6 +58,7 @@ let noteAllPart: HttpHandler =
                 Jieba.refreshSummary conn userId
 
                 Summary.GetSummaryByUserId conn userId
+                |> List.filter (fun x -> not (System.String.IsNullOrWhiteSpace x.Note))
                 |> List.chunkBySize cols
                 |> Json.Response.ofJson)
             ctx
