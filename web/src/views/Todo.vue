@@ -40,17 +40,26 @@ export default {
       this.fetchTodoContent(editor);
     },
     async fetchTodoContent(editor) {
-      try {
-        this.loading = true;
+      const { isLoading, isError, data, error } = useQuery('todoContent', async () => {
         const response = await this.axios.get('/api/todo');
-        this.loading = false;
-        if (response.data) {
-          editor.setContent(response.data);
+        return response.data;
+      });
+
+      watch(isLoading, (loading) => {
+        this.loading = loading;
+      });
+
+      watch(data, (content) => {
+        if (content) {
+          editor.setContent(content);
         }
-      } catch (error) {
-        console.error('Error fetching todo content:', error);
-        this.loading = false;
-      }
+      });
+
+      watch(isError, (hasError) => {
+        if (hasError) {
+          console.error('Error fetching todo content:', error.value);
+        }
+      });
     },
   },
 };
