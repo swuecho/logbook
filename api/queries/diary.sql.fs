@@ -293,7 +293,7 @@ let ListDiaries (db: NpgsqlConnection)  =
 
 
 let listDiaryByUserID = """-- name: ListDiaryByUserID :many
-SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id
+SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id order by note_id DESC
 """
 
 
