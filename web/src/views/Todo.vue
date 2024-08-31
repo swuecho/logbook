@@ -36,12 +36,13 @@ const onInit = ({ editor }) => {
 
 const fetchTodoContent = async (editor) => {
   const { isLoading, isError, data, error } = useQuery(
-    { queryKey: ['todoContent'],
-    queryFn: async () => {
-      const response = await axios.get('/api/todo');
-      return response.data;
-    }
-  });
+    {
+      queryKey: ['todoContent'],
+      queryFn: async () => {
+        const response = await axios.get('/api/todo');
+        return response.data;
+      }
+    });
 
   watch(isLoading, (isLoading) => {
     loading.value = isLoading;
