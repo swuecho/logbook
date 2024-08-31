@@ -66,7 +66,7 @@ let GetSummaryByUserIDAndID (db: NpgsqlConnection)  (arg: GetSummaryByUserIDAndI
 
 
 let getSummaryByUserId = """-- name: GetSummaryByUserId :many
-select note_id, content as note from summary where user_id = @user_id order by id desc
+select note_id, content as note from summary where user_id = @user_id order by note_id desc
 """
 
 

@@ -48,14 +48,14 @@ let noteAllPartSlow: HttpHandler =
 let noteAllPart: HttpHandler =
     fun ctx ->
         // refresh note summary
-        let user_id = int (ctx.User.FindFirst("user_id").Value)
+        let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
 
         Request.mapRoute
             (ignore)
             (fun _ ->
-                Jieba.refreshSummary conn user_id
-                Summary.GetSummaryByUserId conn user_id |> Json.Response.ofJson)
+                Jieba.refreshSummary conn userId
+                Summary.GetSummaryByUserId conn userId |> Json.Response.ofJson)
             ctx
 
 
