@@ -7,7 +7,7 @@
     </el-header>
     <el-main>
       <div class="content">
-        <div v-for="(column, row_idx) in rows" :key="row_idx">
+        <div v-for="(column, row_idx) in rows(this.dates, this.cols)" :key="row_idx">
           <el-row>
             <el-col :span="12" v-for="(item, col_index) in column" :key="col_index">
               <el-card class="box-card">
@@ -31,7 +31,7 @@
   </el-container>
 </template>
 
-<script lang="js">
+<script>
 import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
@@ -56,27 +56,19 @@ export default {
       for (const [key, value] of Object.entries(JSON.parse(dict))) {
         lol.push([key, value])
       }
-      // return JSON.stringify(lol);
       return lol;
     },
     backHome() {
-      console.log("backhome")
       this.$router.push('/')
-    }
-  },
-  computed: {
-    rows: function () {
-      let rows = [];
-      let array = this.dates;
-      var i,
-        j,
-        temparray,
-        chunk = this.cols;
-      for (i = 0, j = array.length; i < j; i += chunk) {
-        temparray = array.slice(i, i + chunk);
-        rows.push(temparray);
-      }
-      return rows;
+    },
+    rows(dates, cols) {
+      return dates.reduce((rows, date, index) => {
+        if (index % cols === 0) {
+          rows.push([]);
+        }
+        rows[rows.length - 1].push(date);
+        return rows;
+      }, []);
     },
   },
   created() {
