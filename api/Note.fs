@@ -5,7 +5,6 @@ open Microsoft.AspNetCore.Http
 open Falco
 open System.Security.Claims
 open Npgsql
-open System.Text.Json
 
 let forbidden =
     let message = "Access to the resource is forbidden."
@@ -125,19 +124,14 @@ let createNewUser conn email password =
 
     let authUser = AuthUser.CreateAuthUser conn newUser
 
-    // Set the role for the new user
     let role = "user"
-
-    //let jwtSecret = JwtSecrets.GetJwtSecret conn "logbook"
-
     let jwtKey = Util.getEnvVar "JWT_SECRET"
     let audience = Util.getEnvVar "JWT_AUDIENCE"
 
 
     let issuer = "logbook-swuecho.github.com"
 
-    let jwt =
-        Token.generateToken authUser.Id role jwtKey audience issuer
+    let jwt = Token.generateToken authUser.Id role jwtKey audience issuer
 
     jwt
 
@@ -163,8 +157,7 @@ let login: HttpHandler =
                     let issuer = "logbook-swuecho.github.com"
 
                     if passwordMatches then
-                        let jwt =
-                            Token.generateToken user.Id role jwtKey audience issuer
+                        let jwt = Token.generateToken user.Id role jwtKey audience issuer
 
                         Json.Response.ofJson jwt
                     else
@@ -177,90 +170,25 @@ let login: HttpHandler =
                     Json.Response.ofJson jwt)
             ctx
 
-open System.Text.Json
 
-// find all todo_list in note and return todo_list as json str
-let extractTodoList (note: string) =
-
-    let rec extractTodoItems (element: JsonElement) =
-        seq {
-            match element.ValueKind with
-            | JsonValueKind.Object ->
-                match element.TryGetProperty("type") with
-                | true, typeProperty when typeProperty.GetString() = "todo_list" ->
-                   yield element
-                | _ ->
-                    for property in element.EnumerateObject() do
-                        yield! extractTodoItems property.Value
-            | JsonValueKind.Array ->
-                for item in element.EnumerateArray() do
-                    yield! extractTodoItems item
-            | _ -> ()
-        }
-
-    try
-        let jsonDocument = JsonDocument.Parse(note)
-        let root = jsonDocument.RootElement
-        extractTodoItems root |> Seq.toList
-    with
-    | ex ->
-        printfn "%A" ex
-        []
-
-
-let getAllTodoLists conn userId =
-    Diary.ListDiaryByUserID conn userId
+let extractTodoLists allDiary =
+    allDiary
     |> List.choose (fun diary ->
-        let todoList = extractTodoList diary.Note
+        let todoList = TipTap.extractTodoList diary.Note
+
         if List.isEmpty todoList then
             None
         else
-            Some {| noteId = diary.NoteId; todoList = todoList |})
+            Some
+                {| noteId = diary.NoteId
+                   todoList = todoList |})
 
 
-let todoListsHandler : HttpHandler =
+let todoListsHandler: HttpHandler =
     fun ctx ->
         let conn = ctx.getNpgsql ()
-        let userId = int (ctx.User.FindFirst("user_id").Value)
-        let todoLists = getAllTodoLists conn userId
-        // print todolists
-        printfn "%A" todoLists
-        // construct a tiptap doc with todoLists and note_id
-        let tiptapDoc =
-            {|
-                ``type`` = "doc"
-                content = [|
-                    for todoList in todoLists do
-
-                        yield JsonSerializer.Deserialize<JsonElement>($"""
-                        {{
-                            "type": "heading",
-                            "attrs": {{
-
-                                "textAlign": null,
-                                "indent": null,
-                                "lineHeight": null,
-                                "level": 3
-                            }},
-                            "content": [
-                                {{
-                                    "type": "text",
-                                     "marks": [
-                                        {{
-                                            "type": "link",
-                                            "attrs": {{
-                                                "href": "/view?date={todoList.noteId}",
-                                                "openInNewTab": true    
-                                            }}
-                                        }}
-                                    ],  
-                                    "text": "{todoList.noteId}"
-                                }}
-                            ]
-                        }}
-                        """)
-                        yield! todoList.todoList
-                |]
-            |}
-
+        let userId = getUserId ctx.User
+        let allDiary = Diary.ListDiaryByUserID conn userId
+        let todoLists = extractTodoLists allDiary
+        let tiptapDoc = TipTap.constructTipTapDoc todoLists
         Json.Response.ofJson tiptapDoc ctx

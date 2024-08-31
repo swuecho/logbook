@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Util.fs" />
+    <Compile Include="TipTap.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="HttpAuth.fs" />
     <Compile Include="Token.fs" />
