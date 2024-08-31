@@ -15,8 +15,10 @@
     </div>
   </div>
 </template>
-<script>
-import { debounce } from 'lodash';
+
+
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
@@ -26,98 +28,97 @@ import 'codemirror/lib/codemirror.css'; // import base style
 import 'codemirror/mode/xml/xml.js'; // language
 import 'codemirror/addon/selection/active-line.js'; // require active-line.js
 import 'codemirror/addon/edit/closetag.js'; // autoCloseTags
+import { useMutation } from '@tanstack/vue-query';
+import router from '@/router';
+import { debounce } from 'lodash';
 
-export default {
-  components: {
-    Icon,
-  },
-  props: {
-    date: String
-  },
-  data() {
-    return {
-      now: moment(),
-      loading: true,
-      timeFormat: 'h:mm:ss a',
-      last_note_json: null,
-      content: null,
-      icons: {
-        tableOfContents,
-      },
-      extensions: createExtensions()
-    };
-  },
-  created() {
+import axios from '@/axiosConfig.js';
 
-    // eslint-disable-next-line no-unused-vars
-    var interval = setInterval(() => this.now = moment(), 1000);
-    // this.date = this.$route.query.date;
+const props = defineProps({
+  date: String
+});
+
+
+const now = ref(moment());
+const loading = ref(true);
+const timeFormat = 'h:mm:ss a';
+const last_note_json = ref(null);
+const content = ref(null);
+const icons = {
+  tableOfContents,
+};
+const extensions = createExtensions();
+const json = ref(null);
+
+onMounted(() => {
+  // eslint-disable-next-line no-unused-vars
+  const interval = setInterval(() => now.value = moment(), 1000);
+});
+
+const today = computed(() => {
+  return now.value.format('YYYYMMDD');
+});
+
+const time = computed(() => {
+  return now.value.format(timeFormat);
+});
+
+const mutation = useMutation({
+  mutationFn: async () => {
+    const response = await axios.put(`/api/diary/${props.date}`, {
+      noteId: props.date,
+      note: JSON.stringify(json.value)
+    });
+    return response.data;
   },
-  computed: {
-    today() {
-      return this.now.format('YYYYMMDD');
-    },
-    time() {
-      return this.now.format(this.timeFormat);
+  onSuccess: (data) => {
+    console.log(data);
+    loading.value = false;
+    // Invalidate the todoContent query
+    queryClient.invalidateQueries('todoContent');
+  },
+  onError: (error) => {
+    loading.value = false;
+    if (error.response && error.response.status === 401) {
+      // Use the correct router method in the Vue 3 setup
+      router.push({ name: 'login' });
     }
-
+    console.error('Error updating diary:', error);
   },
-  methods: {
-    onUpdate(output, options) {
-      const { getJSON, getHTML } = options;
-      console.log(this.date);
-      this.json = getJSON();
-      let app = this;
-      this.axios
-        .put(
-          `/api/diary/${this.date}`,
-          {
-            noteId: this.date,
-            note: JSON.stringify(this.json)
-          },
-        )
-        .then(function (response) {
-          console.log(response);
-          app.loading = false;
-        })
-        .catch(function (error) {
-          app.loading = false;
-          if (error.response.status == 401 ) {
-            app.$router.push({ name: 'login' });
-          }
-          console.log(error);
-        });
-    },
-    debouncedOnUpdate: debounce(function (output, options) {
-      this.onUpdate(output, options);
-    }, 500),
-    onInit({ editor }) {
-      let app = this;
-      // this.date = this.$route.query.date;
-      let date = this.date;
-      app.loading = true;
-      this.axios
-        .get(`/api/diary/${date}`)
-        .then(function (response) {
-          // handle success
-          app.loading = false;
-          let last_note = response.data;
-          if (last_note) {
-            let last_note_json = JSON.parse(last_note.note);
-            // set content should trigger OnUpdate?
-            console.log(last_note_json);
-            app.last_note_json = last_note_json;
-            editor.setContent(last_note_json);
-          }
-        })
-        .catch(function (error) {
-          // handle error
-          console.log(error);
-        })
-        .then(function () {
-          // always executed
-        });
+  staleTime: 500,
+});
+
+const onUpdate = (output, options) => {
+  const { getJSON } = options;
+  json.value = getJSON();
+  console.log(json.value);
+
+  mutation.mutate();
+
+  loading.value = mutation.isLoading.value;
+  if (mutation.isError.value) {
+    console.error('Error updating diary:', mutation.error.value);
+  }
+};
+
+const debouncedOnUpdate = debounce(function (output, options) {
+  onUpdate(output, options);
+}, 500)
+
+const onInit = async ({ editor }) => {
+  loading.value = true;
+  try {
+    const response = await axios.get(`/api/diary/${props.date}`);
+    const lastNote = response.data;
+    if (lastNote) {
+      const lastNoteJson = JSON.parse(lastNote.note);
+      last_note_json.value = lastNoteJson;
+      editor.setContent(lastNoteJson);
     }
+  } catch (error) {
+    console.error('Error fetching diary content:', error);
+  } finally {
+    loading.value = false;
   }
 };
 </script>
