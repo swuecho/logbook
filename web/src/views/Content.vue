@@ -7,12 +7,12 @@
     </el-header>
     <el-main>
       <div class="content">
-        <div v-for="(column, row_idx) in rows" :key="row_idx">
+        <div v-for="(column, row_idx) in this.summaries" :key="row_idx">
           <el-row>
             <el-col :span="12" v-for="(item, col_index) in column" :key="col_index">
               <el-card class="box-card">
-                <div slot="header" class="clearfix">
-                  <span style="float: left; padding: 0 0 5px 0">
+                <div slot="header">
+                  <span>
                     <a :href="'/view?date=' + item.id">{{ item.id }}</a>
                   </span>
                 </div>
@@ -31,7 +31,7 @@
   </el-container>
 </template>
 
-<script lang="js">
+<script>
 import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
@@ -42,13 +42,14 @@ export default {
   },
   data() {
     return {
-      dates: [],
-      cols: 2,
-      content: {},
+      summaries: [],
       icons: {
         homeIcon,
       },
     };
+  },
+  async created() {
+    await this.fetchDiaryNotes();
   },
   methods: {
     dict_to_lol(dict) {
@@ -56,48 +57,34 @@ export default {
       for (const [key, value] of Object.entries(JSON.parse(dict))) {
         lol.push([key, value])
       }
-      // return JSON.stringify(lol);
       return lol;
     },
     backHome() {
-      console.log("backhome")
       this.$router.push('/')
+    },
+    async fetchDiaryNotes() {
+      try {
+        const response = await this.axios.get('/api/diary');
+        const notes = response.data;
+        this.processNotes(notes);
+      } catch (error) {
+        console.error('Error fetching diary notes:', error);
+      }
+    },
+    processNotes(notes) {
+      const processedNotes = notes
+        .map(note_list => 
+          note_list.map(note => ({
+            id: note.noteId,
+            note: this.dict_to_lol(note.note)
+          }))
+        );
+      console.log('Original notes:', notes);
+      console.log('Processed notes:', processedNotes);
+      this.summaries = processedNotes;
     }
   },
-  computed: {
-    rows: function () {
-      let rows = [];
-      let array = this.dates;
-      var i,
-        j,
-        temparray,
-        chunk = this.cols;
-      for (i = 0, j = array.length; i < j; i += chunk) {
-        temparray = array.slice(i, i + chunk);
-        rows.push(temparray);
-      }
-      return rows;
-    },
-  },
-  created() {
-    let app = this;
-    this.axios
-      .get(`/api/diary`)
-      .then(function (response) {
-        // handle success
-        let notes = response.data
-        let changed = notes.map((note) => ({ id: note.noteId, note: app.dict_to_lol(note.note) })).filter((doc) => doc.note.length > 0);
-        app.notes = changed;
-        app.dates = app.notes
-      })
-      .catch(function (error) {
-        // handle error
-        console.log(error);
-      })
-      .then(function () {
-        // always executed
-      });
-  },
+
 };
 </script>
 
