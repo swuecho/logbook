@@ -2,7 +2,6 @@ module Jieba
 
 open System.Text
 open JiebaNet
-open FSharp.Data
 
 let freqs text =
     let wordRegex = RegularExpressions.Regex "\\w"
@@ -20,51 +19,14 @@ let freqs text =
     |> Seq.filter (fun (a, b) -> wordRegex.IsMatch a)
     |> dict
 
-/// Join a sequence of strings using a delimiter.
-/// Equivalent to String.Join() but without arrays.
-let join (delim: string) (items: seq<string>) =
-    // Collect the result in the string builder buffer
-    // The end-sequence will be "item1,delim,...itemN,delim"
-    let buff =
-        Seq.fold (fun (buff: StringBuilder) (s: string) -> buff.Append(s).Append(delim)) (StringBuilder()) items
 
-    buff.Remove(buff.Length - delim.Length, delim.Length).ToString()
-
-let rec getContent (jv: JsonValue) =
-    let extractProperty (x, y) =
-        match (x, y) with
-        | ("content", y) -> getContent y
-        | ("text", y) -> string y
-        | (_, y) -> " "
-
-    match jv with
-    // JsonValue.Array(elements) -> Array.map getContent elements
-    | JsonValue.Array(arr) -> arr |> Array.map getContent |> join " "
-    | JsonValue.Record(record) -> record |> Array.map extractProperty |> join " "
-    | JsonValue.String(str) -> str
-    | JsonValue.Number(n) -> n |> string
-    | JsonValue.Float(f) -> f |> string
-    | JsonValue.Boolean(b) -> b |> string
-    | JsonValue.Null -> ""
-
-let getTextFromNote (note: Diary) =
-    let content = sprintf "%s" note.Note
-
-    match JsonValue.TryParse content with
-    | Some(json) -> getContent json
-    | None -> content
-
-let insertSummary (note: Diary) =
-    let summaryJson = note |> getTextFromNote |> freqs |> Json.Convert.toJson
-    // store as jsonb
-    summaryJson
+let summaryJson (note: Diary) =
+    note.Note |> TipTap.getTextFromNote |> freqs |> Json.Convert.toJson
 
 let updateNoteSummary conn (note_id: string) (user_id: int) =
     let summary =
         Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
-        |> getTextFromNote
-        |> freqs
-        |> Json.Convert.toJson
+        |> summaryJson
 
     Summary.InsertSummary
         conn
@@ -92,7 +54,7 @@ let noteSummary conn (note: Diary) =
 
     match noteDt with
     | [] ->
-        let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
+        let summary = summaryJson note
         // insert new item
         ignore (
             Summary.InsertSummary
@@ -107,7 +69,7 @@ let noteSummary conn (note: Diary) =
         let staled = Diary.CheckIdStale conn { NoteId = nid; UserId = note.UserId }
 
         if staled then
-            let summary = note |> getTextFromNote |> freqs |> Json.Convert.toJson
+            let summary = summaryJson note
             // update the summary and timestamp
             ignore (
                 Summary.InsertSummary
@@ -139,7 +101,7 @@ let noteSummary conn (note: Diary) =
 // note |> getTextFromNote |> freqs
 
 let freqsOfNote conn (note: Diary) =
-    { Id = note.Id 
+    { Id = note.Id
       NoteId = note.NoteId
       Note = note |> noteSummary conn
       UserId = note.UserId

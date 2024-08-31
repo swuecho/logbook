@@ -1,6 +1,31 @@
 module TipTap
-
 open System.Text.Json
+open FSharp.Data
+
+
+let rec getContent (jv: JsonValue) =
+    let extractProperty (x, y) =
+        match (x, y) with
+        | ("content", y) -> getContent y
+        | ("text", y) -> string y
+        | (_, y) -> " "
+
+    match jv with
+    // JsonValue.Array(elements) -> Array.map getContent elements
+    | JsonValue.Array(arr) -> arr |> Array.map getContent |> Util.join " "
+    | JsonValue.Record(record) -> record |> Array.map extractProperty |> Util.join " "
+    | JsonValue.String(str) -> str
+    | JsonValue.Number(n) -> n |> string
+    | JsonValue.Float(f) -> f |> string
+    | JsonValue.Boolean(b) -> b |> string
+    | JsonValue.Null -> ""
+
+let getTextFromNote (note: string) =
+    let content = sprintf "%s" note
+
+    match JsonValue.TryParse content with
+    | Some(json) -> getContent json
+    | None -> content
 
 // find all todo_list in note and return todo_list as json str
 let extractTodoList (note: string) =

@@ -18,7 +18,6 @@ let getUserId (user: ClaimsPrincipal) = int (user.FindFirst("user_id").Value)
 
 let AuthRequired h = Request.ifAuthenticated h forbidden
 
-/// from async objec to json response
 
 
 type HttpContext with
@@ -34,13 +33,13 @@ type HttpContext with
 // do not cache result
 let noteAllPartSlow: HttpHandler =
     fun ctx ->
-        let user_id = getUserId ctx.User
+        let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
 
         Request.mapRoute
             (ignore)
             (fun _ ->
-                Diary.ListDiaryByUserID conn user_id
+                Diary.ListDiaryByUserID conn userId
                 |> List.map (Jieba.freqsOfNote conn)
                 |> Json.Response.ofJson)
             ctx
@@ -68,21 +67,19 @@ let noteAllPart: HttpHandler =
 let noteByIdPart: HttpHandler =
     fun ctx ->
         let route = Request.getRoute ctx
-        let note_id = route.GetString("id", "")
-        let user_id = getUserId ctx.User
-
+        let noteId = route.GetString("id", "")
+        let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
 
-
         try
-            let diary = Diary.DiaryByUserIDAndID conn { NoteId = note_id; UserId = user_id }
+            let diary = Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
             Json.Response.ofJson diary ctx
         with :? NoResultsException as ex ->
             Json.Response.ofJson
                 (Diary.AddNote
                     conn
-                    { NoteId = note_id
-                      UserId = user_id
+                    { NoteId = noteId
+                      UserId = userId
                       Note = "" })
                 ctx
 
@@ -90,13 +87,13 @@ let addNotePart: HttpHandler =
     fun ctx ->
         Request.mapJson
             (fun (note: Diary) ->
-                let user_id = int (ctx.User.FindFirst("user_id").Value)
+                let userId = getUserId ctx.User
                 let conn = ctx.getNpgsql ()
-
+                
                 Diary.AddNote
                     conn
                     { NoteId = note.NoteId
-                      UserId = user_id
+                      UserId = userId
                       Note = note.Note }
                 |> Json.Response.ofJson)
             ctx
@@ -104,7 +101,6 @@ let addNotePart: HttpHandler =
 let noteByIdPartDebug: HttpHandler =
     fun ctx ->
         let principal = ctx.User
-
         for claim in principal.Claims do
             printfn "%s" ("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value)
 
