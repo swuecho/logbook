@@ -57,7 +57,7 @@ let noteAllPart: HttpHandler =
                 Jieba.refreshSummary conn userId
 
                 Summary.GetSummaryByUserId conn userId
-                |> List.filter (fun x ->  x.Note.Length > 2)
+                |> List.filter (fun x -> x.Note.Length > 2)
                 |> List.chunkBySize cols
                 |> Json.Response.ofJson)
             ctx
@@ -89,7 +89,7 @@ let addNotePart: HttpHandler =
             (fun (note: Diary) ->
                 let userId = getUserId ctx.User
                 let conn = ctx.getNpgsql ()
-                
+
                 Diary.AddNote
                     conn
                     { NoteId = note.NoteId
@@ -101,6 +101,7 @@ let addNotePart: HttpHandler =
 let noteByIdPartDebug: HttpHandler =
     fun ctx ->
         let principal = ctx.User
+
         for claim in principal.Claims do
             printfn "%s" ("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value)
 
@@ -194,3 +195,9 @@ let todoListsHandler: HttpHandler =
         let todoLists = extractTodoLists allDiary
         let tiptapDoc = TipTap.constructTipTapDoc todoLists
         Json.Response.ofJson tiptapDoc ctx
+
+let logout: HttpHandler =
+    fun ctx ->
+        let userId = getUserId ctx.User
+        printfn "User with ID %d logged out" userId
+        Response.ofJson {| message = "Logged out successfully" |} ctx

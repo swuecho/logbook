@@ -143,6 +143,7 @@ webHost [||] {
     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
     endpoints
         [ post "/api/login" Note.login
+          post "/api/logout" Note.logout
           get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart
