@@ -94,6 +94,7 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
     | Some secret -> secret
     | None -> createNewSecret()
 
+
 let authService (services: IServiceCollection) =
     let connectionString = Database.Config.connStr
     use pgConn = new Npgsql.NpgsqlConnection(connectionString)
@@ -130,6 +131,9 @@ webHost [||] {
 
     use_cors corsPolicyName corsOptions
     add_service authService
+
+    // init db
+    add_service (fun services -> Database.InitDB.init Database.Config.connStr |> ignore ; services)
 
     // Use authorization middleware. Call before any middleware that depends on users being authenticated.
     // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
