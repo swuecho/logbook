@@ -4,14 +4,10 @@
   </div>
 </template>
 
-<script>
+<script setup>
 // @ is an alias to /src
 import Login from "@/components/Login.vue";
 
-export default {
-  name: "login_view",
-  components: {
-    Login
-  }
-};
+// The name option is not needed in <script setup>
+// Components are automatically registered in <script setup>
 </script>

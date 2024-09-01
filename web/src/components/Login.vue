@@ -30,7 +30,6 @@
 
 <script>
 import axios from "axios";
-import parseJwt from "@/util";
 
 export default {
   name: "Login",
