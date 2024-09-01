@@ -8,19 +8,19 @@
         </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 
-export default {
-        components: { Icon },
-        props: ['date', 'today', 'loading'],
-        data() {
-                return {
-                        icons: { tableOfContents },
-                };
-        },
-};
+defineProps({
+        date: String,
+        today: String,
+        loading: Boolean
+});
+
+const icons = ref({ tableOfContents });
+
 </script>
 
 <style scoped>
