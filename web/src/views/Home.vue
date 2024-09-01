@@ -7,7 +7,7 @@ import { ref, onMounted } from 'vue';
 import DiaryEditor from "@/components/DiaryEditor";
 import { get_date_of_today } from "../util.js";
 
-const date = ref(null);
+const date = ref(get_date_of_today());
 
 onMounted(() => {
   date.value = get_date_of_today();

@@ -34,6 +34,9 @@ import { debounce } from 'lodash';
 
 import axios from '@/axiosConfig.js';
 
+import { useQueryClient } from '@tanstack/vue-query';
+const queryClient = useQueryClient();
+
 const props = defineProps({
   date: String
 });
@@ -75,7 +78,16 @@ const mutation = useMutation({
     console.log(data);
     loading.value = false;
     // Invalidate the todoContent query
-    queryClient.invalidateQueries('todoContent');
+    // Invalidate the todoContent query
+    // Note: queryClient is not defined in this scope. 
+    // You might need to import and configure it, or use a different method to invalidate queries.
+    // For example, if using Vue Query, you could use the useQueryClient composable:
+    // 
+    // import { useQueryClient } from '@tanstack/vue-query';
+    // const queryClient = useQueryClient();
+    // 
+    // Then use it here:
+    queryClient.invalidateQueries({ queryKey: ['todoContent'] });
   },
   onError: (error) => {
     loading.value = false;
@@ -91,14 +103,8 @@ const mutation = useMutation({
 const onUpdate = (output, options) => {
   const { getJSON } = options;
   json.value = getJSON();
-  console.log(json.value);
-
   mutation.mutate();
 
-  loading.value = mutation.isLoading.value;
-  if (mutation.isError.value) {
-    console.error('Error updating diary:', mutation.error.value);
-  }
 };
 
 const debouncedOnUpdate = debounce(function (output, options) {

@@ -163,7 +163,8 @@ let login: HttpHandler =
                         Json.Response.ofJson jwt
                     else
                         // return failure
-                        Json.Response.ofJson
+                        Response.withStatusCode (int HttpStatusCode.Unauthorized)
+                        >> Response.ofJson
                             {| code = HttpStatusCode.Unauthorized
                                message = "Login failed. password or email is wrong" |}
                 else
