@@ -93,3 +93,57 @@ let constructTipTapDoc
                    )
 
                yield! todoList.todoList |] |}
+
+let rec tipTapDocToMarkdown (element: JsonElement) =
+    match element.GetProperty("type").GetString() with
+    | "doc" ->
+        element.GetProperty("content")
+        |> _.EnumerateArray()
+        |> Seq.map tipTapDocToMarkdown
+        |> String.concat "\n"
+    | "heading" ->
+        let heading =
+            element.GetProperty("content")
+            |> _.EnumerateArray()
+            |> Seq.map tipTapDocToMarkdown
+            |> String.concat ""
+        let level = element.GetProperty("attrs").GetProperty("level").GetInt32()
+        let prefix = String.replicate level "#"
+        //let marks = element.GetProperty("marks")
+        // let marksStr =
+        //     marks
+        //     |> _.EnumerateArray()
+        //     |> Seq.map (fun mark -> mark.GetProperty("type").GetString())
+        //   |> String.concat " "
+        "\n" + prefix + " " + heading + "\n"
+    | "paragraph" ->
+        element.GetProperty("content")
+        |> _.EnumerateArray()
+        |> Seq.map tipTapDocToMarkdown
+        |> String.concat ""
+    | "text" -> element.GetProperty("text").GetString()
+    | "todo_list" ->
+        element.GetProperty("content")
+        |> _.EnumerateArray()
+        |> Seq.map tipTapDocToMarkdown
+        |> String.concat "\n"
+    | "todo_item" ->
+        let doneAttr = element.GetProperty("attrs").GetProperty("done").GetBoolean()
+        let prefix = if doneAttr then "- [x] " else "- [ ] "
+        let content =
+            element.GetProperty("content")
+            |> _.EnumerateArray()
+            |> Seq.map tipTapDocToMarkdown
+            |> String.concat ""
+        prefix + content
+    | _ -> ""
+
+// Function to convert a TipTap doc JSON to Markdown
+let tipTapDocJsonToMarkdown (json: string) =
+    try
+        let jsonDocument = JsonDocument.Parse(json)
+        let root = jsonDocument.RootElement
+        tipTapDocToMarkdown root
+    with ex ->
+        printfn "%A" ex
+        ""
