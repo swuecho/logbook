@@ -16,6 +16,17 @@ module Config =
         // wait longger
         printfn "pgConnStr: %s" pgConnStr
         pgConnStr + ";Timeout=300;CommandTimeout=300"
+    
+module InitDB =
+    open Npgsql
+    let init (connectionString: string) =
+        let conn = new NpgsqlConnection(connectionString)
+        conn.Open()
+        // run the init script from file api/sql/schema.sql
+        let initScript = System.IO.File.ReadAllText( __SOURCE_DIRECTORY__ + "/sql/schema.sql")
+        let cmd = new NpgsqlCommand(initScript, conn)
+        cmd.ExecuteNonQuery()  |> printfn "schema.sql executed %d"
+        conn.Close()
 
 
 module Connection =
