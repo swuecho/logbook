@@ -12,7 +12,7 @@ ENV TZ=Asia/Shanghai
 WORKDIR /app
 # copy Resource folder 
 COPY --from=build /src/Resources /src/Resources
-COPY --from=build /src/api/sql/ /src/api/sql/
+COPY --from=build /src/sql/ /src/sql/
 COPY --from=build /src/wwwroot ./wwwroot
 COPY --from=build /app .
 EXPOSE 80
