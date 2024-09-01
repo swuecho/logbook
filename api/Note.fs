@@ -173,6 +173,12 @@ let login: HttpHandler =
                     Json.Response.ofJson jwt)
             ctx
 
+let logout: HttpHandler =
+    fun ctx ->
+        let userId = getUserId ctx.User
+        printfn "User with ID %d logged out" userId
+        Response.ofJson {| message = "Logged out successfully" |} ctx
+
 
 let extractTodoLists allDiary =
     allDiary
@@ -196,8 +202,11 @@ let todoListsHandler: HttpHandler =
         let tiptapDoc = TipTap.constructTipTapDoc todoLists
         Json.Response.ofJson tiptapDoc ctx
 
-let logout: HttpHandler =
+
+
+let listDiaryIds: HttpHandler =
     fun ctx ->
+        let conn = ctx.getNpgsql ()
         let userId = getUserId ctx.User
-        printfn "User with ID %d logged out" userId
-        Response.ofJson {| message = "Logged out successfully" |} ctx
+        let diaryIds = Diary.ListDiaryIDByUserID conn userId |> List.map _.NoteId
+        Json.Response.ofJson diaryIds ctx

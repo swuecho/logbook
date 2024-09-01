@@ -148,6 +148,7 @@ webHost [||] {
     endpoints
         [ post "/api/login" Note.login
           post "/api/logout" Note.logout
+          get "/api/diray_ids" Note.listDiaryIds
           get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart

@@ -343,6 +343,7 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
 
 
 
+
 let updateAuthUser = """-- name: UpdateAuthUser :one
 UPDATE auth_user SET first_name = @first_name, last_name= @last_name, last_login = now() 
 WHERE id = @id
