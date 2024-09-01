@@ -321,6 +321,30 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+let listDiaryIDByUserID = """-- name: ListDiaryIDByUserID :many
+SELECT note_id FROM diary WHERE user_id = @user_id order by note_id DESC
+"""
+
+
+
+
+let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
+  let reader = fun (read:RowReader) -> {| NoteId = read.string "note_id"|}
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listDiaryIDByUserID
+  |> Sql.parameters  [ "@user_id", Sql.int userId ]
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
 
 
 let updateDiary = """-- name: UpdateDiary :one
