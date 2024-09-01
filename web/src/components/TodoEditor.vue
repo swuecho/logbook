@@ -5,10 +5,17 @@
         </div>
 </template>
 
-<script>
-export default {
-        props: ['content', 'extensions'],
-};
+<script setup>
+defineProps({
+  content: {
+    type: [String, Object],
+    required: true
+  },
+  extensions: {
+    type: Array,
+    required: true
+  }
+});
 </script>
 
 <style>

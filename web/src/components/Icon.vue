@@ -6,21 +6,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    name: {},
-    size: {
-      default: 'normal',
-    },
-    modifier: {
-      default: null,
-    },
-    fixAlign: {
-      default: true,
-    },
+<script setup>
+const props = defineProps({
+  name: {},
+  size: {
+    default: 'normal',
   },
-}
+  modifier: {
+    default: null,
+  },
+  fixAlign: {
+    default: true,
+  },
+});
 </script>
 
 <style scoped>
