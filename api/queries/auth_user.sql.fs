@@ -139,6 +139,7 @@ let GetAllAuthUsers (db: NpgsqlConnection)  =
     IsStaff = read.bool "is_staff"
     IsActive = read.bool "is_active"
     DateJoined = read.dateTime "date_joined"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query getAllAuthUsers
@@ -326,6 +327,7 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
     IsStaff = read.bool "is_staff"
     IsActive = read.bool "is_active"
     DateJoined = read.dateTime "date_joined"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query listAuthUsers

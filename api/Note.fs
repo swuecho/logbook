@@ -208,5 +208,5 @@ let listDiaryIds: HttpHandler =
     fun ctx ->
         let conn = ctx.getNpgsql ()
         let userId = getUserId ctx.User
-        let diaryIds = Diary.ListDiaryIDByUserID conn userId |> List.map _.NoteId
+        let diaryIds = Diary.ListDiaryIDByUserID conn userId 
         Json.Response.ofJson diaryIds ctx

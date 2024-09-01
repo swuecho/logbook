@@ -80,6 +80,7 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
   let reader = fun (read:RowReader) -> {
     NoteId = read.string "note_id"
     Note = read.string "note"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query getSummaryByUserId

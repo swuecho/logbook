@@ -242,6 +242,7 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
     NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query getStaleIdsOfUserId
@@ -278,6 +279,7 @@ let ListDiaries (db: NpgsqlConnection)  =
     NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query listDiaries
@@ -306,6 +308,7 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
     NoteId = read.string "note_id"
     Note = read.string "note"
     LastUpdated = read.dateTime "last_updated"}
+  
   db 
   |> Sql.existingConnection
   |> Sql.query listDiaryByUserID
@@ -329,7 +332,8 @@ SELECT note_id FROM diary WHERE user_id = @user_id order by note_id DESC
 
 
 let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
-  let reader = fun (read:RowReader) -> {| NoteId = read.string "note_id"|}
+  let reader = fun (read:RowReader) -> read.string "note_id"
+  
   db 
   |> Sql.existingConnection
   |> Sql.query listDiaryIDByUserID
