@@ -3,7 +3,7 @@
 
 https://diary-log.fly.dev/ (try with a random email is ok)
 
-<img width="1161" alt="image" src="https://github.com/swuecho/logbook/assets/666683/e7626318-4a83-480e-9305-366cf61bd60a">
+<img width="1094" alt="todo" src="https://github.com/user-attachments/assets/bd5cae57-5f82-4cf1-9f50-c45073364075">
 
 
 # How to depoy
