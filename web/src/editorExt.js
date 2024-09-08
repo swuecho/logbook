@@ -1,8 +1,8 @@
 import {
-        Doc, Text, Paragraph, Heading, Bold, Underline, Italic, Strike,
-        Blockquote, Code, CodeBlock, ListItem, BulletList, OrderedList,
+        Doc, Text, Paragraph, Heading, Bold, Underline, Italic, Strike, TextColor, TextHighlight,
+        Blockquote, Code, CodeBlock, ListItem, BulletList, OrderedList, FormatClear,
         TextAlign, Indent, LineHeight, TrailingNode, TodoItem, TodoList,
-        History, Fullscreen, CodeView, Link, Iframe, Image
+        History, Fullscreen, CodeView, Link, Iframe, Image, 
 } from "element-tiptap";
 
 import codemirror from 'codemirror';
@@ -18,14 +18,16 @@ export function createExtensions() {
                 new Paragraph(),
                 new Heading({ level: 3 }),
                 new Bold(),
-                new Underline({ bubble: true }),
+                new Underline(),
                 new Italic(),
                 new Strike(),
-                new Blockquote({ bubble: true }),
+                new TextColor(),
+                new TextHighlight(),
+                new Blockquote(),
                 new Code(),
                 new CodeBlock({ bubble: true }),
                 new TodoItem(),
-                new TodoList(),
+                new TodoList({ bubble: true }),
                 new LineHeight(),
                 new ListItem(),
                 new BulletList(),
@@ -37,6 +39,7 @@ export function createExtensions() {
                 new Image(),
                 new Iframe(),
                 new Fullscreen(),
+                new FormatClear({ bubble: true }),
                 new CodeView({
                         codemirror,
                         codemirrorOptions: {
