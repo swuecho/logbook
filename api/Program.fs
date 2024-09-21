@@ -153,6 +153,7 @@ webHost [||] {
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart
           get "/api/todo"  Note.todoListsHandler
+          get "/api/random-word" Word.getRandomWord 
         ]
 
     use_middleware serveVueFiles
