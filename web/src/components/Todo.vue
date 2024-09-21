@@ -1,34 +1,20 @@
 <template>
   <div class="content">
-    <nav-bar :date="date" :today="today" :loading="loading" />
     <todo-editor :content="content" :extensions="extensions" @init="onInit" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import moment from 'moment';
-import NavBar from '@/components/NavBar';
 import TodoEditor from '@/components/TodoEditor';
 import { createExtensions } from '@/editorExt.js';
 import { useQuery } from '@tanstack/vue-query';
 import axios from '@/axiosConfig.js';
 
-const props = defineProps({
-  date: {
-    type: String,
-    required: true,
-  },
-});
 
-const now = ref(moment());
 const loading = ref(true);
-const content = ref(null);
+const content = ref("");
 const extensions = createExtensions();
-
-const today = computed(() => {
-  return now.value.format('YYYYMMDD');
-});
 
 const onInit = ({ editor }) => {
   fetchTodoContent(editor);
