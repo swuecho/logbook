@@ -1,25 +1,27 @@
 <template>
-  <div>
+  <div class="content">
     <div class="nav">
       {{ time }}
-      <div>
-        <a @click="navigateDate(-1)">
-          <Icon icon="grommet-icons:form-previous" width="1.2rem" height="1.2rem" />
-        </a>
-        <a href="#">{{ date }}</a>
-        <a @click="navigateDate(1)">
-          <Icon icon="grommet-icons:form-next" width="1.2rem" height="1.2rem" />
-        </a>
+      <div class="date-nav">
+        <div @click="navigateDate(-1)" class="icon-container">
+          <Icon icon="grommet-icons:form-previous" width="1.2rem" />
+        </div>
+        <div>
+          {{ displayDate }}
+        </div>
+        <div v-if="date < today" @click="navigateDate(1)" class="icon-container">
+          <Icon icon="grommet-icons:form-next" width="1.2rem" />
+        </div>
+        <div v-if="date != today" @click="navigateDateToToday" class="icon-container">
+          <Icon icon="fluent:arrow-next-16-regular" width="1.2rem" />
+        </div>
       </div>
-      <a v-if="date != today" :href="'/view?date=' + today">Today</a>
-      <a v-if="date == today" href="/todo">Todo</a>
+      <a href="/todo">Todo</a>
       <a href="content">
-        <Icon :icon="icons.tableOfContents" />
+        <Icon :icon="tableOfContents" />
       </a>
     </div>
-    <div class="content">
-      <DiaryEditor :date="date"></DiaryEditor>
-    </div>
+    <DiaryEditor :date="date"></DiaryEditor>
   </div>
 </template>
 
@@ -30,12 +32,9 @@ import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import DiaryEditor from "@/components/DiaryEditor";
 
+
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
-const timeFormat = 'h:mm:ss a';
-const icons = {
-  tableOfContents,
-};
 
 onMounted(() => {
   // eslint-disable-next-line no-unused-vars
@@ -47,26 +46,53 @@ const today = computed(() => {
   return now.value.format('YYYYMMDD');
 });
 
-
-function navigateDate(offset) {
-  const newDate = moment(now.value).add(offset, 'days');
-  if (newDate > today) {
-    alert("can not be in the future")
-    return
-  }
-  router.push(`/view?date=${newDate.format('YYYYMMDD')}`);
-}
-
 const time = computed(() => {
+  const timeFormat = 'h:mm:ss a';
   return now.value.format(timeFormat);
 });
 
+const displayDate = computed(() => {
+  if (date.value == today.value) {
+    return 'Today'
+  } else {
+    return date.value
+  }
+})
+
+function navigateDate(offset) {
+  const newDate = moment(date.value).add(offset, 'days').format("YYYYMMDD");
+  if (newDate > today.value) {
+    alert("can not into future")
+  }
+  date.value = newDate
+}
+
+function navigateDateToToday() {
+  date.value = today.value
+}
 
 </script>
 
-<style>
+<style scoped>
 .content {
   max-width: 65rem;
   margin: auto;
+}
+
+.nav {
+  margin: 1em 1em 1rem 1em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.nav .date-nav {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
 }
 </style>

@@ -1,8 +1,9 @@
 <template>
   <div class="content">
     <div class="editor">
-      <el-tiptap :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
+      <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
     </div>
+    <Icon v-if="loading" icon="line-md:loading-alt-loop" />
   </div>
 </template>
 
@@ -38,10 +39,6 @@ const content = ref(null);
 const extensions = createExtensions();
 const json = ref(null);
 
-onMounted(() => {
-  // eslint-disable-next-line no-unused-vars
-  const interval = setInterval(() => now.value = moment(), 1000);
-});
 
 const mutation = useMutation({
   mutationFn: async () => {
@@ -111,26 +108,10 @@ const onInit = async ({ editor }) => {
 };
 </script>
 
-<style>
+<style scoped>
 pre code {
   font-family: "Fira Code", Courier, Monaco, monospace;
 }
 
-.nav {
-  margin: 1em 1em 1rem 1em;
-  display: flex;
-  justify-content: space-between;
-}
 
-.nav a {
-  display: inline-block;
-  text-decoration: none;
-  border-radius: 5%;
-}
-
-/* Change the link color on hover */
-.nav a:hover {
-  background-color: rgb(223, 214, 214);
-  color: white;
-}
 </style>
