@@ -1,6 +1,6 @@
 <template>
         <div class="nav">
-                <a v-if="date != today" :href="'/view?date=' + today">Diary</a>
+                <a v-if="date != today" href="/">Diary</a>
                 <a href="content">
                         <Icon :icon="icons.tableOfContents" />
                         <Icon v-if="loading" icon="line-md:loading-alt-loop" />

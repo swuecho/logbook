@@ -1,18 +1,9 @@
 <template>
   <div class="content">
-    <div class="nav">
-      {{ time }}
-      <a href="#">{{ date }}</a>
-      <a v-if="date != today" :href="'/view?date=' + today">Today</a>
-      <a v-if="date == today" href="/todo">Todo</a>
-      <a href="content">
-        <Icon :icon="icons.tableOfContents" />
-        <Icon v-if="loading" icon="line-md:loading-alt-loop" />
-      </a>
-    </div>
     <div class="editor">
-      <el-tiptap :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
+      <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate" @onInit="onInit"></el-tiptap>
     </div>
+    <Icon v-if="loading" icon="line-md:loading-alt-loop" />
   </div>
 </template>
 
@@ -42,29 +33,12 @@ const props = defineProps({
 });
 
 
-const now = ref(moment());
 const loading = ref(true);
-const timeFormat = 'h:mm:ss a';
 const last_note_json = ref(null);
 const content = ref(null);
-const icons = {
-  tableOfContents,
-};
 const extensions = createExtensions();
 const json = ref(null);
 
-onMounted(() => {
-  // eslint-disable-next-line no-unused-vars
-  const interval = setInterval(() => now.value = moment(), 1000);
-});
-
-const today = computed(() => {
-  return now.value.format('YYYYMMDD');
-});
-
-const time = computed(() => {
-  return now.value.format(timeFormat);
-});
 
 const mutation = useMutation({
   mutationFn: async () => {
@@ -122,6 +96,11 @@ const onInit = async ({ editor }) => {
       editor.setContent(lastNoteJson);
     }
   } catch (error) {
+    if (error.response && error.response.status === 401) {
+      // Use the correct router method in the Vue 3 setup
+      router.push({ name: 'login' });
+    }
+    console.error('Error updating diary:', error);
     console.error('Error fetching diary content:', error);
   } finally {
     loading.value = false;
@@ -129,31 +108,10 @@ const onInit = async ({ editor }) => {
 };
 </script>
 
-<style>
-.content {
-  max-width: 65rem;
-  margin: auto;
-}
-
-.nav {
-  margin: 1em 1em 1rem 1em;
-  display: flex;
-  justify-content: space-between;
-}
-
+<style scoped>
 pre code {
   font-family: "Fira Code", Courier, Monaco, monospace;
 }
 
-.nav a {
-  display: inline-block;
-  text-decoration: none;
-  border-radius: 5%;
-}
 
-/* Change the link color on hover */
-.nav a:hover {
-  background-color: rgb(223, 214, 214);
-  color: white;
-}
 </style>

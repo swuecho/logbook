@@ -13,4 +13,4 @@ export function parseJwt (token) {
     }).join(''))
   
     return JSON.parse(jsonPayload)
-  }
+}

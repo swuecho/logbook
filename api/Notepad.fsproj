@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -16,6 +16,7 @@
     <Compile Include="queries/summary.sql.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Json.fs" />
+    <Compile Include="Word.fs" />
     <Compile Include="Summary.fs" />
     <Compile Include="Note.fs" />
     <Compile Include="Program.fs" />
