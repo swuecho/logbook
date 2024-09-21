@@ -17,7 +17,7 @@
         </div>
       </div>
       <button @click="openModal">Todo</button>
-      <el-dialog :visible="dialogVisible" title="Todos" @close="closeModal">
+      <el-dialog :visible="dialogVisible" @close="closeModal">
         <Todo></Todo>
       </el-dialog>
       <a href="content">
