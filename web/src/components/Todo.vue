@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import TodoEditor from '@/components/TodoEditor';
 import { createExtensions } from '@/editorExt.js';
 import { useQuery } from '@tanstack/vue-query';
