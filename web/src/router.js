@@ -32,10 +32,5 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () => import( /* webpackChunkName: "about" */ './views/Diary.vue')
     },
-    {
-      path: '/todo',
-      name: 'todo',
-      component: () => import( /* webpackChunkName: "about" */ './views/Todo.vue')
-    }
   ]
 })

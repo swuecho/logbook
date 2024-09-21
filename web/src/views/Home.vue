@@ -16,7 +16,10 @@
           <Icon icon="fluent:arrow-next-16-regular" width="1.2rem" />
         </div>
       </div>
-      <a href="/todo">Todo</a>
+      <button @click="openModal">Todo</button>
+      <el-dialog :visible="dialogVisible" @close="closeModal">
+        <Todo></Todo>
+      </el-dialog>
       <a href="content">
         <Icon :icon="tableOfContents" />
       </a>
@@ -31,10 +34,12 @@ import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import DiaryEditor from "@/components/DiaryEditor";
+import Todo from '@/components/Todo.vue';
 
 
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
+const dialogVisible = ref(false)
 
 onMounted(() => {
   // eslint-disable-next-line no-unused-vars
@@ -69,6 +74,13 @@ function navigateDate(offset) {
 
 function navigateDateToToday() {
   date.value = today.value
+}
+
+function openModal() {
+  dialogVisible.value = true
+}
+function closeModal() {
+  dialogVisible.value = false
 }
 
 </script>
