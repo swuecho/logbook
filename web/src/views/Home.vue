@@ -16,13 +16,19 @@
           <Icon icon="fluent:arrow-next-16-regular" width="1.2rem" />
         </div>
       </div>
-      <button @click="openModal">Todo</button>
       <el-dialog :visible="dialogVisible" @close="closeModal">
         <Todo></Todo>
       </el-dialog>
-      <a href="content">
-        <Icon :icon="tableOfContents" />
-      </a>
+      <div class="right-corner">
+        <div @click="openModal">
+          <Icon icon="streamline:task-list" />
+        </div>
+        <div>
+        <a href="/content">
+          <Icon :icon="tableOfContents" />
+        </a>
+    </div>
+      </div>
     </div>
     <DiaryEditor :date="date"></DiaryEditor>
   </div>
@@ -106,5 +112,12 @@ function closeModal() {
 .icon-container {
   display: flex;
   align-items: center;
+}
+
+.right-corner {
+  display: flex;
+  flex-direction: row;
+  gap: 3rem;
+  justify-content: space-around;
 }
 </style>
