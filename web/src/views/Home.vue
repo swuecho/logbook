@@ -1,6 +1,8 @@
 <template>
   <div class="content">
     <div class="nav">
+          
+
       {{ time }}
       <div class="date-nav">
         <div @click="navigateDate(-1)" class="icon-container">
@@ -20,6 +22,7 @@
         <Todo></Todo>
       </el-dialog>
       <div class="right-corner">
+         <OnlineStatusIndicator />
         <div @click="openModal">
           <Icon icon="streamline:task-list" />
         </div>
@@ -31,6 +34,8 @@
       </div>
     </div>
     <DiaryEditor :date="date"></DiaryEditor>
+           
+
   </div>
 </template>
 
@@ -41,6 +46,8 @@ import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import DiaryEditor from "@/components/DiaryEditor";
 import Todo from '@/components/Todo.vue';
+import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
+
 
 
 const now = ref(moment());
@@ -119,5 +126,7 @@ function closeModal() {
   flex-direction: row;
   gap: 3rem;
   justify-content: space-around;
+  align-items: center;
+  gap: 10px;
 }
 </style>
