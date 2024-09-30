@@ -6,23 +6,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
 
-const isOnline = ref(navigator.onLine);
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
-const updateOnlineStatus = () => {
-  isOnline.value = navigator.onLine;
-};
+const { isOnline } = useOnlineStatus();import { ref, onMounted, onUnmounted } from 'vue';
 
-onMounted(() => {
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('online', updateOnlineStatus);
-  window.removeEventListener('offline', updateOnlineStatus);
-});
 </script>
 
 <style scoped>
