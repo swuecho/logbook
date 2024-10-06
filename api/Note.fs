@@ -153,9 +153,10 @@ let login: HttpHandler =
                     let passwordMatches = Auth.validatePassword password hash
                     // check if user is admin
                     let role = if user.IsSuperuser then "admin" else "user"
-
-                    let jwtKey = Util.getEnvVar "JWT_SECRET"
-                    let audience = Util.getEnvVar "JWT_AUDIENCE"
+                    let jwtAudienceName = "logbook"
+                    let secret = JwtSecrets.GetJwtSecret conn jwtAudienceName
+                    let jwtKey = secret.Secret
+                    let audience = secret.Audience
                     let issuer = "logbook-swuecho.github.com"
 
                     if passwordMatches then
