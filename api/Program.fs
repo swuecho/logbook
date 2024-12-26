@@ -154,6 +154,7 @@ webHost [||] {
           put "/api/diary/{id}" Note.addNotePart
           get "/api/todo"  Note.todoListsHandler
           post "/api/export/{id}" Note.exportDiary
+          post "/api/export_md/{id}" Note.exportDiaryMarkdown
           get "/api/export" Note.exportAllDiaries
           get "/api/random-word" Word.getRandomWord 
         ]

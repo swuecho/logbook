@@ -218,3 +218,15 @@ let exportAllDiaries: HttpHandler =
         let userId = getUserId ctx.User
         let allDiary = Diary.ListDiaryByUserID conn userId
         Json.Response.ofJson allDiary ctx
+
+let exportDiaryMarkdown: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (note: {| Id: string |}) ->
+                let conn = ctx.getNpgsql ()
+                let userId = getUserId ctx.User
+                let diary = Diary.DiaryByUserIDAndID conn { NoteId = note.Id; UserId = userId }
+                let jsonElement = System.Text.Json.JsonDocument.Parse(diary.Note).RootElement
+                let markdown = TipTap.tipTapDocToMarkdown jsonElement
+                Response.ofPlainText markdown)
+            ctx
