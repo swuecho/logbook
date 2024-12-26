@@ -9,7 +9,7 @@ module Config =
         try
             System.Environment.GetEnvironmentVariable("DATABASE_URL")
         with _ ->
-            raise (System.Exception "check if BESTQA_FS_PORT is set")
+            raise (System.Exception "check if DATABASE_URL is set")
     let connStr = 
         let pgConnStr = Npgsql.FSharp.Sql.fromUri (System.Uri postgresDSN)
         //https://stackoverflow.com/questions/40364449/npgsql-exception-while-reading-from-stream-postgres
