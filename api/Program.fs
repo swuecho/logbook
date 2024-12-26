@@ -60,39 +60,41 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
             let secret = JwtSecrets.GetJwtSecret pgConn jwtAudienceName
             printfn "Existing JWT Secret found for %s" jwtAudienceName
             Some secret
-        with :? NoResultsException -> None
+        with :? NoResultsException ->
+            None
 
     let generateRandomKey () =
         System.Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
 
     let getJwtKey () =
         match Util.getEnvVar "JWT_SECRET" with
-        | null -> 
-            let randomKey = generateRandomKey()
+        | null ->
+            let randomKey = generateRandomKey ()
             printfn "Warning: JWT_SECRET not set. Using randomly generated key: %s" randomKey
             randomKey
         | key -> key
 
     let getAudience () =
         match Util.getEnvVar "JWT_AUDIENCE" with
-        | null -> 
-            let defaultAudience = generateRandomKey()
+        | null ->
+            let defaultAudience = generateRandomKey ()
             printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
             defaultAudience
         | aud -> aud
 
     let createNewSecret () =
-        let jwtSecretParams: JwtSecrets.CreateJwtSecretParams = 
+        let jwtSecretParams: JwtSecrets.CreateJwtSecretParams =
             { Name = jwtAudienceName
-              Secret = getJwtKey()
-              Audience = getAudience() }
+              Secret = getJwtKey ()
+              Audience = getAudience () }
+
         let createdSecret = JwtSecrets.CreateJwtSecret pgConn jwtSecretParams
         printfn "New JWT Secret created for %s" jwtAudienceName
         createdSecret
 
-    match getExistingSecret() with
+    match getExistingSecret () with
     | Some secret -> secret
-    | None -> createNewSecret()
+    | None -> createNewSecret ()
 
 
 let authService (services: IServiceCollection) =
@@ -103,7 +105,7 @@ let authService (services: IServiceCollection) =
     let jwtAudienceName = "logbook"
 
     let jwtSecret = getOrCreateJwtSecret pgConn jwtAudienceName
-    
+
     pgConn.Close()
 
     let _ =
@@ -118,7 +120,8 @@ let authService (services: IServiceCollection) =
                         ValidateAudience = true,
                         ValidAudience = jwtSecret.Audience,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
+                        IssuerSigningKey =
+                            new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
                     ))
 
     services
@@ -133,7 +136,9 @@ webHost [||] {
     add_service authService
 
     // init db
-    add_service (fun services -> Database.InitDB.init Database.Config.connStr |> ignore ; services)
+    add_service (fun services ->
+        Database.InitDB.init Database.Config.connStr |> ignore
+        services)
 
     // Use authorization middleware. Call before any middleware that depends on users being authenticated.
     // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
@@ -152,11 +157,11 @@ webHost [||] {
           get "/api/diary" Note.noteAllPart
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart
-          get "/api/todo"  Note.todoListsHandler
+          get "/api/todo" Note.todoListsHandler
+          // export api
           post "/api/export_json" Note.exportDiary
           post "/api/export_md" Note.exportDiaryMarkdown
-          get "/api/export_all" Note.exportAllDiaries
-        ]
+          get "/api/export_all" Note.exportAllDiaries ]
 
     use_middleware serveVueFiles
 }
