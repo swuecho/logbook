@@ -76,7 +76,7 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getAudience () =
         match Util.getEnvVar "JWT_AUDIENCE" with
         | null -> 
-            let defaultAudience = "http://localhost:5000"
+            let defaultAudience = generateRandomKey()
             printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
             defaultAudience
         | aud -> aud
