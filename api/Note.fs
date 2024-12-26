@@ -202,3 +202,19 @@ let listDiaryIds: HttpHandler =
         let userId = getUserId ctx.User
         let diaryIds = Diary.ListDiaryIDByUserID conn userId 
         Json.Response.ofJson diaryIds ctx
+
+let exportDiary: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (note: {| Id: string |}) ->
+                let conn = ctx.getNpgsql ()
+                let userId = getUserId ctx.User
+                let diary = Diary.DiaryByUserIDAndID conn { NoteId = note.Id; UserId = userId }
+                Json.Response.ofJson diary)
+            ctx
+let exportAllDiaries: HttpHandler =
+    fun ctx ->
+        let conn = ctx.getNpgsql ()
+        let userId = getUserId ctx.User
+        let allDiary = Diary.ListDiaryByUserID conn userId
+        Json.Response.ofJson allDiary ctx
