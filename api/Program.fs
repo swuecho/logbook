@@ -156,7 +156,6 @@ webHost [||] {
           post "/api/export_json" Note.exportDiary
           post "/api/export_md" Note.exportDiaryMarkdown
           get "/api/export_all" Note.exportAllDiaries
-          get "/api/random-word" Word.getRandomWord 
         ]
 
     use_middleware serveVueFiles
