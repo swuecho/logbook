@@ -125,17 +125,7 @@ let createNewUser conn email password =
           IsSuperuser = false }
 
     let authUser = AuthUser.CreateAuthUser conn newUser
-
-    let role = "user"
-    let jwtKey = Util.getEnvVar "JWT_SECRET"
-    let audience = Util.getEnvVar "JWT_AUDIENCE"
-
-
-    let issuer = "logbook-swuecho.github.com"
-
-    let jwt = Token.generateToken authUser.Id role jwtKey audience issuer
-
-    jwt
+    authUser
 
 
 let login: HttpHandler =
@@ -145,6 +135,11 @@ let login: HttpHandler =
                 let conn = ctx.getNpgsql ()
                 let email = login.Username
                 let password = login.Password
+                let jwtAudienceName = "logbook"
+                let secret = JwtSecrets.GetJwtSecret conn jwtAudienceName
+                let jwtKey = secret.Secret
+                let audience = secret.Audience
+                let issuer = "logbook-swuecho.github.com"
                 // try get user if not exist create one
                 if AuthUser.CheckUserExists conn email then
                     let user = AuthUser.GetUserByEmail conn email
@@ -153,15 +148,9 @@ let login: HttpHandler =
                     let passwordMatches = Auth.validatePassword password hash
                     // check if user is admin
                     let role = if user.IsSuperuser then "admin" else "user"
-                    let jwtAudienceName = "logbook"
-                    let secret = JwtSecrets.GetJwtSecret conn jwtAudienceName
-                    let jwtKey = secret.Secret
-                    let audience = secret.Audience
-                    let issuer = "logbook-swuecho.github.com"
 
                     if passwordMatches then
                         let jwt = Token.generateToken user.Id role jwtKey audience issuer
-
                         Json.Response.ofJson jwt
                     else
                         // return failure
@@ -170,8 +159,10 @@ let login: HttpHandler =
                             {| code = HttpStatusCode.Unauthorized
                                message = "Login failed. password or email is wrong" |}
                 else
-                    let jwt = createNewUser conn email password
-                    Json.Response.ofJson jwt)
+                    let authUser = createNewUser conn email password
+                    let jwt = Token.generateToken authUser.Id "user" jwtKey audience issuer
+                    Json.Response.ofJson jwt
+            ) 
             ctx
 
 let logout: HttpHandler =
@@ -211,3 +202,19 @@ let listDiaryIds: HttpHandler =
         let userId = getUserId ctx.User
         let diaryIds = Diary.ListDiaryIDByUserID conn userId 
         Json.Response.ofJson diaryIds ctx
+
+let exportDiary: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (note: {| Id: string |}) ->
+                let conn = ctx.getNpgsql ()
+                let userId = getUserId ctx.User
+                let diary = Diary.DiaryByUserIDAndID conn { NoteId = note.Id; UserId = userId }
+                Json.Response.ofJson diary)
+            ctx
+let exportAllDiaries: HttpHandler =
+    fun ctx ->
+        let conn = ctx.getNpgsql ()
+        let userId = getUserId ctx.User
+        let allDiary = Diary.ListDiaryByUserID conn userId
+        Json.Response.ofJson allDiary ctx

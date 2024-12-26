@@ -76,7 +76,7 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getAudience () =
         match Util.getEnvVar "JWT_AUDIENCE" with
         | null -> 
-            let defaultAudience = "http://localhost:5000"
+            let defaultAudience = generateRandomKey()
             printfn "Warning: JWT_AUDIENCE not set. Using default audience: %s" defaultAudience
             defaultAudience
         | aud -> aud
@@ -153,6 +153,8 @@ webHost [||] {
           get "/api/diary/{id}" Note.noteByIdPartDebug
           put "/api/diary/{id}" Note.addNotePart
           get "/api/todo"  Note.todoListsHandler
+          post "/api/export/{id}" Note.exportDiary
+          get "/api/export" Note.exportAllDiaries
           get "/api/random-word" Word.getRandomWord 
         ]
 
