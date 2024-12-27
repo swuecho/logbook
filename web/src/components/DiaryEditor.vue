@@ -62,6 +62,7 @@ const mutation = useMutation({
     // 
     // Then use it here:
     queryClient.invalidateQueries({ queryKey: ['todoContent'] });
+    queryClient.invalidateQueries({ queryKey: ['MdContent',props.date] });
   },
   onError: (error) => {
     loading.value = false;
