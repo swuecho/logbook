@@ -8,7 +8,7 @@ tag:
 	git push origin tag release-v$(version)
 
 build:
-	docker build -t $(local_registry)/notepad:$(version) .
+	docker build -t $(local_registry)/notepad:$(version) 
 	docker push $(local_registry)/notepad:$(version)
 
 push:

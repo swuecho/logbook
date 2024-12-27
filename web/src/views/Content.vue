@@ -5,29 +5,23 @@
         <Icon :icon="icons.homeIcon" height="28" />
       </div>
     </el-header>
-    <el-main>
-      <div class="content">
-        <div v-for="(column, row_idx) in this.summaries" :key="row_idx">
-          <el-row>
-            <el-col :span="12" v-for="(item, col_index) in column" :key="col_index">
-              <el-card class="box-card">
-                <div slot="header">
-                  <span>
-                    <a :href="'/view?date=' + item.id">{{ item.id }}</a>
-                  </span>
-                </div>
-                <vue-word-cloud style="
+    <div class="grid-container">
+      <div v-for="(item, row_idx) in this.summaries" :key="row_idx">
+        <el-card>
+          <div slot="header">
+            <span>
+              <a :href="'/view?date=' + item.id">{{ item.id }}</a>
+            </span>
+          </div>
+          <vue-word-cloud style="
         height: 240px;
         width: 300px;
       " :words="item.note" :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
-                  font-family="Roboto" />
-                <div></div>
-              </el-card>
-            </el-col>
-          </el-row>
-        </div>
+            font-family="Roboto" />
+          <div></div>
+        </el-card>
       </div>
-    </el-main>
+    </div>
   </el-container>
 </template>
 
@@ -74,14 +68,12 @@ export default {
     },
     processNotes(notes) {
       const processedNotes = notes
-        .map(note_list => 
-          note_list.map(note => ({
-            id: note.noteId,
-            note: this.dict_to_lol(note.note)
-          }))
+        .map(note =>
+        ({
+          id: note.noteId,
+          note: this.dict_to_lol(note.note)
+        })
         );
-      console.log('Original notes:', notes);
-      console.log('Processed notes:', processedNotes);
       this.summaries = processedNotes;
     }
   },
@@ -90,17 +82,14 @@ export default {
 </script>
 
 <style scoped>
-.xcontent {
-  margin: 10% auto;
-  text-align: center;
-}
-
-.el-row {
-  margin-bottom: 20px;
-}
-
-.box-card {
-  width: 80%;
+.grid-container {
+  display: grid;
+  gap: 20px;
+  /* Adjust as needed for spacing between cards */
+  padding: 10px;
+  /* Optional padding around the grid */
+  /* Initial layout for larger screens (max 3 columns) */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 code {
