@@ -23,7 +23,6 @@ let rec getContent (jv: JsonValue) =
 
 let getTextFromNote (note: string) =
     let content = sprintf "%s" note
-
     match JsonValue.TryParse content with
     | Some(json) -> getContent json
     | None -> content
@@ -160,14 +159,15 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
             |> Seq.map tipTapDocToMarkdown
             |> String.concat ""
         prefix + content
-    | _ -> LINEBREAK 
+    | _ -> 
+        printfn "Unknown type: %s" (element.GetProperty("type").GetString())
+        LINEBREAK 
 
 // Function to convert a TipTap doc JSON to Markdown
 let tipTapDocJsonToMarkdown (json: string) =
     try
         let jsonDocument = JsonDocument.Parse(json)
         let root = jsonDocument.RootElement
-        printfn "%A" root
         tipTapDocToMarkdown root
     with ex ->
         printfn "%A" ex
