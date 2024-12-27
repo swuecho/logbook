@@ -2,6 +2,7 @@ module TipTap
 open System.Text.Json
 open FSharp.Data
 
+let LINEBREAK = "\n"
 
 let rec getContent (jv: JsonValue) =
     let extractProperty (x, y) =
@@ -22,7 +23,6 @@ let rec getContent (jv: JsonValue) =
 
 let getTextFromNote (note: string) =
     let content = sprintf "%s" note
-
     match JsonValue.TryParse content with
     | Some(json) -> getContent json
     | None -> content
@@ -94,39 +94,62 @@ let constructTipTapDoc
 
                yield! todoList.todoList |] |}
 
+(*
+
+
+*)
 let rec tipTapDocToMarkdown (element: JsonElement) =
     match element.GetProperty("type").GetString() with
     | "doc" ->
-        element.GetProperty("content")
-        |> _.EnumerateArray()
-        |> Seq.map tipTapDocToMarkdown
-        |> String.concat "\n"
-    | "heading" ->
-        let heading =
-            element.GetProperty("content")
-            |> _.EnumerateArray()
+        match element.TryGetProperty("content") with
+        | true, contentProperty ->
+            contentProperty.EnumerateArray()
             |> Seq.map tipTapDocToMarkdown
-            |> String.concat ""
-        let level = element.GetProperty("attrs").GetProperty("level").GetInt32()
-        let prefix = String.replicate level "#"
-        //let marks = element.GetProperty("marks")
-        // let marksStr =
-        //     marks
-        //     |> _.EnumerateArray()
-        //     |> Seq.map (fun mark -> mark.GetProperty("type").GetString())
-        //   |> String.concat " "
-        "\n" + prefix + " " + heading + "\n"
+            |> String.concat LINEBREAK
+        | false, _ -> ""
+    | "heading" ->
+        match element.TryGetProperty("content") with
+        | false, _ -> LINEBREAK
+        | true, content ->
+            let heading =
+                content 
+                |> _.EnumerateArray()
+                |> Seq.map tipTapDocToMarkdown
+                |> String.concat ""
+            let level = element.GetProperty("attrs").GetProperty("level").GetInt32()
+            let prefix = String.replicate level "#"
+            //let marks = element.GetProperty("marks")
+            // let marksStr =
+            //     marks
+            //     |> _.EnumerateArray()
+            //     |> Seq.map (fun mark -> mark.GetProperty("type").GetString())
+            //   |> String.concat " "
+            LINEBREAK + prefix + " " + heading + LINEBREAK
     | "paragraph" ->
-        element.GetProperty("content")
-        |> _.EnumerateArray()
-        |> Seq.map tipTapDocToMarkdown
-        |> String.concat ""
-    | "text" -> element.GetProperty("text").GetString()
+        match element.TryGetProperty("content") with
+        | true, contentProperty -> 
+            contentProperty.EnumerateArray()
+            |> Seq.map tipTapDocToMarkdown
+            |> String.concat LINEBREAK
+        | false, _ -> LINEBREAK
+    | "code_block" ->
+        match element.TryGetProperty("content") with
+        | true, contentProperty -> 
+            let code_text = 
+                contentProperty.EnumerateArray()
+                |> Seq.map tipTapDocToMarkdown
+                |> String.concat LINEBREAK
+            "```" + LINEBREAK + code_text + LINEBREAK + "```"
+        | false, _ -> "```" + LINEBREAK + "```"
+    | "text" ->
+        match element.TryGetProperty("text") with 
+        | false, _ -> LINEBREAK 
+        | true, text -> text.GetString()
     | "todo_list" ->
         element.GetProperty("content")
         |> _.EnumerateArray()
         |> Seq.map tipTapDocToMarkdown
-        |> String.concat "\n"
+        |> String.concat LINEBREAK
     | "todo_item" ->
         let doneAttr = element.GetProperty("attrs").GetProperty("done").GetBoolean()
         let prefix = if doneAttr then "- [x] " else "- [ ] "
@@ -136,7 +159,9 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
             |> Seq.map tipTapDocToMarkdown
             |> String.concat ""
         prefix + content
-    | _ -> ""
+    | _ -> 
+        printfn "Unknown type: %s" (element.GetProperty("type").GetString())
+        LINEBREAK 
 
 // Function to convert a TipTap doc JSON to Markdown
 let tipTapDocJsonToMarkdown (json: string) =
