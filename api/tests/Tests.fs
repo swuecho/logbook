@@ -13,7 +13,6 @@ let ``My test2`` () =
         "在数学和计算机科学之中，算法（algorithm）为任何良定义的具体计算步骤的一个序列，常用于计算、数据处理和自动推理。精确而言，算法是一个表示为有限长列表的有效方法。算法应包含清晰定义的指令用于计算函数"
 
     let seq = Jieba.freqs ins
-    printfn "%A" seq
     Assert.True(true)
 //Assert.True(seq)
 
@@ -342,7 +341,6 @@ let ``tipTapDocJsonToMarkdown test2`` () =
 - [x] TODO2
 - [x] TODO3"""
     let result = TipTap.tipTapDocJsonToMarkdown json
-    printfn "%s" result
     Assert.Equal(expectedMarkdown, result)
 
 [<Fact>]
@@ -350,11 +348,8 @@ let ``tipTapDocJsonToMarkdown test3`` () =
     // current dir
     let dir = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "data")
     let diaryJsonText = System.IO.File.ReadAllText(System.IO.Path.Combine(dir, "20241224.json"))
-    printfn "%s" diaryJsonText
     let diaryContent = diaryJsonText |> System.Text.Json.JsonDocument.Parse 
-    printfn "%A" diaryContent
     let json = diaryContent.RootElement.GetProperty("note").ToString()
-    printfn "%s" json
 
     let expectedMarkdown =
         """```
@@ -378,5 +373,4 @@ eval $(opam env --switch=5.2.1)
 https://stackoverflow.com/questions/40898292/how-to-install-a-specific-version-of-ocaml-compiler-with-opam"""
 
     let result = tipTapDocJsonToMarkdown json
-    printfn "%s" result
     Assert.Equal(expectedMarkdown, result)
