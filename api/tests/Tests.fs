@@ -1,8 +1,6 @@
 module Tests
 
-open System
 open Xunit
-open TipTap
 
 [<Fact>]
 let ``My test`` () =
