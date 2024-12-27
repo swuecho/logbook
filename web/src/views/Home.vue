@@ -21,10 +21,16 @@
       <el-dialog :visible="dialogVisible" @close="closeModal">
         <Todo></Todo>
       </el-dialog>
+      <el-dialog :visible="dialogVisibleMd" @close="closeModalMd">
+        <MDView :noteId="date"></MDView>
+      </el-dialog>
       <div class="right-corner">
-         <OnlineStatusIndicator />
+         <OnlineStatusIndicator />  
+        <div @click="openModalMd">
+          <Icon icon="material-symbols:markdown-copy-outline" />
+        </div>
         <div @click="openModal">
-          <Icon icon="streamline:task-list" />
+          <Icon icon="ri:todo-line" />
         </div>
         <div>
         <a href="/content">
@@ -46,13 +52,13 @@ import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import DiaryEditor from "@/components/DiaryEditor";
 import Todo from '@/components/Todo.vue';
+import MDView from '@/components/MDView.vue';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
-
-
 
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
 const dialogVisible = ref(false)
+const dialogVisibleMd = ref(false)
 
 onMounted(() => {
   // eslint-disable-next-line no-unused-vars
@@ -94,6 +100,13 @@ function openModal() {
 }
 function closeModal() {
   dialogVisible.value = false
+}
+
+function openModalMd() {
+  dialogVisibleMd.value = true
+}
+function closeModalMd() {
+  dialogVisibleMd.value = false
 }
 
 </script>

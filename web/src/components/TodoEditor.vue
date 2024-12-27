@@ -7,14 +7,14 @@
 
 <script setup>
 defineProps({
-  content: {
-    type: [String, Object],
-    required: true
-  },
-  extensions: {
-    type: Array,
-    required: true
-  }
+        content: {
+                type: [String, Object],
+                required: true
+        },
+        extensions: {
+                type: Array,
+                required: true
+        }
 });
 </script>
 
@@ -35,8 +35,6 @@ defineProps({
 
 
 pre code {
-  font-family: "Fira Code", Courier, Monaco, monospace;
+        font-family: "Fira Code", Courier, Monaco, monospace;
 }
-
-
 </style>
