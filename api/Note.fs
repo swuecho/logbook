@@ -49,16 +49,13 @@ let noteAllPart: HttpHandler =
         // refresh note summary
         let userId = getUserId ctx.User
         let conn = ctx.getNpgsql ()
-        let cols = 2
 
         Request.mapRoute
             (ignore)
             (fun _ ->
                 Jieba.refreshSummary conn userId
-
                 Summary.GetSummaryByUserId conn userId
                 |> List.filter (fun x -> x.Note.Length > 2)
-                |> List.chunkBySize cols
                 |> Json.Response.ofJson)
             ctx
 
