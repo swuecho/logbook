@@ -109,20 +109,23 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
             |> String.concat LINEBREAK
         | false, _ -> ""
     | "heading" ->
-        let heading =
-            element.GetProperty("content")
-            |> _.EnumerateArray()
-            |> Seq.map tipTapDocToMarkdown
-            |> String.concat ""
-        let level = element.GetProperty("attrs").GetProperty("level").GetInt32()
-        let prefix = String.replicate level "#"
-        //let marks = element.GetProperty("marks")
-        // let marksStr =
-        //     marks
-        //     |> _.EnumerateArray()
-        //     |> Seq.map (fun mark -> mark.GetProperty("type").GetString())
-        //   |> String.concat " "
-        LINEBREAK + prefix + " " + heading + LINEBREAK
+        match element.TryGetProperty("content") with
+        | false, _ -> LINEBREAK
+        | true, content ->
+            let heading =
+                content 
+                |> _.EnumerateArray()
+                |> Seq.map tipTapDocToMarkdown
+                |> String.concat ""
+            let level = element.GetProperty("attrs").GetProperty("level").GetInt32()
+            let prefix = String.replicate level "#"
+            //let marks = element.GetProperty("marks")
+            // let marksStr =
+            //     marks
+            //     |> _.EnumerateArray()
+            //     |> Seq.map (fun mark -> mark.GetProperty("type").GetString())
+            //   |> String.concat " "
+            LINEBREAK + prefix + " " + heading + LINEBREAK
     | "paragraph" ->
         match element.TryGetProperty("content") with
         | true, contentProperty -> 
@@ -139,7 +142,10 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
                 |> String.concat LINEBREAK
             "```" + LINEBREAK + code_text + LINEBREAK + "```"
         | false, _ -> "```" + LINEBREAK + "```"
-    | "text" -> element.GetProperty("text").GetString()
+    | "text" ->
+        match element.TryGetProperty("text") with 
+        | false, _ -> LINEBREAK 
+        | true, text -> text.GetString()
     | "todo_list" ->
         element.GetProperty("content")
         |> _.EnumerateArray()
@@ -154,7 +160,7 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
             |> Seq.map tipTapDocToMarkdown
             |> String.concat ""
         prefix + content
-    | _ -> ""
+    | _ -> LINEBREAK 
 
 // Function to convert a TipTap doc JSON to Markdown
 let tipTapDocJsonToMarkdown (json: string) =
