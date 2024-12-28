@@ -4,7 +4,6 @@
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
         @onInit="onInit"></el-tiptap>
     </div>
-    <Icon v-if="isLoading || isSaving" icon="line-md:loading-alt-loop" />
   </div>
 </template>
 
@@ -29,33 +28,18 @@ import { saveNote, fetchNote } from '@/services/note.ts';
 import { useQueryClient } from '@tanstack/vue-query';
 const queryClient = useQueryClient();
 
-// import axios from '@/axiosConfig.js';
-// const saveNote = async (noteObj) => {
-//   const response = await axios.put(`/api/diary/${props.date}`, noteObj);
-//   // Introduce a 2-second delay
-//   await new Promise(resolve => setTimeout(resolve, 2000));
-//   return response.data;
-// }
-
-// const fetchNote = async () => {
-//   const response = await axios.get(`/api/diary/${props.date}`);
-//   // Introduce a 2-second delay
-//   await new Promise(resolve => setTimeout(resolve, 2000));
-//   return response.data;
-// }
-
 const props = defineProps({
   date: String
 });
-
 
 const extensions = createExtensions();
 
 const content = ref(null);
 const noteJsonRef = ref(null);
 
-const { data: noteData, isLoading } = useQuery({
+const { data: noteData } = useQuery({
   queryKey: ['diaryContent', props.date],
+  networkMode: 'always',
   queryFn: () => fetchNote(props.date),
   // TODO: fix the onError removed from the useQuery issue
   onError: (error) => {
@@ -65,7 +49,7 @@ const { data: noteData, isLoading } = useQuery({
     }
     console.error('Error fetching diary:', error);
   },
-  staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes
+  staleTime: 1000 * 60 * 5,
 });
 
 
@@ -82,8 +66,9 @@ const onInit = async ({ editor }) => {
 };
 
 
-const { mutate: updateNote, isLoading: isSaving } = useMutation({
+const { mutate: updateNote } = useMutation({
   mutationFn: saveNote,
+  networkMode: 'always',
   onSuccess: (data) => {
     console.log(data);
     // Invalidate the todoContent query
