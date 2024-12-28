@@ -29,67 +29,105 @@ const openDatabase = async () => {
 const requestQueue: QueuedRequest[] = [];
 let isSyncing = false;
 
-// Function to process request queue
+
+// Modified process queue to only process latest state
 const processQueue = async () => {
         if (isSyncing || !navigator.onLine) {
-                return; //  syncing process or offline, wait
+                return;
         }
 
         isSyncing = true;
 
-        while (requestQueue.length > 0) {
-                const request = requestQueue.shift();
-                if (!request) continue;
+        try {
+                // Group requests by noteId and get only the latest one for each note
+                const latestRequests = requestQueue.reduce((acc, curr) => {
+                        if (!acc[curr.noteId] || acc[curr.noteId].timestamp < curr.timestamp) {
+                                acc[curr.noteId] = curr;
+                        }
+                        return acc;
+                }, {} as Record<string, QueuedRequest>);
 
-                try {
-                        const response = await axios({
-                                url: request.url,
-                                method: request.method,
-                                data: request.data
-                        })
-                        if (response.status >= 200 && response.status < 300) {
-                                request.resolve && request.resolve(response.data)
-                        } else {
-                                console.error('request failed with status: ' + response.status)
-                                requestQueue.unshift(request); // push back into the queue
-                                request.reject && request.reject('request failed');
-                                break;
+                // Convert back to array and sort by timestamp
+                const processableRequests = Object.values(latestRequests)
+                        .sort((a, b) => a.timestamp - b.timestamp);
+
+                // Clear the queue since we're only processing latest states
+                requestQueue.length = 0;
+
+                // Process each latest request
+                for (const request of processableRequests) {
+                        try {
+                                // Get latest state from IndexedDB
+                                const db = await openDatabase();
+                                const latestNote = await db.get('notes', request.noteId);
+
+                                if (latestNote) {
+                                        // Use the latest note content from IndexedDB instead of queued data
+                                        const response = await axios({
+                                                url: request.url,
+                                                method: request.method,
+                                                data: latestNote
+                                        });
+
+                                        if (response.status >= 200 && response.status < 300) {
+                                                request.resolve && request.resolve(response.data);
+                                        } else {
+                                                console.error('Request failed with status: ' + response.status);
+                                                // Re-queue only the latest state
+                                                requestQueue.push({
+                                                        ...request,
+                                                        data: latestNote,
+                                                        timestamp: Date.now()
+                                                });
+                                                request.reject && request.reject('Request failed');
+                                        }
+                                }
+                        } catch (error) {
+                                console.error("Request failed", error);
+                                // Re-queue the request
+                                requestQueue.push({
+                                        ...request,
+                                        timestamp: Date.now()
+                                });
+                                request.reject && request.reject('Request failed');
                         }
                 }
-                catch (error) {
-                        console.error("request failed", error)
-                        requestQueue.unshift(request);
-                        request.reject && request.reject('request failed');
-                        break;
+        } finally {
+                isSyncing = false;
+                if (requestQueue.length > 0) {
+                        // If there are requests left, retry after a delay
+                        setTimeout(processQueue, 1000);
                 }
-        }
-
-        isSyncing = false;
-        if (requestQueue.length > 0) {
-                // if there are requests left, retry after a short delay
-                setTimeout(processQueue, 1000)
         }
 };
 
 
 const enqueueRequest = (url: string, method: 'PUT' | 'GET', data: any): Promise<any> => {
         return new Promise((resolve, reject) => {
-                requestQueue.push({ url, method, data, resolve, reject });
+                requestQueue.push({
+                        url, method, data,
+                        timestamp: Date.now(),
+                        noteId: data.noteId,
+                        resolve, reject
+                });
                 processQueue();
         });
 
 };
 
-const apiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
+const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
+        try {
+                const response = await axios({ url, method, data });
+                return response.data
+        }
+        catch (error) {
+                throw error
+        }
+}
+
+const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         if (navigator.onLine) {
-                // if online go straight to the network
-                try {
-                        const response = await axios({ url, method, data });
-                        return response.data
-                }
-                catch (error) {
-                        throw error
-                }
+                axiosRequest(url, method, data);
         }
         else {
                 return enqueueRequest(url, method, data);
@@ -103,7 +141,7 @@ const saveNote = async (note: DiaryEntry) => {
         await db.put('notes', note);
 
         // if user online, immediately save to the server
-        return apiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
+        return wraperApiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
 };
 
 const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
@@ -112,7 +150,7 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         let cachedNote = await db.get('notes', noteId);
         if (navigator.onLine) {
                 try {
-                        const response = await apiRequest(`/api/diary/${noteId}`, 'GET', null);
+                        const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
                         if (response) {
                                 cachedNote = response;
                                 db.put('notes', response);

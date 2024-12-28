@@ -7,6 +7,8 @@ export interface QueuedRequest {
         url: string;
         method: 'PUT' | 'GET';
         data: any;
+        noteId: string;
+        timestamp: number,
         resolve?: (value: any) => void;
         reject?: (reason?: any) => void;
 }
