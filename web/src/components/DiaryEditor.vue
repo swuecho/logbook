@@ -20,14 +20,29 @@ import 'codemirror/lib/codemirror.css'; // import base style
 import 'codemirror/mode/xml/xml.js'; // language
 import 'codemirror/addon/selection/active-line.js'; // require active-line.js
 import 'codemirror/addon/edit/closetag.js'; // autoCloseTags
-import { useIsFetching, useIsMutating, useMutation, useQuery } from '@tanstack/vue-query';
+import { useMutation, useQuery } from '@tanstack/vue-query';
 import router from '@/router';
 import { debounce } from 'lodash';
 
-import axios from '@/axiosConfig.js';
+import { saveNote, fetchNote } from '@/services/note.ts';
 
 import { useQueryClient } from '@tanstack/vue-query';
 const queryClient = useQueryClient();
+
+// import axios from '@/axiosConfig.js';
+// const saveNote = async (noteObj) => {
+//   const response = await axios.put(`/api/diary/${props.date}`, noteObj);
+//   // Introduce a 2-second delay
+//   await new Promise(resolve => setTimeout(resolve, 2000));
+//   return response.data;
+// }
+
+// const fetchNote = async () => {
+//   const response = await axios.get(`/api/diary/${props.date}`);
+//   // Introduce a 2-second delay
+//   await new Promise(resolve => setTimeout(resolve, 2000));
+//   return response.data;
+// }
 
 const props = defineProps({
   date: String
@@ -38,15 +53,10 @@ const extensions = createExtensions();
 
 const content = ref(null);
 const noteJsonRef = ref(null);
-const fetchNote = async () => {
-  const response = await axios.get(`/api/diary/${props.date}`);
-  // Introduce a 2-second delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return response.data;
-}
+
 const { data: noteData, isLoading } = useQuery({
   queryKey: ['diaryContent', props.date],
-  queryFn: fetchNote,
+  queryFn: () => fetchNote(props.date),
   // TODO: fix the onError removed from the useQuery issue
   onError: (error) => {
     if (error.response && error.response.status === 401) {
@@ -71,12 +81,6 @@ const onInit = async ({ editor }) => {
   editor.setContent(content.value);
 };
 
-const saveNote = async (noteObj) => {
-  const response = await axios.put(`/api/diary/${props.date}`, noteObj);
-  // Introduce a 2-second delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return response.data;
-}
 
 const { mutate: updateNote, isLoading: isSaving } = useMutation({
   mutationFn: saveNote,

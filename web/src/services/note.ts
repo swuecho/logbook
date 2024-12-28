@@ -1,26 +1,29 @@
 // services/api.ts
-import axios from 'axios';
+import axios from '../axiosConfig.js';
+
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import type { DiaryEntry, QueuedRequest } from '../types.ts';
 
 interface MyDB extends DBSchema {
-    notes: {
-        key: string;
-        value: DiaryEntry;
-        indexes: { 'note_id': string }
-    }
+        notes: {
+                key: string;
+                value: DiaryEntry;
+                indexes: { 'noteId': string }
+        }
 }
 
 let db: IDBPDatabase<MyDB> | null = null;
 
+const DB_NAME = 'logbook-db';
+
 const openDatabase = async () => {
-    if (db) return db;
-    db = await openDB<MyDB>('my-note-app-db', 1, {
-        upgrade(db) {
-            db.createObjectStore('notes', { keyPath: 'note_id' })
-        }
-    });
-    return db;
+        if (db) return db;
+        db = await openDB<MyDB>(DB_NAME, 1, {
+                upgrade(db) {
+                        db.createObjectStore('notes', { keyPath: 'noteId' })
+                }
+        });
+        return db;
 }
 
 const requestQueue: QueuedRequest[] = [];
@@ -28,99 +31,101 @@ let isSyncing = false;
 
 // Function to process request queue
 const processQueue = async () => {
-  if (isSyncing || !navigator.onLine) {
-    return; //  syncing process or offline, wait
-  }
+        if (isSyncing || !navigator.onLine) {
+                return; //  syncing process or offline, wait
+        }
 
-  isSyncing = true;
+        isSyncing = true;
 
-  while (requestQueue.length > 0) {
-    const request = requestQueue.shift();
-    if (!request) continue;
-    
-    try {
-        const response = await axios({
-            url: request.url,
-            method: request.method,
-            data: request.data
-            })
-            if (response.status >= 200 && response.status < 300) {
-                request.resolve && request.resolve(response.data)
-            } else {
-                console.error('request failed with status: ' + response.status)
-                requestQueue.unshift(request); // push back into the queue
-                request.reject && request.reject('request failed');
-                break;
-            }
-    }
-    catch (error){
-       console.error("request failed", error)
-        requestQueue.unshift(request);
-       request.reject && request.reject('request failed');
-       break;
-    }
-  }
+        while (requestQueue.length > 0) {
+                const request = requestQueue.shift();
+                if (!request) continue;
 
-  isSyncing = false;
-  if (requestQueue.length > 0) {
-      // if there are requests left, retry after a short delay
-    setTimeout(processQueue, 1000)
-  }
+                try {
+                        const response = await axios({
+                                url: request.url,
+                                method: request.method,
+                                data: request.data
+                        })
+                        if (response.status >= 200 && response.status < 300) {
+                                request.resolve && request.resolve(response.data)
+                        } else {
+                                console.error('request failed with status: ' + response.status)
+                                requestQueue.unshift(request); // push back into the queue
+                                request.reject && request.reject('request failed');
+                                break;
+                        }
+                }
+                catch (error) {
+                        console.error("request failed", error)
+                        requestQueue.unshift(request);
+                        request.reject && request.reject('request failed');
+                        break;
+                }
+        }
+
+        isSyncing = false;
+        if (requestQueue.length > 0) {
+                // if there are requests left, retry after a short delay
+                setTimeout(processQueue, 1000)
+        }
 };
 
 
-const enqueueRequest = (url:string, method: 'PUT' | 'GET', data:any) : Promise<any> => {
-    return new Promise((resolve, reject) => {
-        requestQueue.push({ url, method, data, resolve, reject });
-        processQueue();
-    });
+const enqueueRequest = (url: string, method: 'PUT' | 'GET', data: any): Promise<any> => {
+        return new Promise((resolve, reject) => {
+                requestQueue.push({ url, method, data, resolve, reject });
+                processQueue();
+        });
 
 };
 
-const apiRequest = async (url:string, method: 'PUT' | 'GET', data:any) => {
-    if(navigator.onLine){
-        // if online go straight to the network
-        try {
-            const response = await axios({url, method, data});
-            return response.data
+const apiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
+        if (navigator.onLine) {
+                // if online go straight to the network
+                try {
+                        const response = await axios({ url, method, data });
+                        return response.data
+                }
+                catch (error) {
+                        throw error
+                }
         }
-        catch (error) {
-            throw error
+        else {
+                return enqueueRequest(url, method, data);
         }
-    }
-    else {
-        return enqueueRequest(url, method, data);
-    }
 };
 
 
 const saveNote = async (note: DiaryEntry) => {
-    const db = await openDatabase()
-    await db.put('notes', note);
+        const db = await openDatabase()
+        console.log("saving note", note);
+        await db.put('notes', note);
 
-    // if user online, immediately save to the server
-    return apiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
+        // if user online, immediately save to the server
+        return apiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
 };
 
-const fetchNote = async (noteId: string) : Promise<DiaryEntry | undefined> => {
-    const db = await openDatabase();
-    let cachedNote = await db.get('notes', noteId);
-    if (navigator.onLine) {
-        try{
-            const response = await apiRequest(`/api/diary/${noteId}`, 'GET', null);
-             if (response){
-                 cachedNote = response;
-                db.put('notes', response);
-             }
-        } catch (error) {
-            console.log("fetch note failed, using local", error);
+const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
+        console.log("fetching note", noteId);
+        const db = await openDatabase();
+        let cachedNote = await db.get('notes', noteId);
+        if (navigator.onLine) {
+                try {
+                        const response = await apiRequest(`/api/diary/${noteId}`, 'GET', null);
+                        if (response) {
+                                cachedNote = response;
+                                db.put('notes', response);
+                        }
+                } catch (error) {
+                        console.log("fetch note failed, using local", error);
+                }
         }
-    }
-    return cachedNote
+        return cachedNote
 };
 
 window.addEventListener('online', () => {
-  processQueue(); //process the queue on network status change
+        processQueue(); //process the queue on network status change
 });
 
 export { saveNote, fetchNote };
