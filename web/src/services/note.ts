@@ -73,6 +73,8 @@ const processQueue = async () => {
                                                 request.resolve && request.resolve(response.data);
                                         } else {
                                                 console.error('Request failed with status: ' + response.status);
+                                                console.log('re-queueing request', request);
+
                                                 // Re-queue only the latest state
                                                 requestQueue.push({
                                                         ...request,
@@ -85,6 +87,7 @@ const processQueue = async () => {
                         } catch (error) {
                                 console.error("Request failed", error);
                                 // Re-queue the request
+                                console.log('re-queueing request', request);
                                 requestQueue.push({
                                         ...request,
                                         timestamp: Date.now()
@@ -128,6 +131,13 @@ const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
 const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         if (navigator.onLine) {
                 axiosRequest(url, method, data);
+                // try {
+                //         axiosRequest(url, method, data);
+
+                // } catch (error) {
+                //         console.error("Request failed", error);
+                //         return enqueueRequest(url, method, data);
+                // }
         }
         else {
                 return enqueueRequest(url, method, data);
