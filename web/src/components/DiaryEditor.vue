@@ -34,7 +34,7 @@ const props = defineProps({
 
 const extensions = createExtensions();
 
-const content = ref(null);
+const content = ref({});
 const noteJsonRef = ref(null);
 
 const { data: noteData } = useQuery({
