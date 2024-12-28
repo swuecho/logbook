@@ -370,5 +370,5 @@ eval $(opam env --switch=5.2.1)
 
 https://stackoverflow.com/questions/40898292/how-to-install-a-specific-version-of-ocaml-compiler-with-opam"""
 
-    let result = tipTapDocJsonToMarkdown json
+    let result = TipTap.tipTapDocJsonToMarkdown json
     Assert.Equal(expectedMarkdown, result)
