@@ -39,7 +39,6 @@ const noteJsonRef = ref(null);
 
 const { data: noteData } = useQuery({
   queryKey: ['diaryContent', props.date],
-  networkMode: 'always',
   queryFn: () => fetchNote(props.date),
   // TODO: fix the onError removed from the useQuery issue
   onError: (error) => {
