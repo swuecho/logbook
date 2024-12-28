@@ -36,7 +36,7 @@ jobs:
       - name: Build logbook image
         run: |
           docker build . --file Dockerfile -t ghcr.io/swuecho/logbook:${GITHUB_SHA}
-          docker tag ghcr.io/swuecho/logbook:${GITHUB_REF#refs/tags/} echowuhao/logbook:latest
+          docker tag ghcr.io/swuecho/logbook:${GITHUB_SHA} echowuhao/logbook:latest
         working-directory: api
       - name: docker compose
         run: docker compose up -d
