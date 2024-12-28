@@ -80,16 +80,19 @@ const enqueueRequest = (url: string, method: 'PUT' | 'GET', data: any): Promise<
 
 };
 
-const apiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
+const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
+        try {
+                const response = await axios({ url, method, data });
+                return response.data
+        }
+        catch (error) {
+                throw error
+        }
+}
+
+const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         if (navigator.onLine) {
-                // if online go straight to the network
-                try {
-                        const response = await axios({ url, method, data });
-                        return response.data
-                }
-                catch (error) {
-                        throw error
-                }
+                axiosRequest(url, method, data);
         }
         else {
                 return enqueueRequest(url, method, data);
@@ -103,7 +106,7 @@ const saveNote = async (note: DiaryEntry) => {
         await db.put('notes', note);
 
         // if user online, immediately save to the server
-        return apiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
+        return wraperApiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
 };
 
 const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
@@ -112,7 +115,7 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         let cachedNote = await db.get('notes', noteId);
         if (navigator.onLine) {
                 try {
-                        const response = await apiRequest(`/api/diary/${noteId}`, 'GET', null);
+                        const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
                         if (response) {
                                 cachedNote = response;
                                 db.put('notes', response);
