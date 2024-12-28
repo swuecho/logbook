@@ -49,3 +49,12 @@ jobs:
           docker tag ghcr.io/swuecho/logbook:${GITHUB_REF#refs/tags/} echowuhao/logbook:latest
           docker push echowuhao/logbook:${GITHUB_REF#refs/tags/}
           docker push echowuhao/logbook:latest
+
+      - name: docker compose
+        run: docker compose up -d
+
+      - name: show docker ps
+        run: docker compose ps
+
+      - name: show docker logs
+        run: docker compose logs
