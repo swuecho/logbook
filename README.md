@@ -8,16 +8,8 @@ https://diary-log.fly.dev/ (try with a random email is ok)
 
 # How to depoy
 
-## set env var
-
 ```sh
-DATABASE_URL: postgresql://etc
+# check docker-compose.yaml
+docker-compose up -d
 ```
 
-## check docker-compose.yaml
-
-docker-compose up -d
-
-# Develop
-
-set env var DATABASE_URL
