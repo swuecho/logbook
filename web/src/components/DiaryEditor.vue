@@ -4,7 +4,7 @@
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
         @onInit="onInit"></el-tiptap>
     </div>
-    <Icon v-if="loadingRef" icon="line-md:loading-alt-loop" />
+    <Icon v-if="isLoading || isSaving" icon="line-md:loading-alt-loop" />
   </div>
 </template>
 
@@ -38,17 +38,48 @@ const extensions = createExtensions();
 
 const content = ref(null);
 const noteJsonRef = ref(null);
-//const loadingRef = computed(() => useIsFetching() + useIsMutating());
-const loadingRef = ref(false);
-
-const mutation = useMutation({
-  mutationFn: async () => {
-    const response = await axios.put(`/api/diary/${props.date}`, {
-      noteId: props.date,
-      note: JSON.stringify(noteJsonRef.value)
-    });
-    return response.data;
+const fetchNote = async () => {
+  const response = await axios.get(`/api/diary/${props.date}`);
+  // Introduce a 2-second delay
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return response.data;
+}
+const { data: noteData, isLoading } = useQuery({
+  queryKey: ['diaryContent', props.date],
+  queryFn: fetchNote,
+  // TODO: fix the onError removed from the useQuery issue
+  onError: (error) => {
+    if (error.response && error.response.status === 401) {
+      // Use the correct router method in the Vue 3 setup
+      router.push({ name: 'login' });
+    }
+    console.error('Error fetching diary:', error);
   },
+  staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes
+});
+
+
+watch(noteData, (newData) => {
+  if (newData) {
+    const noteObj = JSON.parse(newData.note);
+    content.value = noteObj;
+  }
+});
+
+
+const onInit = async ({ editor }) => {
+  editor.setContent(content.value);
+};
+
+const saveNote = async (noteObj) => {
+  const response = await axios.put(`/api/diary/${props.date}`, noteObj);
+  // Introduce a 2-second delay
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return response.data;
+}
+
+const { mutate: updateNote, isLoading: isSaving } = useMutation({
+  mutationFn: saveNote,
   onSuccess: (data) => {
     console.log(data);
     // Invalidate the todoContent query
@@ -78,7 +109,11 @@ const mutation = useMutation({
 const onUpdate = (output, options) => {
   const { getJSON } = options;
   noteJsonRef.value = getJSON();
-  mutation.mutate();
+  updateNote(
+    {
+      noteId: props.date,
+      note: JSON.stringify(noteJsonRef.value),
+    });
 };
 
 const debouncedOnUpdate = debounce(function (output, options) {
@@ -86,31 +121,7 @@ const debouncedOnUpdate = debounce(function (output, options) {
 }, 500)
 
 
-const { data: noteData, error, isLoading } = useQuery({
-  queryKey: ['diaryContent', props.date],
-  queryFn: async () => {
-    const response = await axios.get(`/api/diary/${props.date}`);
-    return response.data;
-  },
-  onError: (error) => {
-    console.log(error);
-    if (error.response && error.response.status === 401) {
-      router.push({ name: 'login' });
-    }
-    console.error('Error fetching diary content:', error);
-  }
-});
 
-watch(noteData, (newData) => {
-  if (newData) {
-    const noteObj = JSON.parse(newData.note);
-    content.value =  noteObj;
-  }
-});
-
-const onInit = async ({ editor }) => {
-  editor.setContent(content.value);
-};
 </script>
 
 <style scoped>
