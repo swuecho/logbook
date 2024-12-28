@@ -33,6 +33,13 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
         working-directory: api
+
+      - name: run unit tests
+        run: |
+          dotnet restore
+          dotnet test
+          
+        working-directory: api/tests
       - name: Build logbook image
         run: |
           docker build . --file Dockerfile -t ghcr.io/swuecho/logbook:${GITHUB_SHA}
