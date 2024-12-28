@@ -137,7 +137,8 @@ const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) =
 
 const saveNote = async (note: DiaryEntry) => {
         const db = await openDatabase()
-        console.log("saving note", note);
+        console.log("saving note", note.noteId);
+        console.log(JSON.parse(note.note))
         await db.put('notes', note);
 
         // if user online, immediately save to the server
