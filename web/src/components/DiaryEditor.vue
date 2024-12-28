@@ -4,8 +4,6 @@
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
         @onInit="onInit"></el-tiptap>
     </div>
-    {{ date }}
-    {{ content }}
   </div>
 </template>
 
