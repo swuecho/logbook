@@ -1,8 +1,6 @@
 <template>
   <div class="content">
     <div class="nav">
-          
-
       {{ time }}
       <div class="date-nav">
         <div @click="navigateDate(-1)" class="icon-container">
@@ -25,7 +23,7 @@
         <MDView :noteId="date"></MDView>
       </el-dialog>
       <div class="right-corner">
-         <OnlineStatusIndicator />  
+        <OnlineStatusIndicator />
         <div @click="openModalMd">
           <Icon icon="material-symbols:markdown-copy-outline" />
         </div>
@@ -33,14 +31,14 @@
           <Icon icon="ri:todo-line" />
         </div>
         <div>
-        <a href="/content">
-          <Icon :icon="tableOfContents" />
-        </a>
-    </div>
+          <a href="/content">
+            <Icon :icon="tableOfContents" />
+          </a>
+        </div>
       </div>
     </div>
     <DiaryEditor :date="date"></DiaryEditor>
-           
+
 
   </div>
 </template>

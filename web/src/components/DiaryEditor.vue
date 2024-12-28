@@ -4,6 +4,8 @@
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
         @onInit="onInit"></el-tiptap>
     </div>
+    {{ date }}
+    {{ content }}
   </div>
 </template>
 
@@ -36,9 +38,9 @@ const extensions = createExtensions();
 
 const content = ref({});
 const noteJsonRef = ref(null);
-
+const queryKey = computed(() => ['diaryContent', props.date]);
 const { data: noteData } = useQuery({
-  queryKey: ['diaryContent', props.date],
+  queryKey: queryKey,
   queryFn: () => fetchNote(props.date),
   // TODO: fix the onError removed from the useQuery issue
   onError: (error) => {
@@ -54,8 +56,12 @@ const { data: noteData } = useQuery({
 
 watch(noteData, (newData) => {
   if (newData) {
-    const noteObj = JSON.parse(newData.note);
-    content.value = noteObj;
+    if (newData.note) {
+      const noteObj = JSON.parse(newData.note);
+      content.value = noteObj;
+    } else {
+      content.value = {};
+    }
   }
 });
 
