@@ -38,7 +38,6 @@ jobs:
         run: |
           dotnet restore
           dotnet test
-          
         working-directory: api/tests
       - name: Build logbook image
         run: |
