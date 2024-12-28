@@ -1,4 +1,7 @@
 {
     "editor.inlayHints.enabled": "offUnlessPressed",
-    "FSharp.dotnetRoot": "/usr/local/bin/"
+    "FSharp.dotnetRoot": "/usr/local/bin/",
+    "dotnetAcquisitionExtension.existingDotnetPath": [
+        {"extensionId": "msazurermtools.azurerm-vscode-tools", "path": "/usr/local/share/dotnet/dotnet"}
+    ] 
 }
