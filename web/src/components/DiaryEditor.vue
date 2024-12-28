@@ -68,8 +68,7 @@ const onInit = async ({ editor }) => {
 const { mutate: updateNote } = useMutation({
   mutationFn: saveNote,
   networkMode: 'always',
-  onSuccess: (data) => {
-    console.log(data);
+  onSuccess: () => {
     // Invalidate the todoContent query
     // Invalidate the todoContent query
     // Note: queryClient is not defined in this scope. 
