@@ -130,7 +130,7 @@ const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
 
 const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         if (navigator.onLine) {
-                axiosRequest(url, method, data);
+                return axiosRequest(url, method, data);
                 // try {
                 //         axiosRequest(url, method, data);
 

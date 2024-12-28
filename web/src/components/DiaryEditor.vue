@@ -4,6 +4,9 @@
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
         @onInit="onInit"></el-tiptap>
     </div>
+    <div v-if="isLoading" class="loading">
+      <Icon icon="eos-icons:bubble-loading" />
+    </div>
   </div>
 </template>
 
@@ -37,7 +40,7 @@ const extensions = createExtensions();
 const content = ref({});
 const noteJsonRef = ref(null);
 const queryKey = computed(() => ['diaryContent', props.date]);
-const { data: noteData } = useQuery({
+const { data: noteData, isLoading } = useQuery({
   queryKey: queryKey,
   queryFn: () => fetchNote(props.date),
   // TODO: fix the onError removed from the useQuery issue
