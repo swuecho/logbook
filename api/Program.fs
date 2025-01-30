@@ -128,17 +128,15 @@ let authService (services: IServiceCollection) =
 
 // let config = configuration [||] { add_env }
 
+// init db
+Database.InitDB.init Database.Config.connStr |> ignore
+
 webHost [||] {
     // Use the specified middleware if the provided predicate is "true".
     use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
 
     use_cors corsPolicyName corsOptions
     add_service authService
-
-    // init db
-    add_service (fun services ->
-        Database.InitDB.init Database.Config.connStr |> ignore
-        services)
 
     // Use authorization middleware. Call before any middleware that depends on users being authenticated.
     // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
