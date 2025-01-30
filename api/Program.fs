@@ -1,7 +1,5 @@
 ﻿open Falco
 open Falco.Routing
-open Falco.HostBuilder
-
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Cors.Infrastructure
@@ -127,30 +125,7 @@ let authService (services: IServiceCollection) =
     services
 
 // let config = configuration [||] { add_env }
-
-webHost [||] {
-    // Use the specified middleware if the provided predicate is "true".
-    use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
-
-    use_cors corsPolicyName corsOptions
-    add_service authService
-
-    // init db
-    add_service (fun services ->
-        Database.InitDB.init Database.Config.connStr |> ignore
-        services)
-
-    // Use authorization middleware. Call before any middleware that depends on users being authenticated.
-    // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
-    use_authentication
-
-    use_middleware stashConnteciton
-
-    // check user is authorized
-    use_middleware authenticateRouteMiddleware
-
-    // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
-    endpoints
+let endpoints = 
         [ post "/api/login" Note.login
           post "/api/logout" Note.logout
           get "/api/diray_ids" Note.listDiaryIds
@@ -163,5 +138,76 @@ webHost [||] {
           post "/api/export_md" Note.exportDiaryMarkdown
           get "/api/export_all" Note.exportAllDiaries ]
 
-    use_middleware serveVueFiles
-}
+let main args =
+        // TODO: clean up this code
+        // get JWT secret from database
+        let connectionString = Database.Config.connStr
+        use pgConn = new Npgsql.NpgsqlConnection(connectionString)
+        pgConn.Open()
+
+        let jwtAudienceName = "logbook"
+
+        let jwtSecret = getOrCreateJwtSecret pgConn jwtAudienceName
+
+        pgConn.Close()
+
+        Database.InitDB.init connectionString |> ignore
+
+        let bldr = WebApplication.CreateBuilder()
+
+        // bldr.Services.Add(ServiceDescriptor.Singleton<Npgsql.NpgsqlConnection>(fun _ -> new Npgsql.NpgsqlConnection(connectionString))) |> ignore
+        bldr.Services.AddCors(corsOptions) |> ignore
+        bldr.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(fun options ->
+                        options.TokenValidationParameters <-
+                        new TokenValidationParameters(
+                            ValidateLifetime = true,
+                            ValidateIssuer = false,
+                            //ValidIssuer = Configuratio["Jwt:Issuer"],
+                            ValidateAudience = true,
+                            ValidAudience = jwtSecret.Audience,
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey =
+                                new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
+                        )) |> ignore
+
+        let wapp = bldr.Build()
+        let isDevelopment = wapp.Environment.EnvironmentName = "Development"
+        
+        wapp.UseIf(isDevelopment, DeveloperExceptionPageExtensions.UseDeveloperExceptionPage)
+            .UseAuthentication()
+            .UseMiddleware([stashConnteciton, authenticateRouteMiddleware])
+            .UseRouting()
+            .UseFalco(endpoints)
+            .UseMiddleware(serveVueFiles)
+            .Run |> ignore
+
+        0
+
+
+// webHost [||] {
+//     // Use the specified middleware if the provided predicate is "true".
+//     use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
+
+//     use_cors corsPolicyName corsOptions
+//     add_service authService
+
+//     // init db
+//     add_service (fun services ->
+//         Database.InitDB.init Database.Config.connStr |> ignore
+//         services)
+
+//     // Use authorization middleware. Call before any middleware that depends on users being authenticated.
+//     // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
+//     use_authentication
+
+//     use_middleware stashConnteciton
+
+//     // check user is authorized
+//     use_middleware authenticateRouteMiddleware
+
+//     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
+//     endpoints    
+
+//     use_middleware serveVueFiles
+// }
