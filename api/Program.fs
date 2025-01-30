@@ -125,6 +125,7 @@ let authService (services: IServiceCollection) =
     services
 
 // let config = configuration [||] { add_env }
+
 let endpoints = 
         [ post "/api/login" Note.login
           post "/api/logout" Note.logout
