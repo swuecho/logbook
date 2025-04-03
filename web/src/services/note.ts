@@ -167,7 +167,17 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
                                 db.put('notes', response);
                         }
                 } catch (error) {
-                        console.log("fetch note failed, using local", error);
+                        console.log("online but server error", error);
+                        // Handle different error statuses
+                        if (error.response) {
+                                const status = error.response.status;
+                                if (status === 401) {
+                                        console.error("Note not found on server");
+                                        throw error;
+                                } 
+                        } else {
+                                console.error("Network error", error);
+                        }
                 }
         }
         return cachedNote
