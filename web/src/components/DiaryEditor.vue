@@ -40,20 +40,20 @@ const extensions = createExtensions();
 const content = ref({});
 const noteJsonRef = ref(null);
 const queryKey = computed(() => ['diaryContent', props.date]);
-const { data: noteData, isLoading } = useQuery({
+const { data: noteData, isLoading, error: getNoteError } = useQuery({
   queryKey: queryKey,
   queryFn: () => fetchNote(props.date),
-  // TODO: fix the onError removed from the useQuery issue
-  onError: (error) => {
-    if (error.response && error.response.status === 401) {
-      // Use the correct router method in the Vue 3 setup
-      router.push({ name: 'login' });
-    }
-    console.error('Error fetching diary:', error);
-  },
+  retry: false,
   staleTime: 1000 * 60 * 5,
 });
 
+watch(getNoteError, (error) => {
+  if (error.response && error.response.status === 401) {
+    // Use the correct router method in the Vue 3 setup
+    router.push({ name: 'login' });
+  }
+  console.error('Error fetching diary:', error);
+})
 
 watch(noteData, (newData) => {
   if (newData) {
