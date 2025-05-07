@@ -161,7 +161,7 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         let cachedNote = await db.get('notes', noteId);
         if (navigator.onLine) {
                 try {
-                        const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
+                const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
                         if (response) {
                                 cachedNote = response;
                                 db.put('notes', response);
