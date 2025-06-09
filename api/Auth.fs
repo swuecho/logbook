@@ -46,3 +46,5 @@ let generateRandomPassword () =
     |> Array.map (fun x -> letters.[int (x) % letters.Length])
     |> Seq.toArray
     |> System.String
+
+

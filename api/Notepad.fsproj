@@ -18,6 +18,7 @@
     <Compile Include="Json.fs" />
     <Compile Include="Summary.fs" />
     <Compile Include="Note.fs" />
+    <Compile Include="JwtService.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
