@@ -18,19 +18,10 @@ module Response =
     jsonOptions.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
 
     let ofJsonTask (taskObj: System.Threading.Tasks.Task<'a>) : HttpHandler =
-        let jsonTaskHandler: HttpHandler =
-            fun ctx ->
-                task {
-                    let! obj = taskObj
-                    use str = new MemoryStream()
-                    do! JsonSerializer.SerializeAsync(str, obj, options = jsonOptions)
-                    let bytes = str.ToArray()
-                    let byteLen = bytes.Length
-                    ctx.Response.ContentLength <- Nullable<int64>(byteLen |> int64)
-                    let! _ = ctx.Response.BodyWriter.WriteAsync(ReadOnlyMemory<byte>(bytes))
-                    return ()
-                }
-
-        Response.withContentType "application/json; charset=utf-8" >> jsonTaskHandler
+        fun ctx ->
+            task {
+                let! obj = taskObj
+                return! Response.ofJsonOptions jsonOptions obj ctx
+            }
 
     let ofJson v = Response.ofJsonOptions jsonOptions v
