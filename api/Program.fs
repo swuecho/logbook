@@ -1,7 +1,5 @@
 ﻿open Falco
 open Falco.Routing
-open Falco.HostBuilder
-
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Cors.Infrastructure
@@ -21,13 +19,11 @@ let corsPolicy (policyBuilder: CorsPolicyBuilder) =
 let corsOptions (options: CorsOptions) =
     options.AddPolicy(corsPolicyName, corsPolicy)
 
-
 let serveVueFiles (app: IApplicationBuilder) =
     app.UseRouting() |> ignore
     app.UseDefaultFiles() |> ignore
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)
-
 
 let stashConnteciton (app: IApplicationBuilder) =
     app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
@@ -96,70 +92,66 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
     | Some secret -> secret
     | None -> createNewSecret ()
 
-
 let authService (services: IServiceCollection) =
     let connectionString = Database.Config.connStr
     use pgConn = new Npgsql.NpgsqlConnection(connectionString)
     pgConn.Open()
 
     let jwtAudienceName = "logbook"
-
     let jwtSecret = getOrCreateJwtSecret pgConn jwtAudienceName
-
     pgConn.Close()
 
-    let _ =
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(fun options ->
-                options.TokenValidationParameters <-
-                    new TokenValidationParameters(
-                        ValidateLifetime = true,
-                        ValidateIssuer = false,
-                        //ValidIssuer = Configuratio["Jwt:Issuer"],
-                        ValidateAudience = true,
-                        ValidAudience = jwtSecret.Audience,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey =
-                            new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
-                    ))
+    services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(fun options ->
+            options.TokenValidationParameters <-
+                new TokenValidationParameters(
+                    ValidateLifetime = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = true,
+                    ValidAudience = jwtSecret.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey =
+                        new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret.Secret))
+                ))
+    |> ignore
 
     services
-
-// let config = configuration [||] { add_env }
 
 // init db
 Database.InitDB.init Database.Config.connStr |> ignore
 
-webHost [||] {
-    // Use the specified middleware if the provided predicate is "true".
-    use_if FalcoExtensions.IsDevelopment DeveloperExceptionPageExtensions.UseDeveloperExceptionPage
+let endpoints =
+    [
+        post "/api/login" Note.login
+        post "/api/logout" Note.logout
+        get "/api/diray_ids" Note.listDiaryIds
+        get "/api/diary" Note.noteAllPart
+        get "/api/diary/{id}" Note.noteByIdPartDebug
+        put "/api/diary/{id}" Note.addNotePart
+        get "/api/todo" Note.todoListsHandler
+        // export api
+        post "/api/export_json" Note.exportDiary
+        post "/api/export_md" Note.exportDiaryMarkdown
+        get "/api/export_all" Note.exportAllDiaries
+    ]
 
-    use_cors corsPolicyName corsOptions
-    add_service authService
+let builder = WebApplication.CreateBuilder()
+builder.Services |> authService |> ignore
+builder.Services.AddCors corsOptions |> ignore
 
-    // Use authorization middleware. Call before any middleware that depends on users being authenticated.
-    // jwt decode add set context.User.Identity.IsAuthenticated true if user is valid
-    use_authentication
+let wapp = builder.Build()
 
-    use_middleware stashConnteciton
+if wapp.Environment.EnvironmentName = "Development" then
+    wapp.UseDeveloperExceptionPage() |> ignore
 
-    // check user is authorized
-    use_middleware authenticateRouteMiddleware
+wapp.UseRouting()
+    .UseCors(corsPolicyName)
+    .UseAuthentication()
+    .Use(stashConnteciton)
+    .Use(authenticateRouteMiddleware)
+    .UseFalco(endpoints)
+    .Use(serveVueFiles)
+    |> ignore
 
-    // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0
-    endpoints
-        [ post "/api/login" Note.login
-          post "/api/logout" Note.logout
-          get "/api/diray_ids" Note.listDiaryIds
-          get "/api/diary" Note.noteAllPart
-          get "/api/diary/{id}" Note.noteByIdPartDebug
-          put "/api/diary/{id}" Note.addNotePart
-          get "/api/todo" Note.todoListsHandler
-          // export api
-          post "/api/export_json" Note.exportDiary
-          post "/api/export_md" Note.exportDiaryMarkdown
-          get "/api/export_all" Note.exportAllDiaries ]
-
-    use_middleware serveVueFiles
-}
+wapp.Run()
