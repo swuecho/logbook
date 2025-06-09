@@ -141,11 +141,10 @@ builder.Services |> authService |> ignore
 builder.Services.AddCors corsOptions |> ignore
 
 let wapp = builder.Build()
-
-if wapp.Environment.EnvironmentName = "Development" then
-    wapp.UseDeveloperExceptionPage() |> ignore
+let isDevelopment = wapp.Environment.EnvironmentName = "Development"
 
 wapp.UseRouting()
+    .UseIf(isDevelopment, DeveloperExceptionPageExtensions.UseDeveloperExceptionPage)
     .UseCors(corsPolicyName)
     .UseAuthentication()
     .Use(stashConnteciton)
