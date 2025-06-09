@@ -142,6 +142,9 @@ builder.Services.AddCors(corsOptions) |> ignore
 
 let wapp = builder.Build()
 
+if wapp.Environment.EnvironmentName = "Development" then
+    wapp.UseDeveloperExceptionPage() |> ignore
+
 wapp.UseRouting()
     .UseCors(corsPolicyName)
     .UseAuthentication()
