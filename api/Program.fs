@@ -136,7 +136,11 @@ let endpoints =
         get "/api/export_all" Note.exportAllDiaries
     ]
 
-let wapp = WebApplication.Create()
+let builder = WebApplication.CreateBuilder()
+builder.Services |> authService |> ignore
+builder.Services.AddCors(corsOptions) |> ignore
+
+let wapp = builder.Build()
 
 wapp.UseRouting()
     .UseCors(corsPolicyName)
