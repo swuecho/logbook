@@ -4,6 +4,7 @@ type JwtConfig =
     { Secret: string
       Audience: string }
 
+
 let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getExistingSecret () =
         try
