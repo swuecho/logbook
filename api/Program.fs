@@ -138,7 +138,7 @@ let endpoints =
 
 let builder = WebApplication.CreateBuilder()
 builder.Services |> authService |> ignore
-builder.Services.AddCors(corsOptions) |> ignore
+builder.Services.AddCors corsOptions |> ignore
 
 let wapp = builder.Build()
 
@@ -152,4 +152,6 @@ wapp.UseRouting()
     .Use(authenticateRouteMiddleware)
     .UseFalco(endpoints)
     .Use(serveVueFiles)
-    .Run(Response.ofPlainText "Not found")
+    |> ignore
+
+wapp.Run()
