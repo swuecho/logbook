@@ -148,7 +148,7 @@ let login: HttpHandler =
 
                     if passwordMatches then
                         // update last login
-                        AuthUser.UpdateLastLogin conn user.Id
+                        AuthUser.UpdateLastLogin conn user.Id |> ignore
                         let jwt = Token.generateToken user.Id role jwtKey audience issuer
                         Json.Response.ofJson jwt
                     else
