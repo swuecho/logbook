@@ -192,10 +192,7 @@ export default {
                         if (this.users.length === 0) return 0
                         return (this.totalEntries / this.users.length).toFixed(1)
                 },
-                totalUsers() {
-                        return this.filteredUsers.length
-                },
-                filteredUsers() {
+                filteredUsersRaw() {
                         let result = [...this.users]
 
                         // Apply search
@@ -225,11 +222,16 @@ export default {
                                         result.sort((a, b) => b.diaryCount - a.diaryCount)
                                         break
                         }
-
-                        // Apply pagination
+                        return result
+                },
+                filteredUsers() {
+                        // Only apply pagination here
                         const start = (this.currentPage - 1) * this.pageSize
-                        return result.slice(start, start + this.pageSize)
-                }
+                        return this.filteredUsersRaw.slice(start, start + this.pageSize)
+                },
+                totalUsers() {
+                        return this.filteredUsersRaw.length
+                },
         },
         methods: {
                 formatDate(date) {
