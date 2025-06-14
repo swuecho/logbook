@@ -226,3 +226,15 @@ let exportDiaryMarkdown: HttpHandler =
                 let markdown = TipTap.tipTapDocJsonToMarkdown diary.Note
                 Response.ofPlainText markdown)
             ctx
+
+let getUsersWithDiaryCount : HttpHandler =
+    fun ctx ->
+        // let conn = ctx.RequestServices.GetRequiredService<NpgsqlConnection>()
+        // check user is superuser
+        let conn = ctx.getNpgsql ()
+        let user = ctx.User
+        if user.IsInRole "admin" then
+            let users = AuthUser.GetUsersWithDiaryCount conn
+            Json.Response.ofJson users ctx
+        else
+            forbidden ctx

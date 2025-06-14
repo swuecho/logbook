@@ -265,6 +265,7 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+
 let listDiaries = """-- name: ListDiaries :many
 SELECT id, user_id, note_id, note, last_updated FROM diary ORDER BY last_updated DESC
 """

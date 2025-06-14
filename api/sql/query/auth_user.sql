@@ -41,3 +41,17 @@ UPDATE auth_user SET "password" = $2 WHERE email = $1;
 -- name: GetTotalActiveUserCount :one
 SELECT COUNT(*) FROM auth_user WHERE is_active = true;
 
+-- name: GetUsersWithDiaryCount :many
+SELECT 
+    au.id,
+    au.email,
+    au.first_name,
+    au.last_name,
+    au.date_joined,
+    au.last_login,
+    COUNT(d.id) as diary_count
+FROM auth_user au
+LEFT JOIN diary d ON au.id = d.user_id
+GROUP BY au.id
+ORDER BY au.date_joined DESC;
+

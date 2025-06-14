@@ -98,6 +98,7 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+
 let insertSummary = """-- name: InsertSummary :exec
 insert INTO summary (note_id, user_id, content, last_updated) 
 VALUES (@note_id, @user_id, @content, now()) 
