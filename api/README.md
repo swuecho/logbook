@@ -1,5 +1,8 @@
 # F# project
 
+
+
+
 ## project structure
 
 *.fsproj: This is your project file, defining project settings, dependencies, and build configurations.
@@ -18,3 +21,9 @@ dotnet watch run
 
 in prod, default port is 8080 (aspnet 8), 80 (aspnet < 8).
 in dev, default port is 500
+
+## sqlc
+
+```
+sqlc generate
+```

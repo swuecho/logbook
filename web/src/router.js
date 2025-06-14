@@ -4,6 +4,7 @@ import Home from './views/Home.vue'
 
 import Login from './views/Login.vue';
 import Logout from './views/Logout.vue';
+import Admin from './views/Admin.vue';
 
 Vue.use(Router)
 
@@ -14,6 +15,7 @@ export default new Router({
       name: 'home',
       component: Home
     },
+    { path: '/admin', component: Admin, name: 'admin' },
     { path: '/login', component: Login, name: 'login' },
     { path: '/logout', component: Logout },
     {

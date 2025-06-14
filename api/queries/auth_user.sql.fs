@@ -301,6 +301,57 @@ let GetUserByEmail (db: NpgsqlConnection)  (email: string)  =
 
 
 
+let getUsersWithDiaryCount = """-- name: GetUsersWithDiaryCount :many
+SELECT 
+    au.id,
+    au.email,
+    au.first_name,
+    au.last_name,
+    au.date_joined,
+    au.last_login,
+    COUNT(d.id) as diary_count
+FROM auth_user au
+LEFT JOIN diary d ON au.id = d.user_id
+GROUP BY au.id
+ORDER BY au.date_joined DESC
+"""
+
+
+type GetUsersWithDiaryCountRow = {
+  Id: int32;
+  Email: string;
+  FirstName: string;
+  LastName: string;
+  DateJoined: DateTime;
+  LastLogin: DateTime;
+  DiaryCount: int64;
+}
+
+
+let GetUsersWithDiaryCount (db: NpgsqlConnection)  =
+  let reader = fun (read:RowReader) -> {
+    Id = read.int "id"
+    Email = read.string "email"
+    FirstName = read.string "first_name"
+    LastName = read.string "last_name"
+    DateJoined = read.dateTime "date_joined"
+    LastLogin = read.dateTime "last_login"
+    DiaryCount = read.int64 "diary_count"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query getUsersWithDiaryCount
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
 
 
 let listAuthUsers = """-- name: ListAuthUsers :many
