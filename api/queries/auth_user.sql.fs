@@ -484,6 +484,29 @@ let UpdateAuthUserByEmail (db: NpgsqlConnection)  (arg: UpdateAuthUserByEmailPar
 
 
 
+let updateLastLogin = """-- name: UpdateLastLogin :exec
+UPDATE auth_user SET last_login = now()  WHERE id = @id
+"""
+
+
+
+
+
+
+let UpdateLastLogin (db: NpgsqlConnection)  (id: int32)  = 
+  db 
+  |> Sql.existingConnection
+  |> Sql.query updateLastLogin
+  |> Sql.parameters  [ "@id", Sql.int id ]
+  |> Sql.executeNonQuery
+
+
+
+
+
+
+
+
 let updateUserPassword = """-- name: UpdateUserPassword :exec
 UPDATE auth_user SET "password" = @password WHERE email = @email
 """

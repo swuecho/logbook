@@ -55,3 +55,5 @@ LEFT JOIN diary d ON au.id = d.user_id
 GROUP BY au.id
 ORDER BY au.date_joined DESC;
 
+-- name: UpdateLastLogin :exec
+UPDATE auth_user SET last_login = now()  WHERE id = $1;
