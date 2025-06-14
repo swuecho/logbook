@@ -147,6 +147,8 @@ let login: HttpHandler =
                     let role = if user.IsSuperuser then "admin" else "user"
 
                     if passwordMatches then
+                        // update last login
+                        AuthUser.UpdateLastLogin conn user.Id |> ignore
                         let jwt = Token.generateToken user.Id role jwtKey audience issuer
                         Json.Response.ofJson jwt
                     else
