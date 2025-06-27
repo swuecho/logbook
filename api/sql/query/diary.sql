@@ -8,7 +8,7 @@ SELECT * FROM diary WHERE id = $1;
 SELECT * FROM diary WHERE user_id = $1 order by note_id DESC;
 
 -- name: ListDiaryIDByUserID :many
-SELECT note_id FROM diary WHERE user_id = $1 order by note_id DESC;
+SELECT note_id FROM diary WHERE user_id = $1 AND note != '' order by note_id DESC;
 
 -- name: DiaryByUserIDAndID :one
 SELECT * FROM diary WHERE user_id = $1 and note_id=$2;

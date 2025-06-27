@@ -326,7 +326,7 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 
 let listDiaryIDByUserID = """-- name: ListDiaryIDByUserID :many
-SELECT note_id FROM diary WHERE user_id = @user_id order by note_id DESC
+SELECT note_id FROM diary WHERE user_id = @user_id AND note != '' order by note_id DESC
 """
 
 
