@@ -54,7 +54,7 @@ onMounted(() => {
   nextTick(() => {
     setTimeout(() => {
       scrollToActiveDate(false);
-    }, 100); // Small delay to ensure DOM is ready
+    }, 200); // Increased delay to ensure DOM is ready
   });
 
   
@@ -70,13 +70,20 @@ watch(() => props.modelValue, () => {
 
 function scrollToActiveDate(smooth = true) {
   if (!dateSliderRef.value) return;
+  
+  // First try to find the active element
   const activeElement = dateSliderRef.value.querySelector('.date-item.active');
+  
   if (activeElement) {
     activeElement.scrollIntoView({ 
       behavior: smooth ? 'smooth' : 'auto', 
       inline: 'center', 
       block: 'nearest' 
     });
+  } else {
+    // If no active element, scroll to the end (most recent dates)
+    const slider = dateSliderRef.value;
+    slider.scrollLeft = slider.scrollWidth - slider.clientWidth;
   }
 }
 
@@ -94,7 +101,7 @@ const datesToShow = computed(() => {
     dates.push(current.clone());
     current.add(1, 'day');
   }
-  return dates; // show most recent first
+  return dates; // chronological order: oldest to newest (today at the end)
 });
 
 const today = computed(() => {

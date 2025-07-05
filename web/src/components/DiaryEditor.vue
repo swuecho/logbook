@@ -63,11 +63,19 @@ watch(noteData, (newData) => {
     } else {
       content.value = {};
     }
+    
+    // Update the editor content when new data is loaded
+    if (editorRef.value) {
+      editorRef.value.setContent(content.value);
+    }
   }
 });
 
 
+const editorRef = ref(null);
+
 const onInit = async ({ editor }) => {
+  editorRef.value = editor;
   editor.setContent(content.value);
 };
 
