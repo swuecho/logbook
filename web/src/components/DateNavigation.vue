@@ -48,7 +48,13 @@ const dateSliderRef = ref(null);
 
 onMounted(() => {
   const interval = setInterval(() => now.value = moment(), 1000);
-  scrollToActiveDate(false);
+  
+  // Ensure scrolling happens after DOM is fully rendered
+  nextTick(() => {
+    setTimeout(() => {
+      scrollToActiveDate(false);
+    }, 100); // Small delay to ensure DOM is ready
+  });
   
   // Cleanup interval on component unmount
   return () => clearInterval(interval);
