@@ -18,7 +18,7 @@
           </div>
         </div>
       </div>
-      <DateNavigation v-model="date" :diary-ids="diaryIds" />
+      <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
       <el-dialog :visible="dialogVisible" @close="closeModal">
         <Todo></Todo>
       </el-dialog>
@@ -49,11 +49,13 @@ const dialogVisibleMd = ref(false)
 const diaryIds = ref(new Set());
 
 onMounted(async () => {
-  // eslint-disable-next-line no-unused-vars
   date.value = now.value.format("YYYYMMDD")
-  const interval = setInterval(() => now.value = moment(), 1000);
   const ids = await getDiaryIds();
   diaryIds.value = new Set(ids);
+  const interval = setInterval(() => now.value = moment(), 1000);
+  return () => {
+    clearInterval(interval);
+  }
 });
 
 const time = computed(() => {

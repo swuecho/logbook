@@ -3,7 +3,7 @@
     <div class="date-slider" ref="dateSliderRef">
       <div v-for="d in datesToShow" :key="d.format('YYYYMMDD')" @click="setDate(d.format('YYYYMMDD'))" :class="{
         'date-item': true,
-        'active': d.format('YYYYMMDD') === modelValue,
+        'active': d.format('YYYYMMDD') === value,
         'today': d.format('YYYYMMDD') === today,
         'has-diary': hasDiary(d)
       }">
@@ -13,7 +13,7 @@
         <div class="day-number">{{ d.format('DD') }}</div>
       </div>
     </div>
-    <div v-if="modelValue != today" @click="navigateDateToToday" class="icon-container">
+    <div v-if="value != today" @click="navigateDateToToday" class="icon-container">
       <Icon icon="fluent:arrow-next-16-regular" width="1.2rem" />
     </div>
   </div>
@@ -23,10 +23,9 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
-import { getDiaryIds } from '@/services/diary';
 
 const props = defineProps({
-  modelValue: {
+  value: {
     type: String,
     required: true
   },
@@ -36,7 +35,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['input']);
 
 const now = ref(moment());
 const dateSliderRef = ref(null);
@@ -57,7 +56,7 @@ onMounted(() => {
   return () => clearInterval(interval);
 });
 
-watch(() => props.modelValue, () => {
+watch(() => props.value, () => {
   nextTick(() => {
     scrollToActiveDate();
   });
@@ -104,11 +103,11 @@ const today = computed(() => {
 });
 
 function setDate(newDate) {
-  emit('update:modelValue', newDate);
+  emit('input', newDate);
 }
 
 function navigateDateToToday() {
-  emit('update:modelValue', today.value);
+  emit('input', today.value);
 }
 </script>
 
