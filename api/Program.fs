@@ -95,7 +95,7 @@ let endpoints =
     [
         post "/api/login" Note.login
         post "/api/logout" Note.logout
-        get "/api/diray_ids" Note.listDiaryIds
+        get "/api/diary_ids" Note.listDiaryIds
         get "/api/users/with-diary" Note.getUsersWithDiaryCount
         get "/api/diary" Note.noteAllPart
         get "/api/diary/{id}" Note.noteByIdPartDebug

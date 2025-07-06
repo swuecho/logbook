@@ -1,17 +1,12 @@
 <template>
   <div class="date-nav">
     <div class="date-slider" ref="dateSliderRef">
-      <div 
-        v-for="d in datesToShow" 
-        :key="d.format('YYYYMMDD')" 
-        @click="setDate(d.format('YYYYMMDD'))"
-        :class="{ 
-          'date-item': true, 
-          'active': d.format('YYYYMMDD') === modelValue, 
-          'today': d.format('YYYYMMDD') === today, 
-          'has-diary': hasDiary(d) 
-        }"
-      >
+      <div v-for="d in datesToShow" :key="d.format('YYYYMMDD')" @click="setDate(d.format('YYYYMMDD'))" :class="{
+        'date-item': true,
+        'active': d.format('YYYYMMDD') === modelValue,
+        'today': d.format('YYYYMMDD') === today,
+        'has-diary': hasDiary(d)
+      }">
         <div class="month-label">
           {{ d.format('MMM') }}
         </div>
@@ -49,7 +44,7 @@ const dateSliderRef = ref(null);
 onMounted(() => {
   const interval = setInterval(() => now.value = moment(), 1000);
 
-  
+
   // Ensure scrolling happens after DOM is fully rendered
   nextTick(() => {
     setTimeout(() => {
@@ -57,7 +52,7 @@ onMounted(() => {
     }, 200); // Increased delay to ensure DOM is ready
   });
 
-  
+
   // Cleanup interval on component unmount
   return () => clearInterval(interval);
 });
@@ -70,15 +65,15 @@ watch(() => props.modelValue, () => {
 
 function scrollToActiveDate(smooth = true) {
   if (!dateSliderRef.value) return;
-  
+
   // First try to find the active element
   const activeElement = dateSliderRef.value.querySelector('.date-item.active');
-  
+
   if (activeElement) {
-    activeElement.scrollIntoView({ 
-      behavior: smooth ? 'smooth' : 'auto', 
-      inline: 'center', 
-      block: 'nearest' 
+    activeElement.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto',
+      inline: 'center',
+      block: 'nearest'
     });
   } else {
     // If no active element, scroll to the end (most recent dates)
@@ -215,16 +210,16 @@ function navigateDateToToday() {
     min-height: 70px;
     margin: 0;
   }
-  
+
   .date-item {
     padding: 10px 14px;
     min-width: 60px;
   }
-  
+
   .day-number {
     font-size: 1.2em;
   }
-  
+
   .month-label {
     font-size: 0.8em;
   }
@@ -235,13 +230,13 @@ function navigateDateToToday() {
     padding: 8px 10px;
     min-width: 50px;
   }
-  
+
   .day-number {
     font-size: 1.1em;
   }
-  
+
   .month-label {
     font-size: 0.7em;
   }
 }
-</style> 
+</style>

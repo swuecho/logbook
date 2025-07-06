@@ -118,18 +118,18 @@ function closeModalMd() {
     margin: 0.5em;
     gap: 0.75rem;
   }
-  
+
   .nav-header {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
   }
-  
+
   .time-display {
     text-align: center;
     font-size: 1.2em;
   }
-  
+
   .right-corner {
     justify-content: center;
     gap: 1.5rem;
@@ -140,7 +140,7 @@ function closeModalMd() {
   .nav {
     margin: 0.25em;
   }
-  
+
   .right-corner {
     gap: 1rem;
   }

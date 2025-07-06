@@ -63,7 +63,7 @@ watch(noteData, (newData) => {
     } else {
       content.value = {};
     }
-    
+
     // Update the editor content when new data is loaded
     if (editorRef.value) {
       editorRef.value.setContent(content.value);
