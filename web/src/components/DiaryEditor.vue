@@ -94,6 +94,7 @@ const { mutate: updateNote } = useMutation({
     // const queryClient = useQueryClient();
     // 
     // Then use it here:
+    queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date] });
     queryClient.invalidateQueries({ queryKey: ['todoContent'] });
     queryClient.invalidateQueries({ queryKey: ['MdContent', props.date] });
   },
