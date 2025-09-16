@@ -120,6 +120,8 @@ const enqueueRequest = (url: string, method: 'PUT' | 'GET', data: any): Promise<
 
 const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         try {
+                // add delay to simulate network latency
+                // await new Promise(resolve => setTimeout(resolve, 500));
                 const response = await axios({ url, method, data });
                 return response.data
         }
@@ -161,7 +163,7 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         let cachedNote = await db.get('notes', noteId);
         if (navigator.onLine) {
                 try {
-                const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
+                        const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
                         if (response) {
                                 cachedNote = response;
                                 db.put('notes', response);
@@ -174,7 +176,7 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
                                 if (status === 401) {
                                         console.error("Note not found on server");
                                         throw error;
-                                } 
+                                }
                         } else {
                                 console.error("Network error", error);
                         }

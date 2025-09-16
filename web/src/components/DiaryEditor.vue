@@ -84,17 +84,9 @@ const { mutate: updateNote } = useMutation({
   mutationFn: saveNote,
   networkMode: 'always',
   onSuccess: () => {
-    // Invalidate the todoContent query
-    // Invalidate the todoContent query
-    // Note: queryClient is not defined in this scope. 
-    // You might need to import and configure it, or use a different method to invalidate queries.
-    // For example, if using Vue Query, you could use the useQueryClient composable:
-    // 
-    // import { useQueryClient } from '@tanstack/vue-query';
-    // const queryClient = useQueryClient();
-    // 
-    // Then use it here:
-    queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date] });
+    // queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date, ] });
+    // if invalid the diaryContent, it will cause the editor to refresh content. 
+    // will overwrite the current content delta.  (typed in after last put request)
     queryClient.invalidateQueries({ queryKey: ['todoContent'] });
     queryClient.invalidateQueries({ queryKey: ['MdContent', props.date] });
   },
