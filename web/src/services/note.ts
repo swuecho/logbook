@@ -2,7 +2,7 @@
 import axios from '../axiosConfig';
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import type { DiaryEntry, QueuedRequest } from '../types.ts';
+import type { DiaryEntry } from '../types.ts';
 import { isUnauthorized, getApiErrorMessage } from './apiError';
 
 interface MyDB extends DBSchema {
@@ -27,97 +27,13 @@ const openDatabase = async () => {
         return db;
 }
 
-const requestQueue: QueuedRequest[] = [];
 let isSyncing = false;
 
 
-// Modified process queue to only process latest state
-const processQueue = async () => {
-        if (isSyncing || !navigator.onLine) {
-                return;
-        }
-
-        isSyncing = true;
-
-        try {
-                // Group requests by noteId and get only the latest one for each note
-                const latestRequests = requestQueue.reduce((acc, curr) => {
-                        if (!acc[curr.noteId] || acc[curr.noteId].timestamp < curr.timestamp) {
-                                acc[curr.noteId] = curr;
-                        }
-                        return acc;
-                }, {} as Record<string, QueuedRequest>);
-
-                // Convert back to array and sort by timestamp
-                const processableRequests = Object.values(latestRequests)
-                        .sort((a, b) => a.timestamp - b.timestamp);
-
-                // Clear the queue since we're only processing latest states
-                requestQueue.length = 0;
-
-                // Process each latest request
-                for (const request of processableRequests) {
-                        try {
-                                // Get latest state from IndexedDB
-                                const db = await openDatabase();
-                                const latestNote = await db.get('notes', request.noteId);
-
-                                if (latestNote) {
-                                        // Use the latest note content from IndexedDB instead of queued data
-                                        const response = await axios({
-                                                url: request.url,
-                                                method: request.method,
-                                                data: latestNote
-                                        });
-
-                                        if (response.status >= 200 && response.status < 300) {
-                                                request.resolve && request.resolve(response.data);
-                                        } else {
-                                                console.error('Request failed with status: ' + response.status);
-                                                console.log('re-queueing request', request);
-
-                                                // Re-queue only the latest state
-                                                requestQueue.push({
-                                                        ...request,
-                                                        data: latestNote,
-                                                        timestamp: Date.now()
-                                                });
-                                                request.reject && request.reject('Request failed');
-                                        }
-                                }
-                        } catch (error) {
-                                console.error("Request failed", error);
-                                // Re-queue the request
-                                console.log('re-queueing request', request);
-                                requestQueue.push({
-                                        ...request,
-                                        timestamp: Date.now()
-                                });
-                                request.reject && request.reject('Request failed');
-                        }
-                }
-        } finally {
-                isSyncing = false;
-                if (requestQueue.length > 0) {
-                        // If there are requests left, retry after a delay
-                        setTimeout(processQueue, 1000);
-                }
-        }
-};
-
-
-const enqueueRequest = (url: string, method: 'PUT' | 'GET', data: any): Promise<any> => {
-        return new Promise((resolve, reject) => {
-                requestQueue.push({
-                        url, method, data,
-                        timestamp: Date.now(),
-                        noteId: data.noteId,
-                        resolve, reject
-                });
-                processQueue();
-        });
-
-};
+const normalizePayload = (note: DiaryEntry) => ({
+        noteId: note.noteId,
+        note: note.note
+});
 
 const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         try {
@@ -131,19 +47,39 @@ const axiosRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
         }
 }
 
-const wraperApiRequest = async (url: string, method: 'PUT' | 'GET', data: any) => {
-        if (navigator.onLine) {
-                return axiosRequest(url, method, data);
-                // try {
-                //         axiosRequest(url, method, data);
+const syncNote = async (note: DiaryEntry) => {
+        const response = await axiosRequest(`/api/diary/${note.noteId}`, 'PUT', normalizePayload(note));
+        const db = await openDatabase();
+        await db.put('notes', {
+                ...note,
+                dirty: false,
+                syncedAt: Date.now()
+        });
+        return response;
+};
 
-                // } catch (error) {
-                //         console.error("Request failed", error);
-                //         return enqueueRequest(url, method, data);
-                // }
+const syncDirtyNotes = async () => {
+        if (isSyncing || !navigator.onLine) {
+                return;
         }
-        else {
-                return enqueueRequest(url, method, data);
+
+        isSyncing = true;
+        try {
+                const db = await openDatabase();
+                const notes = await db.getAll('notes');
+                const dirtyNotes = notes
+                        .filter((note) => note.dirty)
+                        .sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0));
+
+                for (const note of dirtyNotes) {
+                        try {
+                                await syncNote(note);
+                        } catch (error) {
+                                console.error(getApiErrorMessage(error, 'Failed to sync note.'));
+                        }
+                }
+        } finally {
+                isSyncing = false;
         }
 };
 
@@ -152,22 +88,39 @@ const saveNote = async (note: DiaryEntry) => {
         const db = await openDatabase()
         console.log("saving note", note.noteId);
         console.log(JSON.parse(note.note))
-        await db.put('notes', note);
+        const localNote = {
+                ...note,
+                dirty: true,
+                updatedAt: Date.now()
+        };
+        await db.put('notes', localNote);
 
-        // if user online, immediately save to the server
-        return wraperApiRequest(`/api/diary/${note.noteId}`, 'PUT', note);
+        if (navigator.onLine) {
+                try {
+                        return await syncNote(localNote);
+                } catch (error) {
+                        console.error(getApiErrorMessage(error, 'Failed to sync note.'));
+                        throw error;
+                }
+        }
+
+        return localNote;
 };
 
 const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         console.log("fetching note", noteId);
         const db = await openDatabase();
         let cachedNote = await db.get('notes', noteId);
-        if (navigator.onLine) {
+        if (navigator.onLine && !cachedNote?.dirty) {
                 try {
                         const response = await axiosRequest(`/api/diary/${noteId}`, 'GET', null);
                         if (response) {
                                 cachedNote = response;
-                                db.put('notes', response);
+                                db.put('notes', {
+                                        ...response,
+                                        dirty: false,
+                                        syncedAt: Date.now()
+                                });
                         }
                 } catch (error) {
                         console.log("online but server error", error);
@@ -181,8 +134,13 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
         return cachedNote
 };
 
-window.addEventListener('online', () => {
-        processQueue(); //process the queue on network status change
-});
+if (typeof window !== 'undefined') {
+        window.addEventListener('online', () => {
+                syncDirtyNotes();
+        });
+        if (navigator.onLine) {
+                syncDirtyNotes();
+        }
+}
 
 export { saveNote, fetchNote };
