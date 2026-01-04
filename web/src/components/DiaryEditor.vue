@@ -5,7 +5,9 @@
         @onInit="onInit" :readonly="!isPrimaryTab"></el-tiptap>
     </div>
     <div v-if="!isPrimaryTab" class="lock-warning">
-      Another tab is active. Close other tabs to edit.
+      <div class="lock-warning__banner">
+        Another tab is active. Close other tabs to edit.
+      </div>
     </div>
     <div v-if="isLoading" class="loading">
       <Icon icon="eos-icons:bubble-loading" />
@@ -133,8 +135,15 @@ pre code {
 }
 
 .lock-warning {
-  margin-top: 0.5rem;
-  color: #d32f2f;
+  margin-top: 0.75rem;
+}
+
+.lock-warning__banner {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #a8071a;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
   font-size: 0.95rem;
 }
 </style>
