@@ -27,6 +27,7 @@ import router from '@/router';
 import { debounce } from 'lodash';
 
 import { saveNote, fetchNote } from '@/services/note.ts';
+import { getApiErrorMessage, isUnauthorized } from '@/services/apiError';
 
 import { useQueryClient } from '@tanstack/vue-query';
 const queryClient = useQueryClient();
@@ -48,11 +49,10 @@ const { data: noteData, isLoading, error: getNoteError } = useQuery({
 });
 
 watch(getNoteError, (error) => {
-  if (error.response && error.response.status === 401) {
-    // Use the correct router method in the Vue 3 setup
+  if (isUnauthorized(error)) {
     router.push({ name: 'login' });
   }
-  console.error('Error fetching diary:', error);
+  console.error(getApiErrorMessage(error, 'Error fetching diary.'));
 })
 
 watch(noteData, (newData) => {
@@ -96,11 +96,10 @@ const { mutate: updateNote } = useMutation({
     queryClient.invalidateQueries({ queryKey: ['MdContent', props.date] });
   },
   onError: (error) => {
-    if (error.response && error.response.status === 401) {
-      // Use the correct router method in the Vue 3 setup
+    if (isUnauthorized(error)) {
       router.push({ name: 'login' });
     }
-    console.error('Error updating diary:', error);
+    console.error(getApiErrorMessage(error, 'Error updating diary.'));
   },
   staleTime: 500,
 });

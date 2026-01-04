@@ -30,6 +30,7 @@ import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
 import { getDiarySummaries } from '@/services/diary';
+import { getApiErrorMessage } from '@/services/apiError';
 export default {
   components: {
     [VueWordCloud.name]: VueWordCloud,
@@ -62,7 +63,7 @@ export default {
         const notes = await getDiarySummaries();
         this.processNotes(notes);
       } catch (error) {
-        console.error('Error fetching diary notes:', error);
+        console.error(getApiErrorMessage(error, 'Error fetching diary notes.'));
       }
     },
     processNotes(notes) {

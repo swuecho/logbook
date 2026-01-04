@@ -1,25 +1,21 @@
-import axios from "axios";
+import axios from 'axios';
 
-function getJwtToken() {
-  let jwtToken = localStorage.getItem('JWT_TOKEN')
-  return jwtToken
-}
+const getJwtToken = () => localStorage.getItem('JWT_TOKEN');
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
 // axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
-let config = {
-  headers: {
-  }
+const config = {
+  headers: {},
 };
 
 const instance = axios.create(config);
 
 instance.interceptors.request.use(
   function (config) {
-    config.headers.Authorization = `Bearer ${getJwtToken()}`
+    config.headers.Authorization = `Bearer ${getJwtToken()}`;
     return config;
   },
   function (error) {

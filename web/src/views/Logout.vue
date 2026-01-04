@@ -23,6 +23,7 @@
 import { ref } from 'vue';
 import router from '@/router';
 import { logoutUser } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiError';
 
 const success = ref('');
 const errors = ref([]);
@@ -44,8 +45,8 @@ const logout = async () => {
                         router.push({ path: "/login" });
                 }, 1500);
         } catch (error) {
-                console.error(error);
-                errors.value.push("登出失败，请重试。");
+                console.error('Logout failed:', error);
+                errors.value.push(getApiErrorMessage(error, "登出失败，请重试。"));
         }
 };
 </script>

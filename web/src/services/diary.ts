@@ -1,4 +1,4 @@
-import axios from '../axiosConfig.js';
+import axios from '../axiosConfig';
 
 
 export const getDiaryIds = async (): Promise<string[]> => {

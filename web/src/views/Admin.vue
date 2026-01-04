@@ -163,6 +163,7 @@
 <script>
 import { format, isToday, differenceInDays, differenceInWeeks } from 'date-fns'
 import { fetchUsersWithDiary, deleteUser } from '@/services/users';
+import { getApiErrorMessage } from '@/services/apiError';
 
 export default {
         name: 'AdminDashboard',
@@ -294,7 +295,7 @@ export default {
                                 this.fetchUsers()
                         } catch (error) {
                                 if (error !== 'cancel') {
-                                        this.$message.error('Failed to delete user')
+                                        this.$message.error(getApiErrorMessage(error, 'Failed to delete user'))
                                         console.error('Error deleting user:', error)
                                 }
                         }
@@ -304,7 +305,7 @@ export default {
                         try {
                                 this.users = await fetchUsersWithDiary()
                         } catch (error) {
-                                this.$message.error('Failed to fetch users')
+                                this.$message.error(getApiErrorMessage(error, 'Failed to fetch users'))
                                 console.error('Error fetching users:', error)
                         } finally {
                                 this.loading = false

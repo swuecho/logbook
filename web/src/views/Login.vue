@@ -32,6 +32,7 @@
 import { ref, reactive } from 'vue';
 import router from '@/router';
 import { loginUser } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiError';
 
 const ruleFormRef = ref(null);
 const success = ref('');
@@ -78,8 +79,8 @@ const login = async () => {
       router.push({ path: "/" });
     }
   } catch (error) {
-    console.error(error);
-    errors.value.push("Login failed. Please check your credentials and try again.");
+    console.error('Login failed:', error);
+    errors.value.push(getApiErrorMessage(error, "Login failed. Please check your credentials and try again."));
   }
 };
 </script>
@@ -108,4 +109,3 @@ const login = async () => {
   font-size: 1.5rem;
 }
 </style>
-

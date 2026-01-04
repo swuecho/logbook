@@ -1,8 +1,9 @@
 // services/api.ts
-import axios from '../axiosConfig.js';
+import axios from '../axiosConfig';
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import type { DiaryEntry, QueuedRequest } from '../types.ts';
+import { isUnauthorized, getApiErrorMessage } from './apiError';
 
 interface MyDB extends DBSchema {
         notes: {
@@ -170,16 +171,11 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
                         }
                 } catch (error) {
                         console.log("online but server error", error);
-                        // Handle different error statuses
-                        if (error.response) {
-                                const status = error.response.status;
-                                if (status === 401) {
-                                        console.error("Note not found on server");
-                                        throw error;
-                                }
-                        } else {
-                                console.error("Network error", error);
+                        if (isUnauthorized(error)) {
+                                console.error("Note not found on server");
+                                throw error;
                         }
+                        console.error(getApiErrorMessage(error, "Network error"));
                 }
         }
         return cachedNote
@@ -190,4 +186,3 @@ window.addEventListener('online', () => {
 });
 
 export { saveNote, fetchNote };
-

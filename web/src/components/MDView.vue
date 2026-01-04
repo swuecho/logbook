@@ -17,6 +17,7 @@ import { ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { Icon } from '@iconify/vue2';
 import { exportMarkdown } from '@/services/markdown';
+import { getApiErrorMessage } from '@/services/apiError';
 
 const props = defineProps({
   noteId: String,
@@ -59,7 +60,7 @@ watch(data, (data) => {
 
 watch(isError, (hasError) => {
   if (hasError) {
-    console.error('Error fetching todo content:', error.value);
+    console.error(getApiErrorMessage(error.value, 'Error fetching markdown content.'));
   }
 });
 

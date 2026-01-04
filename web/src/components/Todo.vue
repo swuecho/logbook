@@ -10,6 +10,7 @@ import TodoEditor from '@/components/TodoEditor';
 import { createExtensions } from '@/editorExt.js';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchTodoContent } from '@/services/todo';
+import { getApiErrorMessage } from '@/services/apiError';
 
 const loading = ref(true);
 const content = ref("");
@@ -39,7 +40,7 @@ watch(data, (todoContent) => {
 
 watch(isError, (hasError) => {
   if (hasError) {
-    console.error('Error fetching todo content:', error.value);
+    console.error(getApiErrorMessage(error.value, 'Error fetching todo content.'));
   }
 });
 </script>
