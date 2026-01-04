@@ -2,7 +2,10 @@
   <div class="content">
     <div class="editor">
       <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
-        @onInit="onInit"></el-tiptap>
+        @onInit="onInit" :readonly="!isPrimaryTab"></el-tiptap>
+    </div>
+    <div v-if="!isPrimaryTab" class="lock-warning">
+      Another tab is active. Close other tabs to edit.
     </div>
     <div v-if="isLoading" class="loading">
       <Icon icon="eos-icons:bubble-loading" />
@@ -27,6 +30,7 @@ import router from '@/router';
 import { debounce } from 'lodash';
 
 import { saveNote, fetchNote } from '@/services/note.ts';
+import { isPrimaryTab } from '@/services/tabLock';
 import { getApiErrorMessage, isUnauthorized } from '@/services/apiError';
 
 import { useQueryClient } from '@tanstack/vue-query';
@@ -126,5 +130,11 @@ const debouncedOnUpdate = debounce(function (output, options) {
 <style scoped>
 pre code {
   font-family: "Fira Code", Courier, Monaco, monospace;
+}
+
+.lock-warning {
+  margin-top: 0.5rem;
+  color: #d32f2f;
+  font-size: 0.95rem;
 }
 </style>

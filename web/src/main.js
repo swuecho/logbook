@@ -17,8 +17,11 @@ Vue.use(ElementTiptapPlugin);
 Vue.config.productionTip = false
 
 import { VueQueryPlugin } from '@tanstack/vue-query'
+import { initTabLock } from '@/services/tabLock';
 
 Vue.use(VueQueryPlugin)
+
+initTabLock();
 
 
 function IsAuthenticatedValid() {
