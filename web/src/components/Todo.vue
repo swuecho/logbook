@@ -9,43 +9,39 @@ import { ref, watch } from 'vue';
 import TodoEditor from '@/components/TodoEditor';
 import { createExtensions } from '@/editorExt.js';
 import { useQuery } from '@tanstack/vue-query';
-import axios from '@/axiosConfig.js';
-
+import { fetchTodoContent } from '@/services/todo';
 
 const loading = ref(true);
 const content = ref("");
 const extensions = createExtensions();
+const editorRef = ref(null);
+
+const { isLoading, isError, data, error, refetch } = useQuery({
+  queryKey: ['todoContent'],
+  queryFn: fetchTodoContent,
+  enabled: false,
+});
 
 const onInit = ({ editor }) => {
-  fetchTodoContent(editor);
+  editorRef.value = editor;
+  refetch();
 };
 
-const fetchTodoContent = async (editor) => {
-  const { isLoading, isError, data, error } = useQuery(
-    {
-      queryKey: ['todoContent'],
-      queryFn: async () => {
-        const response = await axios.get('/api/todo');
-        return response.data;
-      }
-    });
+watch(isLoading, (isLoading) => {
+  loading.value = isLoading;
+});
 
-  watch(isLoading, (isLoading) => {
-    loading.value = isLoading;
-  });
+watch(data, (todoContent) => {
+  if (todoContent && editorRef.value) {
+    editorRef.value.setContent(todoContent);
+  }
+});
 
-  watch(data, (content) => {
-    if (content) {
-      editor.setContent(content);
-    }
-  });
-
-  watch(isError, (hasError) => {
-    if (hasError) {
-      console.error('Error fetching todo content:', error.value);
-    }
-  });
-};
+watch(isError, (hasError) => {
+  if (hasError) {
+    console.error('Error fetching todo content:', error.value);
+  }
+});
 </script>
 
 <style>

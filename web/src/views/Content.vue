@@ -29,7 +29,7 @@
 import VueWordCloud from 'vuewordcloud';
 import { Icon } from '@iconify/vue2';
 import homeIcon from '@iconify/icons-material-symbols/home';
-import axios from '@/axiosConfig.js';
+import { getDiarySummaries } from '@/services/diary';
 export default {
   components: {
     [VueWordCloud.name]: VueWordCloud,
@@ -59,8 +59,7 @@ export default {
     },
     async fetchDiaryNotes() {
       try {
-        const response = await axios.get('/api/diary');
-        const notes = response.data;
+        const notes = await getDiarySummaries();
         this.processNotes(notes);
       } catch (error) {
         console.error('Error fetching diary notes:', error);

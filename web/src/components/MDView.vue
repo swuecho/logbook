@@ -13,10 +13,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
-import axios from '@/axiosConfig.js';
 import { Icon } from '@iconify/vue2';
+import { exportMarkdown } from '@/services/markdown';
 
 const props = defineProps({
   noteId: String,
@@ -41,38 +41,33 @@ const copyToClipboard = async () => {
   }
 };
 
-const fetchMdContent = async () => {
-  const { isLoading, isError, data, error } = useQuery(
-    {
-      queryKey: ['MdContent', props.noteId],
-      queryFn: async () => {
-        const response = await axios.post('/api/export_md', {
-          id: props.noteId
-        });
-        return response.data;
-      }
-    });
-
-  watch(isLoading, (isLoading) => {
-    loading.value = isLoading;
-  });
-  watch(data, (data) => {
-    if (content) {
-      content.value = data;
-    }
+const { isLoading, isError, data, error, refetch } = useQuery(
+  {
+    queryKey: ['MdContent', props.noteId],
+    queryFn: () => exportMarkdown(props.noteId),
+    enabled: false
   });
 
-
-  watch(isError, (hasError) => {
-    if (hasError) {
-      console.error('Error fetching todo content:', error.value);
-    }
-  });
-};
-
-onMounted(() => {
-  fetchMdContent();
+watch(isLoading, (isLoading) => {
+  loading.value = isLoading;
 });
+watch(data, (data) => {
+  if (content) {
+    content.value = data;
+  }
+});
+
+watch(isError, (hasError) => {
+  if (hasError) {
+    console.error('Error fetching todo content:', error.value);
+  }
+});
+
+watch(() => props.noteId, (noteId) => {
+  if (noteId) {
+    refetch();
+  }
+}, { immediate: true });
 </script>
 
 <style>

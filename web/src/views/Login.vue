@@ -30,8 +30,8 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import axios from "@/axiosConfig.js";
 import router from '@/router';
+import { loginUser } from '@/services/auth';
 
 const ruleFormRef = ref(null);
 const success = ref('');
@@ -66,19 +66,11 @@ const login = async () => {
   errors.value = [];
 
   const { name, pwd } = form;
-  const options = {
-    method: "POST",
-    url: "/api/login",
-    data: {
-      Username: name,
-      Password: pwd,
-    },
-  };
 
   try {
-    const response = await axios.request(options);
-    console.log(response.data);
-    const { accessToken, expiresIn } = response.data;
+    const data = await loginUser(name, pwd);
+    console.log(data);
+    const { accessToken, expiresIn } = data;
     if (accessToken) {
       const expiresAt = new Date().getTime() + expiresIn * 1000;
       localStorage.setItem("JWT_TOKEN", accessToken);
@@ -116,5 +108,4 @@ const login = async () => {
   font-size: 1.5rem;
 }
 </style>
-
 

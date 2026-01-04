@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 
@@ -39,9 +39,10 @@ const emit = defineEmits(['input']);
 
 const now = ref(moment());
 const dateSliderRef = ref(null);
+let intervalId = null;
 
 onMounted(() => {
-  const interval = setInterval(() => now.value = moment(), 1000);
+  intervalId = setInterval(() => now.value = moment(), 1000);
 
 
   // Ensure scrolling happens after DOM is fully rendered
@@ -52,8 +53,13 @@ onMounted(() => {
   });
 
 
-  // Cleanup interval on component unmount
-  return () => clearInterval(interval);
+});
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 });
 
 watch(() => props.value, () => {

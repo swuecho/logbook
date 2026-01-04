@@ -162,7 +162,7 @@
 
 <script>
 import { format, isToday, differenceInDays, differenceInWeeks } from 'date-fns'
-import axios from '@/axiosConfig'
+import { fetchUsersWithDiary, deleteUser } from '@/services/users';
 
 export default {
         name: 'AdminDashboard',
@@ -289,7 +289,7 @@ export default {
                                         type: 'warning'
                                 })
 
-                                await axios.delete(`/api/users/${user.id}`)
+                                await deleteUser(user.id)
                                 this.$message.success('User deleted successfully')
                                 this.fetchUsers()
                         } catch (error) {
@@ -302,8 +302,7 @@ export default {
                 async fetchUsers() {
                         this.loading = true
                         try {
-                                const response = await axios.get('/api/users/with-diary')
-                                this.users = response.data
+                                this.users = await fetchUsersWithDiary()
                         } catch (error) {
                                 this.$message.error('Failed to fetch users')
                                 console.error('Error fetching users:', error)

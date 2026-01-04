@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
@@ -48,16 +48,21 @@ const dialogVisible = ref(false)
 const dialogVisibleMd = ref(false)
 const diaryIds = ref(new Set());
 
+let intervalId = null;
+
 onMounted(async () => {
   date.value = now.value.format("YYYYMMDD")
   const ids = await getDiaryIds();
   diaryIds.value = new Set(ids);
-  const interval = setInterval(() => now.value = moment(), 1000);
-  return () => {
-    clearInterval(interval);
-  }
+  intervalId = setInterval(() => now.value = moment(), 1000);
 });
 
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+});
 const time = computed(() => {
   const timeFormat = 'h:mm:ss a';
   return now.value.format(timeFormat);

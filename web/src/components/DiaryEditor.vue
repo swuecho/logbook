@@ -58,8 +58,13 @@ watch(getNoteError, (error) => {
 watch(noteData, (newData) => {
   if (newData) {
     if (newData.note) {
-      const noteObj = JSON.parse(newData.note);
-      content.value = noteObj;
+      try {
+        const noteObj = typeof newData.note === 'string' ? JSON.parse(newData.note) : newData.note;
+        content.value = noteObj || {};
+      } catch (parseError) {
+        console.error('Failed to parse diary note:', parseError);
+        content.value = {};
+      }
     } else {
       content.value = {};
     }

@@ -24,9 +24,9 @@ Vue.use(VueQueryPlugin)
 function IsAuthenticatedValid() {
   const isAuthenticated = localStorage.getItem('JWT_TOKEN'); // Check if the JWT token is stored
   const expiresAt = localStorage.getItem('JWT_EXPIRES_AT'); // Check if the JWT token is stored
-  let seconds = new Date() / 1000;
-  let expired = expiresAt - seconds < 0 
-  return isAuthenticated && !expired
+  const expiresAtMs = Number(expiresAt);
+  const expired = !expiresAtMs || expiresAtMs <= Date.now();
+  return Boolean(isAuthenticated) && !expired
 }
 
 router.beforeEach((to, from, next) => {

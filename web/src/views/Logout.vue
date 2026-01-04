@@ -21,8 +21,8 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from "@/axiosConfig.js";
 import router from '@/router';
+import { logoutUser } from '@/services/auth';
 
 const success = ref('');
 const errors = ref([]);
@@ -31,8 +31,7 @@ const logout = async () => {
         errors.value = [];
 
         try {
-                // Send POST request to /api/logout
-                await axios.post('/api/logout');
+                await logoutUser();
 
                 // Remove JWT token and expiration from localStorage
                 localStorage.removeItem("JWT_TOKEN");

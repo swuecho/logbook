@@ -6,11 +6,9 @@
 </template>
 
 <script setup>
-
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
-const { isOnline } = useOnlineStatus();import { ref, onMounted, onUnmounted } from 'vue';
-
+const { isOnline } = useOnlineStatus();
 </script>
 
 <style scoped>
