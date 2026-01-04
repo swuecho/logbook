@@ -87,7 +87,13 @@ const syncDirtyNotes = async () => {
 const saveNote = async (note: DiaryEntry) => {
         const db = await openDatabase()
         console.log("saving note", note.noteId);
-        console.log(JSON.parse(note.note))
+        if (typeof note.note === 'string') {
+                try {
+                        console.log(JSON.parse(note.note))
+                } catch (error) {
+                        console.warn('Note content is not valid JSON.', error);
+                }
+        }
         const localNote = {
                 ...note,
                 dirty: true,
@@ -100,7 +106,8 @@ const saveNote = async (note: DiaryEntry) => {
                         return await syncNote(localNote);
                 } catch (error) {
                         console.error(getApiErrorMessage(error, 'Failed to sync note.'));
-                        throw error;
+                        console.info('Saved locally; will sync when online.');
+                        return localNote;
                 }
         }
 
