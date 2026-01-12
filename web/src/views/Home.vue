@@ -8,9 +8,6 @@
           <div @click="openModalMd">
             <Icon icon="material-symbols:markdown-copy-outline" />
           </div>
-          <div @click="openModal">
-            <Icon icon="ri:todo-line" />
-          </div>
           <div>
             <a href="/content">
               <Icon :icon="tableOfContents" />
@@ -19,9 +16,7 @@
         </div>
       </div>
       <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
-      <el-dialog :visible="dialogVisible" @close="closeModal">
-        <Todo></Todo>
-      </el-dialog>
+      <TodoStrip />
       <el-dialog :visible="dialogVisibleMd" @close="closeModalMd">
         <MDView :noteId="date"></MDView>
       </el-dialog>
@@ -36,7 +31,7 @@ import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import DiaryEditor from "@/components/DiaryEditor";
-import Todo from '@/components/Todo.vue';
+import TodoStrip from '@/components/TodoStrip.vue';
 import MDView from '@/components/MDView.vue';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
 import DateNavigation from '@/components/DateNavigation.vue';
@@ -44,7 +39,6 @@ import { getDiaryIds } from '@/services/diary';
 
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
-const dialogVisible = ref(false)
 const dialogVisibleMd = ref(false)
 const diaryIds = ref(new Set());
 
@@ -67,13 +61,6 @@ const time = computed(() => {
   const timeFormat = 'h:mm:ss a';
   return now.value.format(timeFormat);
 });
-
-function openModal() {
-  dialogVisible.value = true
-}
-function closeModal() {
-  dialogVisible.value = false
-}
 
 function openModalMd() {
   dialogVisibleMd.value = true
