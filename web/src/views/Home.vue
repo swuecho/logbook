@@ -78,7 +78,7 @@ function closeModalMd() {
 }
 
 .nav {
-  margin: 1em 1em 1rem 1em;
+  margin: 1em 0 1rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -109,7 +109,7 @@ function closeModalMd() {
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .nav {
-    margin: 0.5em;
+    margin: 0.5em 0 0.75rem 0;
     gap: 0.75rem;
   }
 
@@ -132,7 +132,7 @@ function closeModalMd() {
 
 @media (max-width: 480px) {
   .nav {
-    margin: 0.25em;
+    margin: 0.25em 0;
   }
 
   .right-corner {
