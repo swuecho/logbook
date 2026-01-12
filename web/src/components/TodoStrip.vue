@@ -17,8 +17,13 @@
     <div class="todo-strip__body">
       <div v-if="isLoading" class="todo-strip__empty">Loading todos...</div>
       <div v-else-if="errorMessage" class="todo-strip__empty">{{ errorMessage }}</div>
-      <ul v-else-if="previewItems.length" class="todo-strip__list">
-        <li v-for="(item, index) in previewItems" :key="itemKey(item, index)" class="todo-strip__item">
+      <transition-group
+        v-else-if="displayItems.length"
+        name="todo-strip-slide"
+        tag="ul"
+        class="todo-strip__list"
+      >
+        <li v-for="(item, index) in displayItems" :key="itemKey(item, index)" class="todo-strip__item">
           <span class="todo-strip__check" :class="{ 'is-done': item.done }"></span>
           <span class="todo-strip__text" :class="{ 'is-done': item.done }">
             {{ item.text || 'Untitled task' }}
@@ -27,7 +32,7 @@
             {{ item.noteId }}
           </a>
         </li>
-      </ul>
+      </transition-group>
       <div v-else class="todo-strip__empty">{{ emptyMessage }}</div>
     </div>
     <div v-if="remainingCount > 0" class="todo-strip__more">{{ remainingCount }} more...</div>
@@ -46,17 +51,20 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchTodoContent } from '@/services/todo';
 import { getApiErrorMessage } from '@/services/apiError';
 import TodoEditor from '@/components/TodoEditor';
 import { createExtensions } from '@/editorExt.js';
 
+const SLIDE_INTERVAL_MS = 3500;
 const expanded = ref(false);
 const showCompleted = ref(false);
 const extensions = createExtensions();
 const editorRef = ref(null);
+const slideIndex = ref(0);
+const slideTimer = ref(null);
 
 const { data, isLoading, isError, error } = useQuery({
   queryKey: ['todoContent'],
@@ -66,15 +74,25 @@ const { data, isLoading, isError, error } = useQuery({
 const todoContent = computed(() => normalizeTodoDoc(data.value));
 const allItems = computed(() => extractTodoItems(todoContent.value));
 const openItems = computed(() => allItems.value.filter((item) => !item.done));
-const previewItems = computed(() => {
-  if (showCompleted.value) {
-    return allItems.value.slice(0, 3);
+const sourceItems = computed(() => (
+  showCompleted.value ? allItems.value : openItems.value
+));
+const displayItems = computed(() => {
+  const source = sourceItems.value;
+  if (source.length <= 3) {
+    return source.map((item, index) => ({ ...item, _displayIndex: index }));
   }
-  return openItems.value.slice(0, 3);
+
+  const start = slideIndex.value % source.length;
+  const window = [];
+  for (let offset = 0; offset < 3; offset += 1) {
+    const sourceIndex = (start + offset) % source.length;
+    window.push({ ...source[sourceIndex], _displayIndex: sourceIndex });
+  }
+  return window;
 });
 const remainingCount = computed(() => {
-  const source = showCompleted.value ? allItems.value : openItems.value;
-  return Math.max(source.length - previewItems.value.length, 0);
+  return Math.max(sourceItems.value.length - displayItems.value.length, 0);
 });
 const totalCount = computed(() => openItems.value.length);
 const errorMessage = computed(() => (
@@ -88,6 +106,22 @@ watch(todoContent, (value) => {
   if (editorRef.value && value) {
     editorRef.value.setContent(value);
   }
+});
+
+watch(
+  () => [showCompleted.value, sourceItems.value.length],
+  () => {
+    slideIndex.value = 0;
+    startSlideShow();
+  }
+);
+
+onMounted(() => {
+  startSlideShow();
+});
+
+onBeforeUnmount(() => {
+  stopSlideShow();
 });
 
 function toggleExpanded() {
@@ -106,10 +140,11 @@ function onInit({ editor }) {
 }
 
 function itemKey(item, index) {
+  const displayIndex = typeof item._displayIndex === 'number' ? item._displayIndex : index;
   if (item.noteId) {
-    return `${item.noteId}-${index}`;
+    return `${item.noteId}-${displayIndex}`;
   }
-  return `todo-${index}`;
+  return `todo-${displayIndex}`;
 }
 
 function normalizeTodoDoc(payload) {
@@ -163,6 +198,23 @@ function flattenText(node) {
     return node.content.map(flattenText).join('');
   }
   return '';
+}
+
+function startSlideShow() {
+  stopSlideShow();
+  if (sourceItems.value.length <= 3) {
+    return;
+  }
+  slideTimer.value = setInterval(() => {
+    slideIndex.value = (slideIndex.value + 1) % sourceItems.value.length;
+  }, SLIDE_INTERVAL_MS);
+}
+
+function stopSlideShow() {
+  if (slideTimer.value) {
+    clearInterval(slideTimer.value);
+    slideTimer.value = null;
+  }
 }
 </script>
 
@@ -300,6 +352,17 @@ function flattenText(node) {
 .todo-strip-expand-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+.todo-strip-slide-enter-active,
+.todo-strip-slide-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.todo-strip-slide-enter,
+.todo-strip-slide-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 @media (max-width: 768px) {
