@@ -10,10 +10,22 @@ type LockPayload = {
 };
 
 const isPrimaryTab = ref(true);
-const tabId =
-  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const TAB_ID_KEY = 'LOGBOOK_TAB_ID';
+const tabId = (() => {
+  if (typeof window === 'undefined') {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  const existing = sessionStorage.getItem(TAB_ID_KEY);
+  if (existing) return existing;
+
+  const generated =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  sessionStorage.setItem(TAB_ID_KEY, generated);
+  return generated;
+})();
 
 let heartbeatId = null;
 
