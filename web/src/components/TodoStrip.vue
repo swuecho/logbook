@@ -306,6 +306,9 @@ function stopSlideShow() {
   flex: 1;
   color: #333;
   font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .todo-strip__text.is-done {
