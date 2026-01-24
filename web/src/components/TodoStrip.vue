@@ -1,10 +1,7 @@
 <template>
   <section class="todo-strip">
     <div class="todo-strip__header">
-      <div class="todo-strip__title">
-        <span class="todo-strip__label">Todos</span>
-        <span v-if="totalCount" class="todo-strip__count">{{ totalCount }}</span>
-      </div>
+      <span v-if="totalCount" class="todo-strip__count">{{ totalCount }}</span>
       <div class="todo-strip__actions">
         <button type="button" class="todo-strip__filter" @click="toggleCompleted">
           {{ showCompleted ? 'Hide done' : 'Show done' }}
@@ -222,7 +219,7 @@ function stopSlideShow() {
 .todo-strip {
   border: 1px solid #e6e6e6;
   border-radius: 10px;
-  padding: 0.75rem 0.9rem;
+  padding: 0.5rem 0.75rem;
   background: #fafafa;
 }
 
@@ -231,14 +228,6 @@ function stopSlideShow() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-}
-
-.todo-strip__title {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  font-weight: 600;
-  color: #333;
 }
 
 .todo-strip__count {
@@ -271,7 +260,7 @@ function stopSlideShow() {
 }
 
 .todo-strip__body {
-  margin-top: 0.6rem;
+  margin-top: 0.4rem;
   overflow: hidden;
 }
 
