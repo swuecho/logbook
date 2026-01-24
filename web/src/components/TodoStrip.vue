@@ -272,6 +272,7 @@ function stopSlideShow() {
 
 .todo-strip__body {
   margin-top: 0.6rem;
+  overflow: hidden;
 }
 
 .todo-strip__list {
@@ -281,6 +282,7 @@ function stopSlideShow() {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  position: relative;
 }
 
 .todo-strip__item {
@@ -360,6 +362,11 @@ function stopSlideShow() {
 .todo-strip-slide-enter-active,
 .todo-strip-slide-leave-active {
   transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.todo-strip-slide-leave-active {
+  position: absolute;
+  width: 100%;
 }
 
 .todo-strip-slide-enter,
