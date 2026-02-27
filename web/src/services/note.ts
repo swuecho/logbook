@@ -114,7 +114,7 @@ const saveNote = async (note: DiaryEntry) => {
         return localNote;
 };
 
-const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
+const fetchNote = async (noteId: string): Promise<DiaryEntry> => {
         console.log("fetching note", noteId);
         const db = await openDatabase();
         let cachedNote = await db.get('notes', noteId);
@@ -138,7 +138,16 @@ const fetchNote = async (noteId: string): Promise<DiaryEntry | undefined> => {
                         console.error(getApiErrorMessage(error, "Network error"));
                 }
         }
-        return cachedNote
+        // Return cached note or create a default empty entry
+        if (cachedNote) {
+                return cachedNote;
+        }
+        // Return a default empty diary entry for new notes
+        return {
+                noteId,
+                note: '',
+                dirty: false,
+        };
 };
 
 if (typeof window !== 'undefined') {
