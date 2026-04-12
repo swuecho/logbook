@@ -27,10 +27,10 @@ const { isOnline } = useOnlineStatus();
 }
 
 .online {
-  background-color: #4CAF50;
+  background-color: var(--lb-accent, #2d8659);
 }
 
 .offline {
-  background-color: #F44336;
+  background-color: var(--lb-error, #b03a2e);
 }
 </style>

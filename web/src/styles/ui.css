@@ -1,0 +1,202 @@
+/**
+ * Shared UI tokens and layout (calendar-style: minimal, flat, one accent).
+ */
+:root {
+  --lb-text: #2c3e50;
+  --lb-text-muted: #5a6d7e;
+  --lb-text-subtle: #8a9aa8;
+  --lb-border: #e8eaed;
+  --lb-accent: #2d8659;
+  --lb-bg: #ffffff;
+  --lb-hover: #f4f5f7;
+  --lb-error: #b03a2e;
+  --lb-focus-ring: rgba(45, 134, 89, 0.45);
+  --lb-font: 'Fira Code', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+}
+
+#app {
+  font-family: var(--lb-font);
+  color: var(--lb-text);
+  background: var(--lb-bg);
+  min-height: 100vh;
+}
+
+/* Full-height page shell */
+.app-page {
+  min-height: 100vh;
+  background: var(--lb-bg);
+  color: var(--lb-text);
+}
+
+/* Top bar: home + title + actions (matches calendar) */
+.app-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--lb-border);
+}
+
+.app-header-bar--dense {
+  padding: 1rem 1.25rem;
+}
+
+.app-header-bar--start {
+  justify-content: flex-start;
+}
+
+/* Ghost text control (icon or label) */
+.linkish {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--lb-text-muted);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+a.linkish {
+  color: var(--lb-text-muted);
+}
+
+.linkish:hover {
+  color: var(--lb-text);
+}
+
+.linkish:focus {
+  outline: none;
+}
+
+.linkish:focus-visible {
+  outline: 2px solid var(--lb-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Constrained content column */
+.app-shell {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.app-shell--narrow {
+  max-width: 65rem;
+}
+
+/* Main area padding for el-main */
+.app-main-padded {
+  padding: 1.5rem 1.5rem 2.5rem !important;
+  background: transparent;
+}
+
+.el-loading-mask {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* Flat card (word cloud, admin) */
+.lb-card-flat.el-card {
+  border: 1px solid var(--lb-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.lb-card-flat .el-card__header {
+  border-bottom: 1px solid var(--lb-border);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--lb-text);
+}
+
+.lb-card-flat .el-card__body {
+  padding: 1rem;
+}
+
+/* Login / logout centered panels */
+.lb-auth.el-container {
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: var(--lb-bg);
+}
+
+.lb-auth .el-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+}
+
+.lb-auth .el-card {
+  border: 1px solid var(--lb-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.lb-auth .el-card__header {
+  border-bottom: 1px solid var(--lb-border);
+  padding: 1rem 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--lb-text);
+}
+
+.lb-auth .el-button--primary {
+  background-color: var(--lb-accent);
+  border-color: var(--lb-accent);
+}
+
+.lb-auth .el-button--primary:hover,
+.lb-auth .el-button--primary:focus {
+  background-color: var(--lb-accent);
+  border-color: var(--lb-accent);
+  filter: brightness(0.96);
+}
+
+/* Admin: calmer dashboard surface */
+.lb-admin {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: var(--lb-bg);
+  color: var(--lb-text);
+}
+
+.lb-admin .el-card {
+  border: 1px solid var(--lb-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.lb-admin .el-card__header {
+  border-bottom: 1px solid var(--lb-border);
+}
+
+.lb-admin .stats-card.el-card {
+  box-shadow: none !important;
+}
+
+.lb-admin .stats-icon {
+  background: var(--lb-hover) !important;
+  color: var(--lb-text-muted) !important;
+}
+
+.lb-admin .stats-title {
+  color: var(--lb-text-subtle) !important;
+}
+
+.lb-admin .stats-value {
+  color: var(--lb-text) !important;
+}

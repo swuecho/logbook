@@ -1,6 +1,6 @@
 <template>
-  <el-container class="calendar-page">
-    <el-header class="calendar-header">
+  <el-container class="calendar-page app-page">
+    <el-header class="app-header-bar calendar-page__header">
       <button type="button" class="linkish" aria-label="Home" @click="goHome">
         <Icon :icon="homeIcon" height="24" />
       </button>
@@ -18,43 +18,43 @@
       <button type="button" class="linkish" @click="goThisYear">This year</button>
     </el-header>
 
-    <el-main v-loading="loading" class="calendar-main">
+    <el-main v-loading="loading" class="app-main-padded calendar-page__main">
       <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
       <div class="year-months">
-        <section
-          v-for="(block, mi) in yearMonths"
-          :key="mi"
-          class="month-block"
-        >
-          <h2 class="month-name">{{ block.title }}</h2>
-          <div class="weekdays">
-            <span
-              v-for="(label, wi) in weekdayLabels"
-              :key="'w' + wi"
-              class="weekday"
-            >{{ label }}</span>
-          </div>
-          <div class="day-grid">
-            <template v-for="(cell, idx) in block.cells">
-              <button
-                v-if="cell.day"
-                :key="'d' + idx"
-                type="button"
-                :class="cellClass(cell)"
-                :aria-label="ariaDayLabel(cell)"
-                @click="openDay(cell.day)"
-              >
-                <span class="day-num">{{ cell.day.date() }}</span>
-              </button>
+          <section
+            v-for="(block, mi) in yearMonths"
+            :key="mi"
+            class="month-block"
+          >
+            <h2 class="month-name">{{ block.title }}</h2>
+            <div class="weekdays">
               <span
-                v-else
-                :key="'e' + idx"
-                class="day-placeholder"
-                aria-hidden="true"
-              />
-            </template>
-          </div>
-        </section>
+                v-for="(label, wi) in weekdayLabels"
+                :key="'w' + wi"
+                class="weekday"
+              >{{ label }}</span>
+            </div>
+            <div class="day-grid">
+              <template v-for="(cell, idx) in block.cells">
+                <button
+                  v-if="cell.day"
+                  :key="'d' + idx"
+                  type="button"
+                  :class="cellClass(cell)"
+                  :aria-label="ariaDayLabel(cell)"
+                  @click="openDay(cell.day)"
+                >
+                  <span class="day-num">{{ cell.day.date() }}</span>
+                </button>
+                <span
+                  v-else
+                  :key="'e' + idx"
+                  class="day-placeholder"
+                  aria-hidden="true"
+                />
+              </template>
+            </div>
+          </section>
       </div>
     </el-main>
   </el-container>
@@ -176,27 +176,13 @@ onMounted(async () => {
 
 <style scoped>
 .calendar-page {
-  min-height: 100vh;
-  max-width: 72rem;
+  max-width: 76rem;
   margin: 0 auto;
-  color: #2c3e50;
-  background: #fff;
 }
 
 .calendar-page >>> .el-header {
   padding: 0;
   background: transparent;
-}
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  height: auto !important;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e8eaed;
 }
 
 .year-row {
@@ -212,6 +198,7 @@ onMounted(async () => {
   font-size: 1.25rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: var(--lb-text);
 }
 
 .year-arrow {
@@ -220,42 +207,9 @@ onMounted(async () => {
   padding: 0.15rem 0.35rem;
 }
 
-.linkish {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: #5a6d7e;
-  font: inherit;
-  cursor: pointer;
-}
-
-.linkish:hover {
-  color: #2c3e50;
-}
-
-.linkish:focus {
-  outline: none;
-}
-
-.linkish:focus-visible {
-  outline: 2px solid #2d8659;
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-.calendar-main {
-  padding: 1.5rem 1.5rem 2.5rem !important;
-  background: transparent;
-}
-
-.calendar-page >>> .el-loading-mask {
-  background-color: rgba(255, 255, 255, 0.7);
-}
-
 .load-error {
   margin: 0 0 1rem;
-  color: #b03a2e;
+  color: var(--lb-error);
   font-size: 0.9rem;
 }
 
@@ -273,7 +227,7 @@ onMounted(async () => {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #3d4f5f;
+  color: var(--lb-text);
 }
 
 .weekdays {
@@ -285,7 +239,7 @@ onMounted(async () => {
 .weekday {
   text-align: center;
   font-size: 0.65rem;
-  color: #8a9aa8;
+  color: var(--lb-text-subtle);
 }
 
 .day-grid {
@@ -310,7 +264,7 @@ onMounted(async () => {
   background: transparent;
   font: inherit;
   cursor: pointer;
-  color: #2c3e50;
+  color: var(--lb-text);
 }
 
 .day-num {
@@ -320,7 +274,7 @@ onMounted(async () => {
 }
 
 .day:hover {
-  background: #f4f5f7;
+  background: var(--lb-hover);
 }
 
 .day:focus {
@@ -328,13 +282,13 @@ onMounted(async () => {
 }
 
 .day:focus-visible {
-  background: #f4f5f7;
-  box-shadow: inset 0 0 0 1px #2d8659;
+  background: var(--lb-hover);
+  box-shadow: inset 0 0 0 1px var(--lb-accent);
 }
 
 .day--today .day-num {
   font-weight: 600;
-  color: #2d8659;
+  color: var(--lb-accent);
 }
 
 .day--note::after {
@@ -342,7 +296,7 @@ onMounted(async () => {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #2d8659;
+  background: var(--lb-accent);
   opacity: 0.75;
 }
 

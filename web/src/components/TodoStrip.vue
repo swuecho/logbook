@@ -217,10 +217,10 @@ function stopSlideShow() {
 
 <style scoped>
 .todo-strip {
-  border: 1px solid #e6e6e6;
+  border: 1px solid var(--lb-border, #e8eaed);
   border-radius: 10px;
   padding: 0.5rem 0.75rem;
-  background: #fafafa;
+  background: var(--lb-bg, #fff);
 }
 
 .todo-strip__header {
@@ -232,12 +232,13 @@ function stopSlideShow() {
 
 .todo-strip__count {
   font-size: 0.85rem;
-  color: #777;
+  color: var(--lb-text-muted, #5a6d7e);
 }
 
 .todo-strip__toggle {
-  border: 1px solid #d9d9d9;
-  background: #fff;
+  border: 1px solid var(--lb-border, #e8eaed);
+  background: var(--lb-bg, #fff);
+  color: var(--lb-text-muted, #5a6d7e);
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
   font-size: 0.8rem;
@@ -251,8 +252,9 @@ function stopSlideShow() {
 }
 
 .todo-strip__filter {
-  border: 1px solid #d9d9d9;
-  background: #f1f3f5;
+  border: 1px solid var(--lb-border, #e8eaed);
+  background: var(--lb-hover, #f4f5f7);
+  color: var(--lb-text-muted, #5a6d7e);
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
   font-size: 0.8rem;
@@ -289,13 +291,13 @@ function stopSlideShow() {
 }
 
 .todo-strip__check.is-done {
-  background: #cdebd2;
-  border-color: #5c9c63;
+  background: rgba(45, 134, 89, 0.2);
+  border-color: var(--lb-accent, #2d8659);
 }
 
 .todo-strip__text {
   flex: 1;
-  color: #333;
+  color: var(--lb-text, #2c3e50);
   font-size: 0.95rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -304,29 +306,29 @@ function stopSlideShow() {
 
 .todo-strip__text.is-done {
   text-decoration: line-through;
-  color: #7a7a7a;
+  color: var(--lb-text-subtle, #8a9aa8);
 }
 
 .todo-strip__note {
   font-size: 0.75rem;
-  color: #4a68a6;
+  color: var(--lb-accent, #2d8659);
   text-decoration: none;
-  border: 1px solid #d9e1f2;
+  border: 1px solid var(--lb-border, #e8eaed);
   padding: 0.1rem 0.35rem;
   border-radius: 6px;
-  background: #f5f7fb;
+  background: var(--lb-hover, #f4f5f7);
   flex: 0 0 auto;
 }
 
 .todo-strip__more {
   margin-top: 0.4rem;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--lb-text-muted, #5a6d7e);
 }
 
 .todo-strip__expanded {
   margin-top: 0.75rem;
-  border-top: 1px dashed #ddd;
+  border-top: 1px dashed var(--lb-border, #e8eaed);
   padding-top: 0.75rem;
   max-height: 320px;
   overflow: auto;
@@ -334,7 +336,7 @@ function stopSlideShow() {
 
 .todo-strip__empty {
   font-size: 0.9rem;
-  color: #777;
+  color: var(--lb-text-muted, #5a6d7e);
 }
 
 .todo-strip-expand-enter-active,

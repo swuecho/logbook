@@ -1,10 +1,10 @@
 <template>
-        <div class="admin-dashboard">
+        <div class="lb-admin admin-dashboard">
                 <!-- Stats Cards Row -->
 
                 <el-row :gutter="20" class="stats-row">
                         <el-col :span="6">
-                                <el-card shadow="hover" class="stats-card">
+                                <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon users-icon">
                                                 <i class="el-icon-user"></i>
                                         </div>
@@ -15,7 +15,7 @@
                                 </el-card>
                         </el-col>
                         <el-col :span="6">
-                                <el-card shadow="hover" class="stats-card">
+                                <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon active-icon">
                                                 <i class="el-icon-time"></i>
                                         </div>
@@ -26,7 +26,7 @@
                                 </el-card>
                         </el-col>
                         <el-col :span="6">
-                                <el-card shadow="hover" class="stats-card">
+                                <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon diary-icon">
                                                 <i class="el-icon-notebook-2"></i>
                                         </div>
@@ -37,7 +37,7 @@
                                 </el-card>
                         </el-col>
                         <el-col :span="6">
-                                <el-card shadow="hover" class="stats-card">
+                                <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon avg-icon">
                                                 <i class="el-icon-data-analysis"></i>
                                         </div>
@@ -50,7 +50,7 @@
                 </el-row>
 
                 <!-- Main Content -->
-                <el-card class="box-card">
+                <el-card shadow="never" class="box-card">
                         <div slot="header" class="clearfix">
                                 <div class="header-actions">
                                         <el-input v-model="searchQuery" placeholder="Search users..."
@@ -320,9 +320,9 @@ export default {
 
 <style scoped>
 .admin-dashboard {
-        padding: 20px;
-        background-color: #f5f7fa;
-        min-height: 100vh;
+        padding: 0;
+        max-width: 90rem;
+        margin: 0 auto;
 }
 
 .stats-row {
@@ -337,34 +337,14 @@ export default {
 .stats-card {
         display: flex;
         align-items: center;
-        padding: 20px;
+        padding: 1.25rem;
 }
 
 .stats-icon {
-        font-size: 48px;
-        margin-right: 20px;
-        padding: 15px;
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        padding: 0.85rem;
         border-radius: 8px;
-}
-
-.users-icon {
-        background-color: #ecf5ff;
-        color: #409EFF;
-}
-
-.active-icon {
-        background-color: #f0f9eb;
-        color: #67c23a;
-}
-
-.diary-icon {
-        background-color: #fdf6ec;
-        color: #e6a23c;
-}
-
-.avg-icon {
-        background-color: #fef0f0;
-        color: #f56c6c;
 }
 
 .stats-info {
@@ -372,15 +352,13 @@ export default {
 }
 
 .stats-title {
-        font-size: 14px;
-        color: #909399;
-        margin-bottom: 8px;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
 }
 
 .stats-value {
-        font-size: 24px;
-        font-weight: bold;
-        color: #303133;
+        font-size: 1.5rem;
+        font-weight: 600;
 }
 
 

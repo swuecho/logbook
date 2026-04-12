@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container class="lb-auth">
     <el-card shadow="never">
       <div slot="header" class="clearfix">Logbook</div>
       <el-main>
@@ -85,24 +85,9 @@ const login = async () => {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.el-container {
-  margin: 10% auto;
+.lb-auth {
   text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.el-main {
-  min-width: 400px;
-  max-width: 600px;
-  margin: auto;
-}
-
-.el-card {
-  border: none;
 }
 
 .el-card__header div {

@@ -1,27 +1,27 @@
 <template>
-  <el-container>
-    <el-header style="text-align: right">
-      <div @click="backHome">
-        <Icon :icon="icons.homeIcon" height="28" />
-      </div>
+  <el-container class="app-page content-view">
+    <el-header class="app-header-bar app-header-bar--start">
+      <button type="button" class="linkish" aria-label="Home" @click="backHome">
+        <Icon :icon="icons.homeIcon" height="24" />
+      </button>
     </el-header>
-    <div class="grid-container">
-      <div v-for="(item, row_idx) in this.summaries" :key="row_idx">
-        <el-card>
-          <div slot="header">
-            <span>
-              <a :href="'/view?date=' + item.id">{{ item.id }}</a>
-            </span>
-          </div>
-          <vue-word-cloud style="
-        height: 240px;
-        width: 300px;
-      " :words="item.note" :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
-            font-family="Roboto" />
-          <div></div>
-        </el-card>
+    <el-main class="app-main-padded">
+      <div class="app-shell grid-container">
+        <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
+          <el-card class="lb-card-flat" shadow="never">
+            <div slot="header">
+              <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
+            </div>
+            <vue-word-cloud
+              style="height: 240px; width: 300px;"
+              :words="item.note"
+              :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
+              font-family="Roboto"
+            />
+          </el-card>
+        </div>
       </div>
-    </div>
+    </el-main>
   </el-container>
 </template>
 
@@ -82,17 +82,34 @@ export default {
 </script>
 
 <style scoped>
+.content-view >>> .el-header {
+  padding: 0;
+  height: auto !important;
+  background: transparent;
+}
+
 .grid-container {
   display: grid;
-  gap: 20px;
-  /* Adjust as needed for spacing between cards */
-  padding: 10px;
-  /* Optional padding around the grid */
-  /* Initial layout for larger screens (max 3 columns) */
+  gap: 1.25rem;
+  padding: 0;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+.grid-item {
+  min-width: 0;
+}
+
+.entry-date-link {
+  color: var(--lb-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.entry-date-link:hover {
+  text-decoration: underline;
+}
+
 code {
-  line-height: 1
+  line-height: 1;
 }
 </style>

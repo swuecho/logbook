@@ -164,22 +164,22 @@ function navigateDateToToday() {
 .month-label {
   font-size: 0.75em;
   font-weight: 500;
-  color: #6c757d;
+  color: var(--lb-text-subtle, #8a9aa8);
   height: 1.2em;
 }
 
 .date-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--lb-hover, #f4f5f7);
 }
 
 .date-item.active {
-  background-color: #f8f9fa;
-  border-color: #28a745;
+  background-color: var(--lb-hover, #f4f5f7);
+  border-color: var(--lb-accent, #2d8659);
 }
 
 .date-item.active .month-label,
 .date-item.active .day-number {
-  color: #28a745;
+  color: var(--lb-accent, #2d8659);
 }
 
 .date-item.has-diary::after {
@@ -190,7 +190,7 @@ function navigateDateToToday() {
   transform: translateX(-50%);
   width: 5px;
   height: 5px;
-  background-color: #28a745;
+  background-color: var(--lb-accent, #2d8659);
   border-radius: 50%;
 }
 
@@ -199,7 +199,7 @@ function navigateDateToToday() {
 }
 
 .date-item.today:not(.active) .day-number {
-  color: #28a745;
+  color: var(--lb-accent, #2d8659);
 }
 
 .icon-container {

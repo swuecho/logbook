@@ -1,32 +1,30 @@
 <template>
-  <div class="content">
-    <div class="nav">
-      <div class="nav-header">
-        <div class="time-display">{{ time }}</div>
-        <div class="right-corner">
-          <OnlineStatusIndicator />
-          <div @click="openModalMd">
-            <Icon icon="material-symbols:markdown-copy-outline" />
-          </div>
-          <div>
-            <a href="/calendar" title="Calendar">
+  <div class="app-page home-page">
+    <div class="app-shell app-shell--narrow home-page__inner">
+      <div class="nav">
+        <div class="app-header-bar app-header-bar--dense home-page__top">
+          <div class="time-display">{{ time }}</div>
+          <div class="right-corner">
+            <OnlineStatusIndicator />
+            <button type="button" class="linkish" aria-label="Markdown preview" @click="openModalMd">
+              <Icon icon="material-symbols:markdown-copy-outline" />
+            </button>
+            <a href="/calendar" class="linkish" title="Calendar">
               <Icon :icon="calendarMonth" />
             </a>
-          </div>
-          <div>
-            <a href="/content">
+            <a href="/content" class="linkish" title="Browse entries">
               <Icon :icon="tableOfContents" />
             </a>
           </div>
         </div>
+        <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
+        <TodoStrip />
+        <el-dialog :visible="dialogVisibleMd" @close="closeModalMd">
+          <MDView :noteId="date"></MDView>
+        </el-dialog>
       </div>
-      <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
-      <TodoStrip />
-      <el-dialog :visible="dialogVisibleMd" @close="closeModalMd">
-        <MDView :noteId="date"></MDView>
-      </el-dialog>
+      <DiaryEditor :date="date"></DiaryEditor>
     </div>
-    <DiaryEditor :date="date"></DiaryEditor>
   </div>
 </template>
 
@@ -78,37 +76,32 @@ function closeModalMd() {
 </script>
 
 <style scoped>
-.content {
-  max-width: 65rem;
-  margin: auto;
+.home-page__inner {
+  padding-top: 0;
+  padding-bottom: 2rem;
 }
 
 .nav {
-  margin: 1em 0 1rem 0;
+  margin: 0 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.nav-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.home-page__top {
+  margin-bottom: 0.25rem;
 }
 
 .time-display {
-  font-size: 1.1em;
+  font-size: 1.05em;
   font-weight: 500;
-  color: #333;
+  color: var(--lb-text);
 }
 
 .right-corner {
   display: flex;
   flex-direction: row;
-  gap: 10px;
-  justify-content: space-around;
+  gap: 0.65rem;
   align-items: center;
 }
 
@@ -119,7 +112,7 @@ function closeModalMd() {
     gap: 0.75rem;
   }
 
-  .nav-header {
+  .home-page__top {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
