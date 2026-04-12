@@ -1,53 +1,66 @@
 <template>
   <el-container class="calendar-page">
     <el-header class="calendar-header">
-      <div class="calendar-header-left" @click="goHome">
-        <Icon :icon="homeIcon" height="28" />
-      </div>
-      <div class="calendar-header-center">
-        <button type="button" class="nav-year" aria-label="Previous year" @click="prevYear">
-          ‹
+      <div class="header-inner">
+        <button type="button" class="home-btn" aria-label="Home" @click="goHome">
+          <Icon :icon="homeIcon" height="22" />
         </button>
-        <h1 class="year-title">{{ yearTitle }}</h1>
-        <button type="button" class="nav-year" aria-label="Next year" @click="nextYear">
-          ›
+
+        <div class="year-control" role="group" aria-label="Year navigation">
+          <button type="button" class="year-step" aria-label="Previous year" @click="prevYear">
+            <span class="year-step-chevron" aria-hidden="true">‹</span>
+          </button>
+          <h1 class="year-title">
+            <span class="year-title-num">{{ yearTitle }}</span>
+          </h1>
+          <button type="button" class="year-step" aria-label="Next year" @click="nextYear">
+            <span class="year-step-chevron" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <button type="button" class="today-pill" @click="goThisYear">
+          This year
         </button>
-      </div>
-      <div class="calendar-header-right">
-        <button type="button" class="today-btn" @click="goThisYear">This year</button>
       </div>
     </el-header>
 
-    <el-main v-loading="loading">
-      <div v-if="loadError" class="load-error">{{ loadError }}</div>
+    <el-main v-loading="loading" class="calendar-main">
+      <div v-if="loadError" class="load-error" role="alert">{{ loadError }}</div>
       <div class="year-months">
         <section
           v-for="(block, mi) in yearMonths"
           :key="mi"
-          class="month-block"
+          class="month-card"
         >
-          <h2 class="month-block-title">{{ block.title }}</h2>
-          <div class="weekdays weekdays--compact">
+          <h2 class="month-card-title">{{ block.title }}</h2>
+          <div class="weekdays">
             <div
-              v-for="label in weekdayLabels"
-              :key="label"
+              v-for="(label, wi) in weekdayLabels"
+              :key="'w' + wi"
               class="weekday-cell"
             >
               {{ label }}
             </div>
           </div>
-          <div class="grid grid--compact">
-            <div
-              v-for="(cell, idx) in block.cells"
-              :key="idx"
-              :class="cellClass(cell)"
-              @click="cell.day && openDay(cell.day)"
-            >
-              <template v-if="cell.day">
+          <div class="day-grid">
+            <template v-for="(cell, idx) in block.cells">
+              <button
+                v-if="cell.day"
+                :key="'d' + idx"
+                type="button"
+                :class="cellClass(cell)"
+                :aria-label="ariaDayLabel(cell)"
+                @click="openDay(cell.day)"
+              >
                 <span class="day-num">{{ cell.day.date() }}</span>
-                <span v-if="cell.hasNote" class="note-dot" aria-hidden="true" />
-              </template>
-            </div>
+              </button>
+              <div
+                v-else
+                :key="'e' + idx"
+                class="day-cell day-cell--empty"
+                aria-hidden="true"
+              />
+            </template>
           </div>
         </section>
       </div>
@@ -72,6 +85,19 @@ const loadError = ref('');
 const weekdayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const yearTitle = computed(() => String(visibleYear.value));
+
+function ariaDayLabel(cell) {
+  const d = cell.day.format('MMMM D, YYYY');
+  const parts = [];
+  if (cell.hasNote) {
+    parts.push('has entry');
+  }
+  if (cell.isToday) {
+    parts.push('today');
+  }
+  const suffix = parts.length ? `, ${parts.join(', ')}` : '';
+  return `Open diary for ${d}${suffix}`;
+}
 
 function buildCellsForMonth(year, month0Based, todayId) {
   const m = moment({ year, month: month0Based, day: 1 }).startOf('month');
@@ -114,10 +140,10 @@ const yearMonths = computed(() => {
 
 function cellClass(cell) {
   return {
-    'grid-cell': true,
-    'grid-cell--empty': !cell.day,
-    'grid-cell--today': cell.isToday,
-    'grid-cell--has-note': cell.hasNote,
+    'day-cell': true,
+    'day-cell--empty': !cell.day,
+    'day-cell--today': cell.isToday,
+    'day-cell--has-note': cell.hasNote,
   };
 }
 
@@ -158,201 +184,337 @@ onMounted(async () => {
 
 <style scoped>
 .calendar-page {
+  --cal-bg: #f0f1f3;
+  --cal-surface: #ffffff;
+  --cal-ink: #2c3e50;
+  --cal-ink-soft: #5c6b7a;
+  --cal-muted: #8b99a8;
+  --cal-line: rgba(44, 62, 80, 0.08);
+  --cal-accent: #2d8659;
+  --cal-accent-ring: rgba(45, 134, 89, 0.35);
+  --cal-accent-fill: rgba(45, 134, 89, 0.09);
+  --cal-shadow: 0 1px 1px rgba(44, 62, 80, 0.04), 0 6px 24px rgba(44, 62, 80, 0.07);
+  --cal-radius: 14px;
+  --cal-font: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', Arial, sans-serif;
+
   min-height: 100vh;
-  max-width: 72rem;
+  max-width: 76rem;
   margin: 0 auto;
+  background: var(--cal-bg);
+  font-family: var(--cal-font);
+}
+
+.calendar-page >>> .el-header {
+  padding: 0;
+  background: transparent;
 }
 
 .calendar-header {
+  height: auto !important;
+  padding: 1.25rem 1rem 1rem;
+  border-bottom: 1px solid var(--cal-line);
+  background: linear-gradient(180deg, #fafbfc 0%, var(--cal-bg) 100%);
+}
+
+.header-inner {
+  max-width: 72rem;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  height: auto !important;
-  padding: 1rem 1rem 0.5rem;
 }
 
-.calendar-header-left,
-.calendar-header-right {
-  flex: 0 0 auto;
-  cursor: pointer;
+.home-btn {
   display: flex;
   align-items: center;
-}
-
-.calendar-header-center {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1 1 auto;
   justify-content: center;
-  min-width: 8rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--cal-surface);
+  color: var(--cal-ink-soft);
+  box-shadow: 0 1px 2px rgba(44, 62, 80, 0.06);
+  cursor: pointer;
+  transition: color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.home-btn:hover {
+  color: var(--cal-ink);
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}
+
+.home-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--cal-accent-ring);
+}
+
+.year-control {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem;
+  background: var(--cal-surface);
+  border-radius: 12px;
+  box-shadow: var(--cal-shadow);
+  border: 1px solid var(--cal-line);
+}
+
+.year-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cal-ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.year-step:hover {
+  background: var(--cal-bg);
+  color: var(--cal-ink);
+}
+
+.year-step:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cal-accent-ring);
+}
+
+.year-step-chevron {
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 300;
+  position: relative;
+  top: -1px;
 }
 
 .year-title {
   margin: 0;
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #333;
-  min-width: 4.5rem;
+  padding: 0 0.5rem;
+  min-width: 5rem;
   text-align: center;
 }
 
-.nav-year {
-  border: 1px solid #dee2e6;
-  background: #fff;
-  border-radius: 6px;
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #495057;
+.year-title-num {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--cal-ink);
+  font-variant-numeric: tabular-nums;
 }
 
-.nav-year:hover {
-  background: #f8f9fa;
-}
-
-.today-btn {
-  border: 1px solid #28a745;
-  background: #fff;
-  color: #28a745;
-  border-radius: 6px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.875rem;
-  cursor: pointer;
+.today-pill {
+  border: 1px solid var(--cal-line);
+  background: var(--cal-surface);
+  color: var(--cal-ink-soft);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.8125rem;
   font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(44, 62, 80, 0.04);
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
-.today-btn:hover {
-  background: #f8fff9;
+.today-pill:hover {
+  border-color: var(--cal-accent);
+  color: var(--cal-accent);
+  background: var(--cal-accent-fill);
+}
+
+.today-pill:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--cal-accent-ring);
+}
+
+.calendar-main {
+  padding: 1.5rem 1.25rem 3rem !important;
+  background: transparent;
+}
+
+.calendar-page >>> .el-loading-mask {
+  background-color: rgba(240, 241, 243, 0.75);
 }
 
 .load-error {
-  color: #c0392b;
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
+  max-width: 40rem;
+  margin: 0 auto 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #fff5f5;
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  color: #a33025;
+  font-size: 0.875rem;
 }
 
 .year-months {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
-  gap: 1.25rem 1rem;
-  padding-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.35rem;
 }
 
-.month-block {
+.month-card {
   min-width: 0;
+  padding: 1rem 1rem 1.1rem;
+  background: var(--cal-surface);
+  border-radius: var(--cal-radius);
+  border: 1px solid var(--cal-line);
+  box-shadow: var(--cal-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
-.month-block-title {
-  margin: 0 0 0.35rem;
-  font-size: 0.95rem;
+.month-card:hover {
+  box-shadow: 0 2px 4px rgba(44, 62, 80, 0.05), 0 12px 32px rgba(44, 62, 80, 0.09);
+  border-color: rgba(44, 62, 80, 0.1);
+}
+
+.month-card-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #495057;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cal-muted);
 }
 
 .weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  margin-bottom: 0.2rem;
-}
-
-.weekdays--compact .weekday-cell {
-  font-size: 0.62rem;
-  padding: 0.1rem 0;
+  gap: 2px;
+  margin-bottom: 0.35rem;
 }
 
 .weekday-cell {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  color: #6c757d;
-  padding: 0.25rem 0;
+  color: var(--cal-muted);
+  padding: 0.15rem 0;
+  letter-spacing: 0.02em;
 }
 
-.grid {
+.day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  gap: 3px;
 }
 
-.grid--compact .grid-cell {
-  min-height: 0;
-  padding: 0.12rem 0.05rem 0.1rem;
-  border-radius: 4px;
-}
-
-.grid--compact .day-num {
-  font-size: 0.7rem;
-}
-
-.grid--compact .grid-cell--has-note .note-dot {
-  width: 4px;
-  height: 4px;
-}
-
-.grid-cell {
+.day-cell {
+  position: relative;
   aspect-ratio: 1;
-  min-height: 1.65rem;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
+  min-height: 0;
+  max-height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(44, 62, 80, 0.03);
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 0.2rem 0.05rem 0.15rem;
-  cursor: pointer;
-  background: #fff;
-  position: relative;
-  transition: background-color 0.15s ease;
+  justify-content: center;
+  color: var(--cal-ink);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
 }
 
-.grid-cell:hover:not(.grid-cell--empty) {
-  background: #f8f9fa;
-}
-
-.grid-cell--empty {
+.day-cell:disabled {
   cursor: default;
   background: transparent;
-  border-color: transparent;
+  pointer-events: none;
 }
 
-.grid-cell--empty:hover {
+.day-cell:not(:disabled):hover {
+  background: rgba(44, 62, 80, 0.07);
+}
+
+.day-cell:not(:disabled):focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--cal-accent-ring);
+  z-index: 1;
+}
+
+.day-cell--empty {
   background: transparent;
 }
 
-.grid-cell--today .day-num {
+.day-cell--today .day-num {
   font-weight: 700;
-  color: #28a745;
+  color: var(--cal-accent);
 }
 
-.grid-cell--has-note .note-dot {
-  display: block;
-  width: 5px;
-  height: 5px;
-  background-color: #28a745;
+.day-cell--today:not(:disabled) {
+  background: var(--cal-accent-fill);
+  box-shadow: inset 0 0 0 1.5px var(--cal-accent);
+}
+
+.day-cell--has-note:not(:disabled)::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  margin-top: auto;
+  background: var(--cal-accent);
+  opacity: 0.85;
+}
+
+.day-cell--today.day-cell--has-note:not(:disabled)::after {
+  bottom: 4px;
 }
 
 .day-num {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  color: #333;
-  line-height: 1.1;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    justify-content: center;
+  }
+
+  .home-btn {
+    order: 0;
+  }
+
+  .year-control {
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .today-pill {
+    order: 2;
+  }
+
+  .year-title-num {
+    font-size: 1.35rem;
+  }
 }
 
 @media (max-width: 480px) {
-  .year-title {
-    font-size: 1.15rem;
-  }
-
   .year-months {
     grid-template-columns: 1fr;
+  }
+
+  .day-cell {
+    max-height: none;
   }
 }
 </style>
