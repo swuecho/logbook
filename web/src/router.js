@@ -34,5 +34,10 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () => import( /* webpackChunkName: "about" */ './views/Diary.vue')
     },
+    {
+      path: '/calendar',
+      name: 'calendar',
+      component: () => import('./views/Calendar.vue')
+    },
   ]
 })

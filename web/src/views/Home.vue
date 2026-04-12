@@ -9,6 +9,11 @@
             <Icon icon="material-symbols:markdown-copy-outline" />
           </div>
           <div>
+            <a href="/calendar" title="Calendar">
+              <Icon :icon="calendarMonth" />
+            </a>
+          </div>
+          <div>
             <a href="/content">
               <Icon :icon="tableOfContents" />
             </a>
@@ -30,6 +35,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue2';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
+import calendarMonth from '@iconify/icons-mdi/calendar-month';
 import DiaryEditor from "@/components/DiaryEditor";
 import TodoStrip from '@/components/TodoStrip.vue';
 import MDView from '@/components/MDView.vue';
