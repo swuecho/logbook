@@ -5,7 +5,11 @@
         <Icon :icon="icons.homeIcon" height="24" />
       </button>
     </el-header>
-    <el-main class="app-main-padded">
+    <el-main
+      v-loading="loading"
+      class="app-main-padded content-view__main"
+      element-loading-text="Loading entries…"
+    >
       <div class="app-shell grid-container">
         <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
           <el-card class="lb-card-flat" shadow="never">
@@ -38,6 +42,7 @@ export default {
   },
   data() {
     return {
+      loading: true,
       summaries: [],
       icons: {
         homeIcon,
@@ -59,11 +64,14 @@ export default {
       this.$router.push('/')
     },
     async fetchDiaryNotes() {
+      this.loading = true;
       try {
         const notes = await getDiarySummaries();
         this.processNotes(notes);
       } catch (error) {
         console.error(getApiErrorMessage(error, 'Error fetching diary notes.'));
+      } finally {
+        this.loading = false;
       }
     },
     processNotes(notes) {
@@ -86,6 +94,10 @@ export default {
   padding: 0;
   height: auto !important;
   background: transparent;
+}
+
+.content-view__main {
+  min-height: 14rem;
 }
 
 .grid-container {
