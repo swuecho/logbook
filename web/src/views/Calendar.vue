@@ -5,36 +5,51 @@
         <Icon :icon="homeIcon" height="28" />
       </div>
       <div class="calendar-header-center">
-        <button type="button" class="nav-month" aria-label="Previous month" @click="prevMonth">
+        <button type="button" class="nav-year" aria-label="Previous year" @click="prevYear">
           ‹
         </button>
-        <h1 class="month-title">{{ monthTitle }}</h1>
-        <button type="button" class="nav-month" aria-label="Next month" @click="nextMonth">
+        <h1 class="year-title">{{ yearTitle }}</h1>
+        <button type="button" class="nav-year" aria-label="Next year" @click="nextYear">
           ›
         </button>
       </div>
       <div class="calendar-header-right">
-        <button type="button" class="today-btn" @click="goThisMonth">Today</button>
+        <button type="button" class="today-btn" @click="goThisYear">This year</button>
       </div>
     </el-header>
 
     <el-main v-loading="loading">
       <div v-if="loadError" class="load-error">{{ loadError }}</div>
-      <div class="weekdays">
-        <div v-for="label in weekdayLabels" :key="label" class="weekday-cell">{{ label }}</div>
-      </div>
-      <div class="grid">
-        <div
-          v-for="(cell, idx) in gridCells"
-          :key="idx"
-          :class="cellClass(cell)"
-          @click="cell.day && openDay(cell.day)"
+      <div class="year-months">
+        <section
+          v-for="(block, mi) in yearMonths"
+          :key="mi"
+          class="month-block"
         >
-          <template v-if="cell.day">
-            <span class="day-num">{{ cell.day.date() }}</span>
-            <span v-if="cell.hasNote" class="note-dot" aria-hidden="true" />
-          </template>
-        </div>
+          <h2 class="month-block-title">{{ block.title }}</h2>
+          <div class="weekdays weekdays--compact">
+            <div
+              v-for="label in weekdayLabels"
+              :key="label"
+              class="weekday-cell"
+            >
+              {{ label }}
+            </div>
+          </div>
+          <div class="grid grid--compact">
+            <div
+              v-for="(cell, idx) in block.cells"
+              :key="idx"
+              :class="cellClass(cell)"
+              @click="cell.day && openDay(cell.day)"
+            >
+              <template v-if="cell.day">
+                <span class="day-num">{{ cell.day.date() }}</span>
+                <span v-if="cell.hasNote" class="note-dot" aria-hidden="true" />
+              </template>
+            </div>
+          </div>
+        </section>
       </div>
     </el-main>
   </el-container>
@@ -49,17 +64,17 @@ import router from '@/router';
 import { getDiaryIds } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
 
-const visibleMonth = ref(moment().startOf('month'));
+const visibleYear = ref(moment().year());
 const diaryIds = ref(new Set());
 const loading = ref(true);
 const loadError = ref('');
 
-const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const weekdayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-const monthTitle = computed(() => visibleMonth.value.format('MMMM YYYY'));
+const yearTitle = computed(() => String(visibleYear.value));
 
-const gridCells = computed(() => {
-  const m = visibleMonth.value.clone().startOf('month');
+function buildCellsForMonth(year, month0Based, todayId) {
+  const m = moment({ year, month: month0Based, day: 1 }).startOf('month');
   const startWeekday = m.day();
   const daysInMonth = m.clone().endOf('month').date();
   const cells = [];
@@ -73,7 +88,7 @@ const gridCells = computed(() => {
     cells.push({
       day,
       hasNote: diaryIds.value.has(id),
-      isToday: id === moment().format('YYYYMMDD'),
+      isToday: id === todayId,
     });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -81,6 +96,20 @@ const gridCells = computed(() => {
     cells.push({ day: null });
   }
   return cells;
+}
+
+const yearMonths = computed(() => {
+  const y = visibleYear.value;
+  const todayId = moment().format('YYYYMMDD');
+  const months = [];
+  for (let month = 0; month < 12; month++) {
+    const start = moment({ year: y, month, day: 1 });
+    months.push({
+      title: start.format('MMMM'),
+      cells: buildCellsForMonth(y, month, todayId),
+    });
+  }
+  return months;
 });
 
 function cellClass(cell) {
@@ -92,16 +121,16 @@ function cellClass(cell) {
   };
 }
 
-function prevMonth() {
-  visibleMonth.value = visibleMonth.value.clone().subtract(1, 'month');
+function prevYear() {
+  visibleYear.value -= 1;
 }
 
-function nextMonth() {
-  visibleMonth.value = visibleMonth.value.clone().add(1, 'month');
+function nextYear() {
+  visibleYear.value += 1;
 }
 
-function goThisMonth() {
-  visibleMonth.value = moment().startOf('month');
+function goThisYear() {
+  visibleYear.value = moment().year();
 }
 
 function openDay(day) {
@@ -130,7 +159,7 @@ onMounted(async () => {
 <style scoped>
 .calendar-page {
   min-height: 100vh;
-  max-width: 42rem;
+  max-width: 72rem;
   margin: 0 auto;
 }
 
@@ -158,19 +187,19 @@ onMounted(async () => {
   gap: 0.5rem;
   flex: 1 1 auto;
   justify-content: center;
-  min-width: 12rem;
+  min-width: 8rem;
 }
 
-.month-title {
+.year-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: #333;
-  min-width: 10rem;
+  min-width: 4.5rem;
   text-align: center;
 }
 
-.nav-month {
+.nav-year {
   border: 1px solid #dee2e6;
   background: #fff;
   border-radius: 6px;
@@ -182,7 +211,7 @@ onMounted(async () => {
   color: #495057;
 }
 
-.nav-month:hover {
+.nav-year:hover {
   background: #f8f9fa;
 }
 
@@ -207,11 +236,34 @@ onMounted(async () => {
   margin-bottom: 0.75rem;
 }
 
+.year-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 1.25rem 1rem;
+  padding-bottom: 1.5rem;
+}
+
+.month-block {
+  min-width: 0;
+}
+
+.month-block-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+}
+
 .weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 0.35rem;
+  gap: 1px;
+  margin-bottom: 0.2rem;
+}
+
+.weekdays--compact .weekday-cell {
+  font-size: 0.62rem;
+  padding: 0.1rem 0;
 }
 
 .weekday-cell {
@@ -225,19 +277,34 @@ onMounted(async () => {
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;
+}
+
+.grid--compact .grid-cell {
+  min-height: 0;
+  padding: 0.12rem 0.05rem 0.1rem;
+  border-radius: 4px;
+}
+
+.grid--compact .day-num {
+  font-size: 0.7rem;
+}
+
+.grid--compact .grid-cell--has-note .note-dot {
+  width: 4px;
+  height: 4px;
 }
 
 .grid-cell {
   aspect-ratio: 1;
-  min-height: 2.75rem;
+  min-height: 1.65rem;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 0.35rem 0.2rem 0.25rem;
+  padding: 0.2rem 0.05rem 0.15rem;
   cursor: pointer;
   background: #fff;
   position: relative;
@@ -265,32 +332,27 @@ onMounted(async () => {
 
 .grid-cell--has-note .note-dot {
   display: block;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   background-color: #28a745;
   border-radius: 50%;
   margin-top: auto;
 }
 
 .day-num {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #333;
+  line-height: 1.1;
 }
 
 @media (max-width: 480px) {
-  .month-title {
-    font-size: 1rem;
-    min-width: 8rem;
+  .year-title {
+    font-size: 1.15rem;
   }
 
-  .grid-cell {
-    min-height: 2.5rem;
-    padding: 0.25rem 0.1rem;
-  }
-
-  .day-num {
-    font-size: 0.85rem;
+  .year-months {
+    grid-template-columns: 1fr;
   }
 }
 </style>
