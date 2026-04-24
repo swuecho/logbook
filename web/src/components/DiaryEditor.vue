@@ -28,7 +28,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
-import { createExtensions } from '@/editorExt.js';
+import { createExtensions, emptyDoc, normalizeTiptapDoc } from '@/editorExt.js';
 import codemirror from 'codemirror';
 import 'codemirror/lib/codemirror.css'; // import base style
 import 'codemirror/mode/xml/xml.js'; // language
@@ -51,7 +51,7 @@ const props = defineProps({
 
 const extensions = createExtensions();
 
-const content = ref({});
+const content = ref(emptyDoc());
 const noteJsonRef = ref(null);
 const queryKey = computed(() => ['diaryContent', props.date]);
 const { data: noteData, isLoading, error: getNoteError } = useQuery({
@@ -73,13 +73,13 @@ watch(noteData, (newData) => {
     if (newData.note) {
       try {
         const noteObj = typeof newData.note === 'string' ? JSON.parse(newData.note) : newData.note;
-        content.value = noteObj || {};
+        content.value = normalizeTiptapDoc(noteObj);
       } catch (parseError) {
         console.error('Failed to parse diary note:', parseError);
-        content.value = {};
+        content.value = emptyDoc();
       }
     } else {
-      content.value = {};
+      content.value = emptyDoc();
     }
 
     // Update the editor content when new data is loaded
@@ -119,7 +119,7 @@ const { mutate: updateNote } = useMutation({
 
 
 const onUpdate = (output, editor) => {
-  noteJsonRef.value = editor.getJSON();
+  noteJsonRef.value = normalizeTiptapDoc(editor?.getJSON ? editor.getJSON() : output);
   updateNote(
     {
       noteId: props.date,

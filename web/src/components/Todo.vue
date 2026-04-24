@@ -7,13 +7,13 @@
 <script setup>
 import { ref, watch } from 'vue';
 import TodoEditor from '@/components/TodoEditor';
-import { createExtensions } from '@/editorExt.js';
+import { createExtensions, emptyDoc, normalizeTiptapDoc } from '@/editorExt.js';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchTodoContent } from '@/services/todo';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const loading = ref(true);
-const content = ref("");
+const content = ref(emptyDoc());
 const extensions = createExtensions();
 const editorRef = ref(null);
 
@@ -34,7 +34,7 @@ watch(isLoading, (isLoading) => {
 
 watch(data, (todoContent) => {
   if (todoContent && editorRef.value) {
-    editorRef.value.commands.setContent(todoContent);
+    editorRef.value.commands.setContent(normalizeTiptapDoc(todoContent));
   }
 });
 
