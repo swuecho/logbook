@@ -98,6 +98,10 @@ export default {
   background: transparent;
 }
 
+.content-view .app-shell {
+  max-width: 88rem;
+}
+
 .content-view__main {
   min-height: 14rem;
 }
@@ -106,7 +110,7 @@ export default {
   display: grid;
   gap: 1.25rem;
   padding: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(18rem, 1fr));
 }
 
 .grid-item {
@@ -134,6 +138,7 @@ code {
 @media (max-width: 480px) {
   .grid-container {
     gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .content-view__card :deep(.el-card__header) {
