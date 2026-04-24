@@ -1,5 +1,16 @@
 <template>
         <div class="lb-admin admin-dashboard">
+                <div class="app-shell">
+                        <section class="app-page__hero admin-dashboard__hero">
+                                <p class="app-page__eyebrow">Workspace</p>
+                                <div class="app-page__title-row">
+                                        <div>
+                                                <h1 class="app-page__title">Admin dashboard</h1>
+                                                <p class="app-page__subtitle">User metrics, search, and account actions now share the same surface treatment and spacing as the rest of the product.</p>
+                                        </div>
+                                        <div class="app-page__meta">{{ users.length }} users</div>
+                                </div>
+                        </section>
                 <el-row :gutter="20" class="stats-row">
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
@@ -157,6 +168,7 @@
                                 </el-descriptions>
                         </div>
                 </el-dialog>
+                </div>
         </div>
 </template>
 
@@ -319,8 +331,6 @@ export default {
 <style scoped>
 .admin-dashboard {
         padding: 0;
-        max-width: 90rem;
-        margin: 0 auto;
 }
 
 .stats-row {
@@ -335,6 +345,7 @@ export default {
         display: flex;
         align-items: center;
         padding: 1.25rem;
+        height: 100%;
 }
 
 .stats-icon {
@@ -367,6 +378,7 @@ export default {
         gap: 10px;
         align-items: center;
         padding: 20px 20px 0 20px;
+        flex-wrap: wrap;
 }
 
 .search-input {
@@ -388,5 +400,39 @@ export default {
 
 .user-details {
         padding: 20px;
+}
+
+@media (max-width: 992px) {
+        .stats-row :deep(.el-col) {
+                max-width: 50%;
+                flex: 0 0 50%;
+                margin-bottom: 1rem;
+        }
+}
+
+@media (max-width: 768px) {
+        .stats-row :deep(.el-col) {
+                max-width: 100%;
+                flex: 0 0 100%;
+        }
+
+        .search-input {
+                width: 100%;
+        }
+
+        .header-actions {
+                padding: 16px 16px 0 16px;
+        }
+
+        .user-email {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+        }
+
+        .pagination-container {
+                justify-content: center;
+                padding: 0 16px 16px 16px;
+        }
 }
 </style>

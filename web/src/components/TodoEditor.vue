@@ -26,9 +26,10 @@ defineProps({
 
 <style>
 .todo .el-tiptap-editor__content {
-        border-bottom: 1px solid #ebeef5 !important;
-        border-top: 1px solid #ebeef5 !important;
-        border-radius: 5px !important;
+        border: 1px solid var(--lb-border, #ebeef5) !important;
+        border-radius: 14px !important;
+        background: rgba(255, 255, 255, 0.96) !important;
+        padding: 0.4rem 0.5rem !important;
 }
 
 .todo .el-tiptap-editor__menu-bar {
@@ -41,6 +42,6 @@ defineProps({
 
 
 pre code {
-        font-family: "Fira Code", Courier, Monaco, monospace;
+        font-family: var(--lb-font-mono, "Fira Code", Courier, Monaco, monospace);
 }
 </style>

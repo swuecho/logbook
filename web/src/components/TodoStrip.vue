@@ -217,10 +217,11 @@ function stopSlideShow() {
 
 <style scoped>
 .todo-strip {
-  border: 1px solid var(--lb-border, #e8eaed);
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem;
-  background: var(--lb-bg, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 16px;
+  padding: 0.75rem 0.9rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--lb-shadow-sm);
 }
 
 .todo-strip__header {
@@ -233,13 +234,14 @@ function stopSlideShow() {
 .todo-strip__count {
   font-size: 0.85rem;
   color: var(--lb-text-muted, #5a6d7e);
+  font-weight: 600;
 }
 
 .todo-strip__toggle {
   border: 1px solid var(--lb-border, #e8eaed);
-  background: var(--lb-bg, #fff);
+  background: rgba(255, 255, 255, 0.95);
   color: var(--lb-text-muted, #5a6d7e);
-  padding: 0.25rem 0.7rem;
+  padding: 0.35rem 0.8rem;
   border-radius: 999px;
   font-size: 0.8rem;
   cursor: pointer;
@@ -255,14 +257,20 @@ function stopSlideShow() {
   border: 1px solid var(--lb-border, #e8eaed);
   background: var(--lb-hover, #f4f5f7);
   color: var(--lb-text-muted, #5a6d7e);
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
+.todo-strip__toggle:hover,
+.todo-strip__filter:hover {
+  border-color: var(--lb-border-strong, #c5d6d1);
+  color: var(--lb-text, #2c3e50);
+}
+
 .todo-strip__body {
-  margin-top: 0.4rem;
+  margin-top: 0.65rem;
   overflow: hidden;
 }
 
@@ -280,6 +288,12 @@ function stopSlideShow() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid rgba(219, 230, 228, 0.7);
+}
+
+.todo-strip__item:last-child {
+  border-bottom: none;
 }
 
 .todo-strip__check {

@@ -1,7 +1,12 @@
 <template>
   <el-container class="lb-auth">
     <el-card shadow="never">
-      <template #header><div class="lb-auth__title">Logbook</div></template>
+      <template #header>
+        <div class="lb-auth__title-wrap">
+          <div class="lb-auth__eyebrow">Session</div>
+          <div class="lb-auth__title">Logbook</div>
+        </div>
+      </template>
       <el-main>
         <el-result
           v-if="done && !errors.length"
@@ -108,6 +113,19 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.lb-auth__title-wrap {
+  text-align: center;
+}
+
+.lb-auth__eyebrow {
+  margin-bottom: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lb-text-subtle);
+}
+
 .lb-auth__title {
   text-align: center;
 }

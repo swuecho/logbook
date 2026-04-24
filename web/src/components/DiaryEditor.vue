@@ -137,7 +137,29 @@ const debouncedOnUpdate = debounce(function (output, options) {
 
 <style scoped>
 pre code {
-  font-family: "Fira Code", Courier, Monaco, monospace;
+  font-family: var(--lb-font-mono, "Fira Code", Courier, Monaco, monospace);
+}
+
+.content {
+  position: relative;
+}
+
+.editor :deep(.el-tiptap-editor) {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--lb-shadow-sm);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.editor :deep(.el-tiptap-editor__menu-bar) {
+  border-bottom: 1px solid var(--lb-border, #e8eaed);
+  background: linear-gradient(180deg, rgba(247, 251, 249, 0.96), rgba(242, 248, 245, 0.94));
+}
+
+.editor :deep(.el-tiptap-editor__content) {
+  min-height: 60vh;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .lock-warning {

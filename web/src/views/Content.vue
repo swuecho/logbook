@@ -1,31 +1,44 @@
 <template>
-  <el-container class="app-page content-view">
-    <el-header class="app-header-bar app-header-bar--start">
-      <button type="button" class="linkish" aria-label="Home" @click="backHome">
-        <Icon :icon="icons.homeIcon" height="24" />
-      </button>
-    </el-header>
-    <el-main
-      v-loading="loading"
-      class="app-main-padded content-view__main"
-      element-loading-text="Loading entries…"
-    >
-      <div class="app-shell grid-container">
-        <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
-          <el-card class="lb-card-flat" shadow="never">
-            <template #header>
-              <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
-            </template>
-            <vue-word-cloud
-              style="height: 240px; width: 300px;"
-              :words="item.note"
-              :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
-              font-family="Roboto"
-            />
-          </el-card>
+  <el-container class="app-page app-page--shell content-view">
+    <div class="app-shell">
+      <section class="app-page__hero content-view__hero">
+        <p class="app-page__eyebrow">Archive</p>
+        <div class="app-page__title-row">
+          <div>
+            <h1 class="app-page__title">Entry Atlas</h1>
+            <p class="app-page__subtitle">Browse past notes as compact visual summaries. Each card stays aligned with the rest of the product instead of feeling like a separate tool.</p>
+          </div>
+          <div class="app-page__meta">{{ summaries.length }} entries</div>
         </div>
-      </div>
-    </el-main>
+      </section>
+      <el-header class="app-header-bar app-header-bar--start">
+        <button type="button" class="linkish" aria-label="Home" @click="backHome">
+          <Icon :icon="icons.homeIcon" height="24" />
+          <span>Home</span>
+        </button>
+      </el-header>
+      <el-main
+        v-loading="loading"
+        class="app-main-padded content-view__main"
+        element-loading-text="Loading entries…"
+      >
+        <div class="grid-container">
+          <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
+            <el-card class="lb-card-flat content-view__card" shadow="never">
+              <template #header>
+                <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
+              </template>
+              <vue-word-cloud
+                style="height: 240px; width: 100%;"
+                :words="item.note"
+                :color="([, weight]) => weight > 10 ? '#0f766e' : weight > 5 ? '#2563eb' : '#475569'"
+                font-family="IBM Plex Sans"
+              />
+            </el-card>
+          </div>
+        </div>
+      </el-main>
+    </div>
   </el-container>
 </template>
 
@@ -109,6 +122,10 @@ export default {
 
 .grid-item {
   min-width: 0;
+}
+
+.content-view__card {
+  height: 100%;
 }
 
 .entry-date-link {

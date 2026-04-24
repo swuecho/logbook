@@ -1,26 +1,38 @@
 <template>
-  <el-container class="calendar-page app-page">
-    <el-header class="app-header-bar calendar-page__header">
-      <button type="button" class="linkish" aria-label="Home" @click="goHome">
-        <Icon :icon="homeIcon" height="24" />
-      </button>
-
-      <div class="year-row">
-        <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
-          ‹
+  <el-container class="calendar-page app-page app-page--shell">
+    <div class="app-shell">
+      <section class="app-page__hero calendar-page__hero">
+        <p class="app-page__eyebrow">Overview</p>
+        <div class="app-page__title-row">
+          <div>
+            <h1 class="app-page__title">Calendar</h1>
+            <p class="app-page__subtitle">Scan the full year, spot days with entries instantly, and jump into any note without leaving the broader timeline.</p>
+          </div>
+          <div class="app-page__meta">Year {{ yearTitle }}</div>
+        </div>
+      </section>
+      <el-header class="app-header-bar calendar-page__header">
+        <button type="button" class="linkish" aria-label="Home" @click="goHome">
+          <Icon :icon="homeIcon" height="24" />
+          <span>Home</span>
         </button>
-        <h1 class="year-heading">{{ yearTitle }}</h1>
-        <button type="button" class="linkish year-arrow" aria-label="Next year" @click="nextYear">
-          ›
-        </button>
-      </div>
 
-      <button type="button" class="linkish" @click="goThisYear">This year</button>
-    </el-header>
+        <div class="year-row">
+          <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
+            ‹
+          </button>
+          <h2 class="year-heading">{{ yearTitle }}</h2>
+          <button type="button" class="linkish year-arrow" aria-label="Next year" @click="nextYear">
+            ›
+          </button>
+        </div>
 
-    <el-main v-loading="loading" class="app-main-padded calendar-page__main">
-      <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
-      <div class="year-months">
+        <button type="button" class="linkish" @click="goThisYear">This year</button>
+      </el-header>
+
+      <el-main v-loading="loading" class="app-main-padded calendar-page__main">
+        <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
+        <div class="year-months app-panel app-panel--soft">
           <section
             v-for="(block, mi) in yearMonths"
             :key="mi"
@@ -55,8 +67,9 @@
               </template>
             </div>
           </section>
-      </div>
-    </el-main>
+        </div>
+      </el-main>
+    </div>
   </el-container>
 </template>
 
@@ -176,8 +189,7 @@ onMounted(async () => {
 
 <style scoped>
 .calendar-page {
-  max-width: 76rem;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .calendar-page :deep(.el-header) {
@@ -196,7 +208,7 @@ onMounted(async () => {
   min-width: 4.5ch;
   text-align: center;
   font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--lb-text);
 }
@@ -217,6 +229,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: 2rem 1.5rem;
+  padding: 1.25rem;
 }
 
 .month-block {
@@ -228,6 +241,7 @@ onMounted(async () => {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--lb-text);
+  letter-spacing: 0.02em;
 }
 
 .weekdays {
@@ -259,12 +273,13 @@ onMounted(async () => {
   max-height: 2.25rem;
   margin: 0;
   padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.66);
   font: inherit;
   cursor: pointer;
   color: var(--lb-text);
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .day-num {
@@ -275,6 +290,8 @@ onMounted(async () => {
 
 .day:hover {
   background: var(--lb-hover);
+  border-color: var(--lb-border);
+  transform: translateY(-1px);
 }
 
 .day:focus {
@@ -309,6 +326,8 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .year-months {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
   }
 
   .day {
