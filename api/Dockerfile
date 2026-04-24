@@ -1,4 +1,4 @@
-FROM  mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 
 # build application
 WORKDIR /src
@@ -7,7 +7,7 @@ RUN dotnet restore
 RUN dotnet publish -c release -o /app --no-self-contained --no-restore
 
 # final stage/image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine3.19
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 ENV TZ=Asia/Shanghai
 WORKDIR /app
 # copy Resource folder 
