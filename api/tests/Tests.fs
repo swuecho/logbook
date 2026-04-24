@@ -81,6 +81,63 @@ let ``tipTapDocJsonToMarkdown test`` () =
 
 
 [<Fact>]
+let ``tipTapDocJsonToMarkdown supports tiptap v2 task nodes`` () =
+    let json =
+        """
+    {
+        "type": "doc",
+        "content": [
+            {
+                "type": "taskList",
+                "content": [
+                    {
+                        "type": "taskItem",
+                        "attrs": {
+                            "checked": true
+                        },
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Completed v2 task"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "taskItem",
+                        "attrs": {
+                            "checked": false
+                        },
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Open v2 task"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+    """
+
+    let expectedMarkdown =
+        "- [x] Completed v2 task\n- [ ] Open v2 task"
+
+    let result = TipTap.tipTapDocJsonToMarkdown json
+    Assert.Equal(expectedMarkdown, result)
+
+
+[<Fact>]
 let ``tipTapDocJsonToMarkdown test2`` () =
     let json =
         """
