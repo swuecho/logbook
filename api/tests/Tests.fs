@@ -6,6 +6,26 @@ open Xunit
 let ``My test`` () = Assert.True(true)
 
 [<Fact>]
+let ``generatePasswordHashWithSalt preserves existing pbkdf2 format`` () =
+    let password = "correct horse battery staple"
+    let salt = [| for i in 0uy .. 15uy -> i |]
+
+    let hash = Auth.generatePasswordHashWithSalt password salt
+
+    Assert.Equal(
+        "pbkdf2_sha256$260000$AAECAwQFBgcICQoLDA0ODw==$lW4qFPSClIiYgdSo62pmJTEK1ypptA2r/mZO2xIB8ZM=",
+        hash
+    )
+
+[<Fact>]
+let ``validatePassword accepts hashes created by generatePasswordHash`` () =
+    let password = "p@ssw0rd"
+    let hash = Auth.generatePasswordHash password
+
+    Assert.True(Auth.validatePassword password hash)
+    Assert.False(Auth.validatePassword "wrong-password" hash)
+
+[<Fact>]
 let ``My test2`` () =
     let ins =
         "在数学和计算机科学之中，算法（algorithm）为任何良定义的具体计算步骤的一个序列，常用于计算、数据处理和自动推理。精确而言，算法是一个表示为有限长列表的有效方法。算法应包含清晰定义的指令用于计算函数"
