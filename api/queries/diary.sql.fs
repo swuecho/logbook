@@ -93,7 +93,6 @@ CROSS JOIN query_terms
 WHERE d.user_id = @user_id
   AND d.search_terms && query_terms.terms
 ORDER BY rank DESC, d.last_updated DESC, d.note_id DESC
-LIMIT 100
 """
 
 
@@ -481,7 +480,6 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   |> Sql.query updateDiary
   |> Sql.parameters  [ "@id", Sql.int arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
-
 
 
 

@@ -12,6 +12,9 @@
             <a href="/calendar" class="linkish" title="Calendar">
               <Icon :icon="calendarMonth" />
             </a>
+            <a href="/search" class="linkish" title="Search entries">
+              <Icon :icon="magnifyIcon" />
+            </a>
             <a href="/content" class="linkish" title="Browse entries">
               <Icon :icon="tableOfContents" />
             </a>
@@ -44,6 +47,7 @@ import moment from 'moment';
 import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';
+import magnifyIcon from '@iconify/icons-mdi/magnify';
 import logoutIcon from '@iconify/icons-mdi/logout';
 import DiaryEditor from "@/components/DiaryEditor";
 import TodoStrip from '@/components/TodoStrip.vue';

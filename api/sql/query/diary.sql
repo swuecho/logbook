@@ -37,7 +37,34 @@ ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated 
 returning id, user_id, note_id, note, last_updated;
 
 -- name: UpdateDiarySearch :exec
-UPDATE diary SET search_text = $3, search_terms = $4 WHERE note_id = $1 AND user_id = $2;
+UPDATE diary
+SET search_text = $3,
+    search_terms =
+        CASE
+            WHEN $4 = '' THEN ARRAY[]::text[]
+            ELSE string_to_array($4, $5)
+        END
+WHERE note_id = $1 AND user_id = $2;
+
+-- name: SearchDiary :many
+WITH query_terms AS (
+  SELECT
+    CASE
+      WHEN $2 = '' THEN ARRAY[]::text[]
+      ELSE string_to_array($2, $3)
+    END AS terms
+)
+SELECT d.note_id, d.search_text, d.last_updated,
+       (
+         SELECT COUNT(*)
+         FROM unnest(d.search_terms) term
+         WHERE term = ANY(query_terms.terms)
+       )::int AS rank
+FROM diary d
+CROSS JOIN query_terms
+WHERE d.user_id = $1
+  AND d.search_terms && query_terms.terms
+ORDER BY rank DESC, d.last_updated DESC, d.note_id DESC;
 
 -- name: ListMissingSearchIndex :many
 SELECT id, user_id, note_id, note, last_updated

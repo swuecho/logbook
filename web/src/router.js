@@ -21,6 +21,11 @@ export default createRouter({
       component: () => import('./views/Content.vue')
     },
     {
+      path: '/search',
+      name: 'search',
+      component: () => import('./views/Search.vue')
+    },
+    {
       path: '/view',
       name: 'view',
       component: () => import('./views/Diary.vue')
