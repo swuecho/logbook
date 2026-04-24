@@ -19,6 +19,15 @@
 - Vue/JS: 2-space indent, single quotes, PascalCase component filenames (e.g., `DiaryEditor.vue`); UI via Element Plus.
 - Keep new files near related modules (e.g., API routes next to `Program.fs`, UI components in `web/src/components/`).
 
+## Frontend UI Style
+- Keep the UI minimal and quiet: plain white backgrounds, thin gray borders, light hover states, and no decorative gradients, glassmorphism, or heavy shadows.
+- Prefer simple structure over marketing-style sections. Use compact header bars, restrained spacing, and flat panels that feel like application chrome rather than landing-page blocks.
+- Reuse shared tokens and layout helpers in `web/src/styles/ui.css` before adding page-local styling.
+- Keep typography understated. Use the existing app font stack, avoid large display headings, and use muted text for secondary information.
+- Actions should stay lightweight: icon buttons and text buttons should be subtle, with small radius and low-contrast hover states.
+- Cards, dialogs, editors, and strips should feel consistent across pages: white surface, 1px border, small radius, minimal or no shadow.
+- When polishing a page, preserve the current interaction model and information density; prefer consistency and refinement over redesign.
+
 ## Testing Guidelines
 - Framework: xUnit in `api/tests/`.
 - Test names use backticks and descriptive phrases (see `api/tests/Tests.fs`).

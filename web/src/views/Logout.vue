@@ -11,10 +11,10 @@
         >
           <template #extra>
             <div class="lb-auth__actions">
-              <el-button class="lb-auth__primary" type="primary" round @click="goLogin">
+              <el-button class="lb-auth__primary" type="primary" @click="goLogin">
                 返回登录<span v-if="redirectIn > 0">（{{ redirectIn }}）</span>
               </el-button>
-              <el-button round @click="goHome">回到首页</el-button>
+              <el-button @click="goHome">回到首页</el-button>
             </div>
           </template>
         </el-result>
@@ -29,8 +29,8 @@
               <el-alert :closable="false" :title="error" type="error" />
             </div>
             <div class="lb-auth__actions">
-              <el-button type="primary" round :loading="loading" @click="logout">重试登出</el-button>
-              <el-button round @click="goLogin">返回登录</el-button>
+              <el-button type="primary" :loading="loading" @click="logout">重试登出</el-button>
+              <el-button @click="goLogin">返回登录</el-button>
             </div>
           </div>
         </div>

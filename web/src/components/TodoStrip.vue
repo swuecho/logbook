@@ -240,7 +240,7 @@ function stopSlideShow() {
   background: var(--lb-bg, #fff);
   color: var(--lb-text-muted, #5a6d7e);
   padding: 0.25rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--lb-radius-sm, 6px);
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -256,7 +256,7 @@ function stopSlideShow() {
   background: var(--lb-hover, #f4f5f7);
   color: var(--lb-text-muted, #5a6d7e);
   padding: 0.25rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--lb-radius-sm, 6px);
   font-size: 0.8rem;
   cursor: pointer;
 }

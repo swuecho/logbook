@@ -31,14 +31,17 @@ const icons = ref({ tableOfContents });
 }
 
 .nav a {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0.25rem 0.35rem;
+        color: var(--lb-text-muted);
         text-decoration: none;
-        border-radius: 5%;
+        border-radius: var(--lb-radius-sm, 6px);
 }
 
-/* Change the link color on hover */
 .nav a:hover {
-        background-color: rgb(223, 214, 214);
-        color: white;
+        background-color: var(--lb-hover);
+        color: var(--lb-text);
 }
 </style>

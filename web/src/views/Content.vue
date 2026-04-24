@@ -21,7 +21,7 @@
                 style="height: 240px; width: 100%;"
                 :words="item.note"
                 :color="([, weight]) => weight > 10 ? '#0f766e' : weight > 5 ? '#2563eb' : '#475569'"
-                font-family="IBM Plex Sans"
+                font-family="Fira Code"
               />
             </el-card>
           </div>

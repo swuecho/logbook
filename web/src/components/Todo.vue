@@ -45,7 +45,7 @@ watch(isError, (hasError) => {
 });
 </script>
 
-<style>
+<style scoped>
 .content {
   max-width: 65rem;
   margin: auto;

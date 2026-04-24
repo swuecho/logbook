@@ -71,7 +71,7 @@ watch(() => props.noteId, (noteId) => {
 }, { immediate: true });
 </script>
 
-<style>
+<style scoped>
 .content {
   position: relative;
   max-width: 65rem;
@@ -83,9 +83,9 @@ watch(() => props.noteId, (noteId) => {
 }
 
 .copy-button {
-  background-color: #f1f1f1;
-  border: none;
-  color: black;
+  background-color: var(--lb-bg, #fff);
+  border: 1px solid var(--lb-border, #e8eaed);
+  color: var(--lb-text-muted, #5a6d7e);
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -95,6 +95,11 @@ watch(() => props.noteId, (noteId) => {
   position: absolute;
   bottom: 10px;
   right: 10px;
+}
+
+.copy-button:hover {
+  background-color: var(--lb-hover, #f4f5f7);
+  color: var(--lb-text, #2c3e50);
 }
 
 /* Additional styles... */

@@ -24,24 +24,24 @@ defineProps({
 });
 </script>
 
-<style>
-.todo .el-tiptap-editor__content {
+<style scoped>
+.todo :deep(.el-tiptap-editor__content) {
         border: 1px solid var(--lb-border, #ebeef5) !important;
-        border-radius: 14px !important;
-        background: rgba(255, 255, 255, 0.96) !important;
+        border-radius: var(--lb-radius-md, 8px) !important;
+        background: #fff !important;
         padding: 0.4rem 0.5rem !important;
 }
 
-.todo .el-tiptap-editor__menu-bar {
+.todo :deep(.el-tiptap-editor__menu-bar) {
         display: none;
 }
 
-.todo .el-tiptap-editor__footer {
+.todo :deep(.el-tiptap-editor__footer) {
         display: none;
 }
 
 
-pre code {
+.todo :deep(pre code) {
         font-family: var(--lb-font-mono, "Fira Code", Courier, Monaco, monospace);
 }
 </style>

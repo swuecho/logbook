@@ -229,7 +229,6 @@ onMounted(async () => {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--lb-text);
-  letter-spacing: 0.02em;
 }
 
 .weekdays {

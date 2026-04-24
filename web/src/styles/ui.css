@@ -28,7 +28,7 @@
   --el-color-primary: var(--lb-accent);
   --el-border-color: var(--lb-border);
   --el-border-color-light: #e6efec;
-  --el-border-radius-base: 12px;
+  --el-border-radius-base: var(--lb-radius-sm);
   --el-font-family: var(--lb-font);
   --el-bg-color: #ffffff;
   --el-fill-color-light: var(--lb-hover);

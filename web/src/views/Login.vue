@@ -21,7 +21,7 @@
           </el-form-item>
 
           <el-form-item label-width="0">
-            <el-button class="lb-auth__submit" type="primary" size="default" round @click="submitForm">
+            <el-button class="lb-auth__submit" type="primary" size="default" @click="submitForm">
               注册/登录
             </el-button>
           </el-form-item>
