@@ -18,7 +18,7 @@
                 <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
               </template>
               <vue-word-cloud
-                style="height: 240px; width: 100%;"
+                class="content-view__cloud"
                 :words="item.note"
                 :color="([, weight]) => weight > 10 ? '#0f766e' : weight > 5 ? '#2563eb' : '#475569'"
                 font-family="Fira Code"
@@ -106,7 +106,7 @@ export default {
   display: grid;
   gap: 1.25rem;
   padding: 0;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .grid-item {
@@ -115,6 +115,11 @@ export default {
 
 .content-view__card {
   height: 100%;
+}
+
+.content-view__cloud {
+  height: 240px;
+  width: 100%;
 }
 
 .entry-date-link {
@@ -129,5 +134,23 @@ export default {
 
 code {
   line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .grid-container {
+    gap: 0.75rem;
+  }
+
+  .content-view__card :deep(.el-card__header) {
+    padding: 0.5rem;
+  }
+
+  .content-view__card :deep(.el-card__body) {
+    padding: 0.5rem;
+  }
+
+  .content-view__cloud {
+    height: 150px;
+  }
 }
 </style>

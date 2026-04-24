@@ -216,7 +216,7 @@ onMounted(async () => {
 
 .year-months {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2rem 1.5rem;
 }
 
@@ -309,11 +309,29 @@ onMounted(async () => {
 
 @media (max-width: 480px) {
   .year-months {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem 0.75rem;
+  }
+
+  .month-name {
+    font-size: 0.82rem;
+  }
+
+  .weekday {
+    font-size: 0.58rem;
+  }
+
+  .day-num {
+    font-size: 0.7rem;
   }
 
   .day {
+    min-height: 1.25rem;
     max-height: none;
+  }
+
+  .day-placeholder {
+    min-height: 1.25rem;
   }
 }
 </style>
