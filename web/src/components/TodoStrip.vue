@@ -53,7 +53,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { fetchTodoContent } from '@/services/todo';
 import { getApiErrorMessage } from '@/services/apiError';
 import TodoEditor from '@/components/TodoEditor';
-import { createExtensions } from '@/editorExt.js';
+import { createExtensions, normalizeTiptapDoc } from '@/editorExt.js';
 
 const SLIDE_INTERVAL_MS = 3500;
 const expanded = ref(false);
@@ -148,12 +148,12 @@ function normalizeTodoDoc(payload) {
   if (!payload) return null;
   if (typeof payload === 'string') {
     try {
-      return JSON.parse(payload);
+      return normalizeTiptapDoc(JSON.parse(payload));
     } catch (parseError) {
       return null;
     }
   }
-  return payload;
+  return normalizeTiptapDoc(payload);
 }
 
 function extractTodoItems(doc) {
