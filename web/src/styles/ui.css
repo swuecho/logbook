@@ -13,6 +13,9 @@
   --lb-focus-ring: rgba(45, 134, 89, 0.45);
   --lb-font: 'Fira Code', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+
+  /* Element Plus theme bridge */
+  --el-color-primary: var(--lb-accent);
 }
 
 #app {
