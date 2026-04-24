@@ -34,7 +34,7 @@ watch(isLoading, (isLoading) => {
 
 watch(data, (todoContent) => {
   if (todoContent && editorRef.value) {
-    editorRef.value.setContent(todoContent);
+    editorRef.value.commands.setContent(todoContent);
   }
 });
 

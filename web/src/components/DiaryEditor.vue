@@ -1,8 +1,15 @@
 <template>
   <div class="content">
     <div class="editor">
-      <el-tiptap :key="'editor-' + date" :content="content" :extensions="extensions" @onUpdate="debouncedOnUpdate"
-        @onInit="onInit" :readonly="!isPrimaryTab"></el-tiptap>
+      <el-tiptap
+        :key="'editor-' + date"
+        output="json"
+        :content="content"
+        :extensions="extensions"
+        @onUpdate="debouncedOnUpdate"
+        @onCreate="onCreate"
+        :readonly="!isPrimaryTab"
+      />
     </div>
     <div v-if="!isPrimaryTab" class="lock-warning">
       <div class="lock-warning__banner">
@@ -19,7 +26,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import moment from 'moment';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import { createExtensions } from '@/editorExt.js';
 import codemirror from 'codemirror';
@@ -77,7 +84,7 @@ watch(noteData, (newData) => {
 
     // Update the editor content when new data is loaded
     if (editorRef.value) {
-      editorRef.value.setContent(content.value);
+      editorRef.value.commands.setContent(content.value);
     }
   }
 });
@@ -85,9 +92,9 @@ watch(noteData, (newData) => {
 
 const editorRef = ref(null);
 
-const onInit = async ({ editor }) => {
+const onCreate = ({ editor }) => {
   editorRef.value = editor;
-  editor.setContent(content.value);
+  editor.commands.setContent(content.value);
 };
 
 
@@ -111,9 +118,8 @@ const { mutate: updateNote } = useMutation({
 });
 
 
-const onUpdate = (output, options) => {
-  const { getJSON } = options;
-  noteJsonRef.value = getJSON();
+const onUpdate = (output, editor) => {
+  noteJsonRef.value = editor.getJSON();
   updateNote(
     {
       noteId: props.date,

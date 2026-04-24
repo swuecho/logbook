@@ -7,41 +7,36 @@
     "dev": "rsbuild dev",
     "build": "rsbuild build"
   },
-  "resolutions": {
-    "prosemirror-model": "1.13.1"
-  },
   "dependencies": {
+    "@iconify/vue": "^4.1.0",
     "@tanstack/vue-query": "^5.53.1",
+    "@tiptap/extension-list-item": "^2.11.5",
+    "@tiptap/extension-task-item": "^2.11.5",
     "axios": "^1.7.4",
+    "codemirror": "^5.65.16",
     "date-fns": "^4.1.0",
-    "element-tiptap": "1.27.1",
-    "element-ui": "^2.15.13",
+    "element-plus": "^2.8.0",
+    "element-tiptap": "^2.2.1",
     "idb": "^8.0.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "prosemirror-tables": "^1.1.1",
-    "prosemirror-utils": "1.0.0-0",
-    "tiptap": "1.32.2",
-    "tiptap-commands": "1.17.1",
-    "tiptap-extensions": "1.35.2",
-    "vue": "^2.7.14",
-    "vue-router": "^3.6.5",
-    "vuewordcloud": "^18.7.12"
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0",
+    "vuewordcloud": "^19.0.0"
   },
   "devDependencies": {
     "@iconify/icons-material-symbols": "^1.2.40",
     "@iconify/icons-mdi": "^1.2.45",
-    "@iconify/vue2": "^2.1.0",
     "@rsbuild/core": "^1.0.1-rc.0",
     "@rsbuild/plugin-less": "^1.0.1-rc.0",
-    "@rsbuild/plugin-vue2": "^1.0.1-rc.0",
+    "@rsbuild/plugin-vue": "^1.0.1",
+    "@vue/compiler-sfc": "^3.5.0",
     "autoprefixer": "^10.4.20",
     "babel-eslint": "^10.0.1",
     "eslint": "^5.15.1",
     "eslint-plugin-vue": "^6.2.2",
     "postcss": "^8.4.41",
-    "tailwindcss": "^3.4.10",
-    "vue-template-compiler": "^2.7.14"
+    "tailwindcss": "^3.4.10"
   },
   "eslintConfig": {
     "root": true,

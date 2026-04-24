@@ -132,7 +132,7 @@ function toggleCompleted() {
 function onInit({ editor }) {
   editorRef.value = editor;
   if (todoContent.value) {
-    editor.setContent(todoContent.value);
+    editor.commands.setContent(todoContent.value);
   }
 }
 

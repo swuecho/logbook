@@ -1,7 +1,7 @@
 <template>
         <el-container class="lb-auth">
                 <el-card shadow="never">
-                        <div slot="header" class="clearfix">Logbook</div>
+                        <template #header><div class="clearfix">Logbook</div></template>
                         <el-main>
                                 <el-row>
                                         <el-button type="primary" size="medium" round @click="logout">登出</el-button>

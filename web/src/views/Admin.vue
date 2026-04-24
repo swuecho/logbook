@@ -1,12 +1,10 @@
 <template>
         <div class="lb-admin admin-dashboard">
-                <!-- Stats Cards Row -->
-
                 <el-row :gutter="20" class="stats-row">
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon users-icon">
-                                                <i class="el-icon-user"></i>
+                                                <Icon icon="mdi:account" width="2.25rem" height="2.25rem" />
                                         </div>
                                         <div class="stats-info">
                                                 <div class="stats-title">Total Users</div>
@@ -17,7 +15,7 @@
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon active-icon">
-                                                <i class="el-icon-time"></i>
+                                                <Icon icon="mdi:clock-outline" width="2.25rem" height="2.25rem" />
                                         </div>
                                         <div class="stats-info">
                                                 <div class="stats-title">Active Today</div>
@@ -28,7 +26,7 @@
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon diary-icon">
-                                                <i class="el-icon-notebook-2"></i>
+                                                <Icon icon="mdi:notebook" width="2.25rem" height="2.25rem" />
                                         </div>
                                         <div class="stats-info">
                                                 <div class="stats-title">Total Entries</div>
@@ -39,7 +37,7 @@
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon avg-icon">
-                                                <i class="el-icon-data-analysis"></i>
+                                                <Icon icon="mdi:chart-box-outline" width="2.25rem" height="2.25rem" />
                                         </div>
                                         <div class="stats-info">
                                                 <div class="stats-title">Avg. Entries/User</div>
@@ -49,37 +47,40 @@
                         </el-col>
                 </el-row>
 
-                <!-- Main Content -->
                 <el-card shadow="never" class="box-card">
-                        <div slot="header" class="clearfix">
+                        <template #header>
                                 <div class="header-actions">
-                                        <el-input v-model="searchQuery" placeholder="Search users..."
-                                                prefix-icon="el-icon-search" clearable class="search-input"
-                                                @clear="handleSearch" @input="handleSearch"></el-input>
+                                        <el-input v-model="searchQuery" placeholder="Search users..." clearable class="search-input"
+                                                @clear="handleSearch" @input="handleSearch">
+                                                <template #prefix>
+                                                        <Icon icon="mdi:magnify" width="1.1rem" height="1.1rem" />
+                                                </template>
+                                        </el-input>
 
                                         <el-select v-model="statusFilter" placeholder="Status" clearable
                                                 @change="handleFilter">
-                                                <el-option label="Active" value="active"></el-option>
-                                                <el-option label="Recent" value="recent"></el-option>
-                                                <el-option label="Inactive" value="inactive"></el-option>
+                                                <el-option label="Active" value="active" />
+                                                <el-option label="Recent" value="recent" />
+                                                <el-option label="Inactive" value="inactive" />
                                         </el-select>
 
                                         <el-select v-model="sortBy" placeholder="Sort by" @change="handleSort">
-                                                <el-option label="Newest" value="newest"></el-option>
-                                                <el-option label="Most Active" value="mostActive"></el-option>
-                                                <el-option label="Most Entries" value="mostEntries"></el-option>
+                                                <el-option label="Newest" value="newest" />
+                                                <el-option label="Most Active" value="mostActive" />
+                                                <el-option label="Most Entries" value="mostEntries" />
                                         </el-select>
                                 </div>
-                        </div>
+                        </template>
 
                         <el-table :data="filteredUsers" style="width: 100%" border stripe v-loading="loading"
                                 element-loading-text="Loading users...">
                                 <el-table-column prop="email" label="Email" min-width="220">
-                                        <template slot-scope="scope">
+                                        <template #default="scope">
                                                 <div class="user-email">
                                                         <span>{{ scope.row.email }}</span>
-                                                        <el-button type="text" size="mini"
-                                                                @click="viewUserDetails(scope.row)" icon="el-icon-view">
+                                                        <el-button type="primary" link size="small"
+                                                                @click="viewUserDetails(scope.row)">
+                                                                <Icon icon="mdi:eye" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
                                                                 View Details
                                                         </el-button>
                                                 </div>
@@ -87,38 +88,39 @@
                                 </el-table-column>
 
                                 <el-table-column label="Diary Count" width="120">
-                                        <template slot-scope="scope">
-                                                <el-tag type="success" size="medium">
+                                        <template #default="scope">
+                                                <el-tag type="success">
                                                         {{ scope.row.diaryCount }} entries
                                                 </el-tag>
                                         </template>
                                 </el-table-column>
 
                                 <el-table-column label="Joined Date" width="180">
-                                        <template slot-scope="scope">
+                                        <template #default="scope">
                                                 {{ formatDate(scope.row.dateJoined) }}
                                         </template>
                                 </el-table-column>
 
                                 <el-table-column label="Last Login" width="180">
-                                        <template slot-scope="scope">
+                                        <template #default="scope">
                                                 {{ formatDate(scope.row.lastLogin) }}
                                         </template>
                                 </el-table-column>
 
                                 <el-table-column label="Status" width="100">
-                                        <template slot-scope="scope">
-                                                <el-tag :type="getUserStatusType(scope.row)" size="medium">
+                                        <template #default="scope">
+                                                <el-tag :type="getUserStatusType(scope.row)">
                                                         {{ getUserStatus(scope.row) }}
                                                 </el-tag>
                                         </template>
                                 </el-table-column>
 
                                 <el-table-column label="Actions" width="150">
-                                        <template slot-scope="scope">
-                                                <el-button size="mini" type="danger" icon="el-icon-delete"
+                                        <template #default="scope">
+                                                <el-button size="small" type="danger"
                                                         @click="handleDelete(scope.row)"
                                                         :disabled="!canDeleteUser(scope.row)">
+                                                        <Icon icon="mdi:delete" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
                                                         Delete
                                                 </el-button>
                                         </template>
@@ -129,13 +131,11 @@
                                 <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
                                         :current-page="currentPage" :page-sizes="[10, 20, 50, 100]"
                                         :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
-                                        :total="totalUsers">
-                                </el-pagination>
+                                        :total="totalUsers" />
                         </div>
                 </el-card>
 
-                <!-- User Details Dialog -->
-                <el-dialog title="User Details" :visible.sync="dialogVisible" width="50%">
+                <el-dialog v-model="dialogVisible" title="User Details" width="50%">
                         <div v-if="selectedUser" class="user-details">
                                 <el-descriptions :column="2" border>
                                         <el-descriptions-item label="Email">{{ selectedUser.email
@@ -162,11 +162,14 @@
 
 <script>
 import { format, isToday, differenceInDays, differenceInWeeks } from 'date-fns'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Icon } from '@iconify/vue'
 import { fetchUsersWithDiary, deleteUser } from '@/services/users';
 import { getApiErrorMessage } from '@/services/apiError';
 
 export default {
         name: 'AdminDashboard',
+        components: { Icon },
         data() {
                 return {
                         users: [],
@@ -196,7 +199,6 @@ export default {
                 filteredUsersRaw() {
                         let result = [...this.users]
 
-                        // Apply search
                         if (this.searchQuery) {
                                 const query = this.searchQuery.toLowerCase()
                                 result = result.filter(user =>
@@ -204,14 +206,12 @@ export default {
                                 )
                         }
 
-                        // Apply status filter
                         if (this.statusFilter) {
                                 result = result.filter(user =>
                                         this.getUserStatus(user).toLowerCase() === this.statusFilter
                                 )
                         }
 
-                        // Apply sorting
                         switch (this.sortBy) {
                                 case 'newest':
                                         result.sort((a, b) => new Date(b.dateJoined) - new Date(a.dateJoined))
@@ -226,7 +226,6 @@ export default {
                         return result
                 },
                 filteredUsers() {
-                        // Only apply pagination here
                         const start = (this.currentPage - 1) * this.pageSize
                         return this.filteredUsersRaw.slice(start, start + this.pageSize)
                 },
@@ -279,23 +278,22 @@ export default {
                         this.dialogVisible = true
                 },
                 canDeleteUser(user) {
-                        // Add your logic here to determine if a user can be deleted
                         return true
                 },
                 async handleDelete(user) {
                         try {
-                                await this.$confirm('Are you sure you want to delete this user?', 'Warning', {
+                                await ElMessageBox.confirm('Are you sure you want to delete this user?', 'Warning', {
                                         confirmButtonText: 'Delete',
                                         cancelButtonText: 'Cancel',
                                         type: 'warning'
                                 })
 
                                 await deleteUser(user.id)
-                                this.$message.success('User deleted successfully')
+                                ElMessage.success('User deleted successfully')
                                 this.fetchUsers()
                         } catch (error) {
                                 if (error !== 'cancel') {
-                                        this.$message.error(getApiErrorMessage(error, 'Failed to delete user'))
+                                        ElMessage.error(getApiErrorMessage(error, 'Failed to delete user'))
                                         console.error('Error deleting user:', error)
                                 }
                         }
@@ -305,7 +303,7 @@ export default {
                         try {
                                 this.users = await fetchUsersWithDiary()
                         } catch (error) {
-                                this.$message.error(getApiErrorMessage(error, 'Failed to fetch users'))
+                                ElMessage.error(getApiErrorMessage(error, 'Failed to fetch users'))
                                 console.error('Error fetching users:', error)
                         } finally {
                                 this.loading = false
@@ -329,7 +327,6 @@ export default {
         margin-bottom: 20px;
         margin-left: auto;
         margin-right: auto;
-        /* padding: 0 20px; */
         display: flex;
         justify-content: center;
 }
@@ -345,6 +342,10 @@ export default {
         margin-right: 1rem;
         padding: 0.85rem;
         border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--lb-text-muted, #5a6d7e);
 }
 
 .stats-info {
@@ -360,8 +361,6 @@ export default {
         font-size: 1.5rem;
         font-weight: 600;
 }
-
-
 
 .header-actions {
         display: flex;

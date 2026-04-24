@@ -1,7 +1,13 @@
 <template>
         <div class="todo">
-                <el-tiptap :content="content" :extensions="extensions" :readonly="true" @onInit="$emit('init', $event)"
-                        :enableCharCount="false"></el-tiptap>
+                <el-tiptap
+                        output="json"
+                        :content="content"
+                        :extensions="extensions"
+                        :readonly="true"
+                        :enable-char-count="false"
+                        @onCreate="$emit('init', $event)"
+                />
         </div>
 </template>
 

@@ -13,9 +13,9 @@
       <div class="app-shell grid-container">
         <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
           <el-card class="lb-card-flat" shadow="never">
-            <div slot="header">
+            <template #header>
               <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
-            </div>
+            </template>
             <vue-word-cloud
               style="height: 240px; width: 300px;"
               :words="item.note"
@@ -31,13 +31,13 @@
 
 <script>
 import VueWordCloud from 'vuewordcloud';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import homeIcon from '@iconify/icons-material-symbols/home';
 import { getDiarySummaries } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
 export default {
   components: {
-    [VueWordCloud.name]: VueWordCloud,
+    VueWordCloud,
     Icon,
   },
   data() {
@@ -90,7 +90,7 @@ export default {
 </script>
 
 <style scoped>
-.content-view >>> .el-header {
+.content-view :deep(.el-header) {
   padding: 0;
   height: auto !important;
   background: transparent;

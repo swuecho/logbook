@@ -10,7 +10,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 
 defineProps({

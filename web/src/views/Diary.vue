@@ -1,16 +1,17 @@
 <template>
-  <DiaryEditor :date="date"></DiaryEditor>
+  <DiaryEditor :date="date" />
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
-import router from '@/router';
+import { useRoute } from 'vue-router';
 import DiaryEditor from "@/components/DiaryEditor";
 
-const date = ref(router.currentRoute.query.date);
+const route = useRoute();
+const date = ref(route.query.date);
 
 watch(
-  () => router.currentRoute.query.date,
+  () => route.query.date,
   (newDate) => {
     date.value = newDate;
   },

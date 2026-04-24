@@ -3,20 +3,20 @@
 ## Project Structure & Module Organization
 - `api/`: F# ASP.NET Core backend (`Program.fs`, `*.fsproj`), DB queries in `api/queries/` and SQL in `api/sql/`.
 - `api/tests/`: xUnit test project (`unit.fsproj`, `Tests.fs`).
-- `web/`: Vue 2 frontend (`src/`, `public/`) built with Rsbuild.
+- `web/`: Vue 3 frontend (`src/`, `public/`) built with Rsbuild, Element Plus, and element-tiptap 2.
 - `scripts/`: small Python utilities for maintenance tasks.
 - Root `docker-compose.yml`: local container orchestration.
 
 ## Build, Test, and Development Commands
 - Backend dev: `cd api && dotnet restore && dotnet build && dotnet watch run` (build and run with hot reload).
 - Backend tests: `cd api/tests && dotnet test` (runs xUnit tests).
-- Frontend dev: `cd web && yarn dev` (Rsbuild dev server).
+- Frontend dev: `cd web && yarn dev` (Rsbuild dev server with Vue 3).
 - Frontend build: `cd web && yarn build` (production assets).
 - Full stack (containers): `docker-compose up -d` (see `docker-compose.yml`).
 
 ## Coding Style & Naming Conventions
 - F#: follow existing formatting (4-space indent, PascalCase file/module names such as `JwtService.fs`).
-- Vue/JS: 2-space indent, single quotes, PascalCase component filenames (e.g., `DiaryEditor.vue`).
+- Vue/JS: 2-space indent, single quotes, PascalCase component filenames (e.g., `DiaryEditor.vue`); UI via Element Plus.
 - Keep new files near related modules (e.g., API routes next to `Program.fs`, UI components in `web/src/components/`).
 
 ## Testing Guidelines

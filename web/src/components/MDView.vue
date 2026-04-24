@@ -15,7 +15,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import { exportMarkdown } from '@/services/markdown';
 import { getApiErrorMessage } from '@/services/apiError';
 

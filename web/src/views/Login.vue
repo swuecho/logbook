@@ -1,7 +1,7 @@
 <template>
   <el-container class="lb-auth">
     <el-card shadow="never">
-      <div slot="header" class="clearfix">Logbook</div>
+      <template #header><div class="clearfix">Logbook</div></template>
       <el-main>
         <el-row>
           <el-form ref="ruleFormRef" label-position="left" :model="form" status-icon :rules="rules" label-width="60px">

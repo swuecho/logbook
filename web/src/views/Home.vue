@@ -19,8 +19,8 @@
         </div>
         <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
         <TodoStrip />
-        <el-dialog :visible="dialogVisibleMd" @close="closeModalMd">
-          <MDView :noteId="date"></MDView>
+        <el-dialog v-model="dialogVisibleMd" @close="closeModalMd">
+          <MDView :note-id="date" />
         </el-dialog>
       </div>
       <DiaryEditor :date="date"></DiaryEditor>
@@ -31,7 +31,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import moment from 'moment';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';
 import DiaryEditor from "@/components/DiaryEditor";

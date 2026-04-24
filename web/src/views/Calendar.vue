@@ -63,7 +63,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import moment from 'moment';
-import { Icon } from '@iconify/vue2';
+import { Icon } from '@iconify/vue';
 import homeIcon from '@iconify/icons-material-symbols/home';
 import router from '@/router';
 import { getDiaryIds } from '@/services/diary';
@@ -180,7 +180,7 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-.calendar-page >>> .el-header {
+.calendar-page :deep(.el-header) {
   padding: 0;
   background: transparent;
 }
