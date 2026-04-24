@@ -15,6 +15,16 @@
             <a href="/content" class="linkish" title="Browse entries">
               <Icon :icon="tableOfContents" />
             </a>
+            <button
+              v-if="isAuthenticated"
+              type="button"
+              class="linkish"
+              title="Logout"
+              aria-label="Logout"
+              @click="goLogout"
+            >
+              <Icon :icon="logoutIcon" />
+            </button>
           </div>
         </div>
         <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
@@ -34,12 +44,14 @@ import moment from 'moment';
 import { Icon } from '@iconify/vue';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';
+import logoutIcon from '@iconify/icons-mdi/logout';
 import DiaryEditor from "@/components/DiaryEditor";
 import TodoStrip from '@/components/TodoStrip.vue';
 import MDView from '@/components/MDView.vue';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
 import DateNavigation from '@/components/DateNavigation.vue';
 import { getDiaryIds } from '@/services/diary';
+import router from '@/router';
 
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
@@ -65,6 +77,16 @@ const time = computed(() => {
   const timeFormat = 'h:mm:ss a';
   return now.value.format(timeFormat);
 });
+
+const isAuthenticated = computed(() => {
+  const token = localStorage.getItem('JWT_TOKEN');
+  const expiresAt = Number(localStorage.getItem('JWT_EXPIRES_AT'));
+  return Boolean(token) && Boolean(expiresAt) && expiresAt > Date.now();
+});
+
+const goLogout = () => {
+  router.push({ path: '/logout' });
+};
 
 function openModalMd() {
   dialogVisibleMd.value = true
