@@ -10,3 +10,10 @@ export const getDiarySummaries = async () => {
         const response = await axios.get('/api/diary');
         return response.data;
 };
+
+export const searchDiary = async (query: string) => {
+        const response = await axios.get('/api/diary/search', {
+                params: { q: query }
+        });
+        return response.data;
+};

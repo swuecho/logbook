@@ -16,11 +16,21 @@
           </button>
         </div>
 
+        <el-input
+          v-model="searchQuery"
+          class="calendar-page__search"
+          placeholder="Search entries"
+          clearable
+          size="small"
+        />
+
         <button type="button" class="linkish" @click="goThisYear">This year</button>
       </el-header>
 
       <el-main v-loading="loading" class="app-main-padded calendar-page__main">
         <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
+        <p v-if="searchError" class="load-error" role="alert">{{ searchError }}</p>
+        <p v-if="isSearchActive && searching" class="search-status">Searching…</p>
         <div class="year-months">
           <section
             v-for="(block, mi) in yearMonths"
@@ -63,25 +73,36 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue';
 import homeIcon from '@iconify/icons-material-symbols/home';
 import router from '@/router';
-import { getDiaryIds } from '@/services/diary';
+import { getDiaryIds, searchDiary } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const visibleYear = ref(moment().year());
 const diaryIds = ref(new Set());
+const searchQuery = ref('');
+const searchResults = ref([]);
+const searching = ref(false);
+const searchError = ref('');
+const searchSeq = ref(0);
+let searchTimer = null;
 const loading = ref(true);
 const loadError = ref('');
 
 const weekdayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const yearTitle = computed(() => String(visibleYear.value));
+const isSearchActive = computed(() => searchQuery.value.trim().length > 0);
+const matchingDiaryIds = computed(() => new Set(searchResults.value.map(item => item.noteId)));
 
 function ariaDayLabel(cell) {
   const d = cell.day.format('MMMM D, YYYY');
+  if (cell.isSearchMatch) {
+    return `Open ${d}, matches search`;
+  }
   if (cell.hasNote && cell.isToday) {
     return `Open ${d}, has entry, today`;
   }
@@ -109,6 +130,7 @@ function buildCellsForMonth(year, month0Based, todayId) {
     cells.push({
       day,
       hasNote: diaryIds.value.has(id),
+      isSearchMatch: matchingDiaryIds.value.has(id),
       isToday: id === todayId,
     });
   }
@@ -138,6 +160,8 @@ function cellClass(cell) {
     day: true,
     'day--today': cell.isToday,
     'day--note': cell.hasNote,
+    'day--search-match': isSearchActive.value && cell.isSearchMatch,
+    'day--search-dim': isSearchActive.value && cell.hasNote && !cell.isSearchMatch,
   };
 }
 
@@ -160,6 +184,52 @@ function openDay(day) {
 function goHome() {
   router.push('/');
 }
+
+async function fetchSearchResults() {
+  const query = searchQuery.value.trim();
+  const seq = searchSeq.value + 1;
+  searchSeq.value = seq;
+  searchError.value = '';
+
+  if (!query) {
+    searchResults.value = [];
+    searching.value = false;
+    return;
+  }
+
+  searching.value = true;
+  try {
+    const results = await searchDiary(query);
+    if (seq === searchSeq.value) {
+      searchResults.value = results;
+    }
+  } catch (err) {
+    if (seq === searchSeq.value) {
+      searchError.value = getApiErrorMessage(err, 'Could not search diary entries.');
+      searchResults.value = [];
+    }
+  } finally {
+    if (seq === searchSeq.value) {
+      searching.value = false;
+    }
+  }
+}
+
+watch(searchQuery, () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+
+  searchTimer = setTimeout(() => {
+    fetchSearchResults();
+  }, 280);
+});
+
+onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+});
 
 onMounted(async () => {
   loading.value = true;
@@ -192,6 +262,10 @@ onMounted(async () => {
   gap: 0.25rem;
 }
 
+.calendar-page__search {
+  width: min(18rem, 100%);
+}
+
 .year-heading {
   margin: 0;
   min-width: 4.5ch;
@@ -211,6 +285,12 @@ onMounted(async () => {
 .load-error {
   margin: 0 0 1rem;
   color: var(--lb-error);
+  font-size: 0.9rem;
+}
+
+.search-status {
+  margin: 0 0 1rem;
+  color: var(--lb-text-muted);
   font-size: 0.9rem;
 }
 
@@ -301,6 +381,22 @@ onMounted(async () => {
   opacity: 0.75;
 }
 
+.day--search-match {
+  background: #eef8f2;
+  box-shadow: inset 0 0 0 1px rgba(45, 134, 89, 0.28);
+}
+
+.day--search-match::after {
+  width: 5px;
+  height: 5px;
+  opacity: 1;
+}
+
+.day--search-dim {
+  color: var(--lb-text-subtle);
+  opacity: 0.38;
+}
+
 .day-placeholder {
   display: block;
   aspect-ratio: 1;
@@ -308,6 +404,10 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
+  .calendar-page__search {
+    width: 100%;
+  }
+
   .year-months {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.25rem 0.75rem;
