@@ -18,7 +18,7 @@
                 <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
               </template>
               <vue-word-cloud
-                class="content-view__cloud"
+                style="height: 240px; width: 100%;"
                 :words="item.note"
                 :color="([, weight]) => weight > 10 ? '#0f766e' : weight > 5 ? '#2563eb' : '#475569'"
                 font-family="Fira Code"
@@ -117,11 +117,6 @@ export default {
   height: 100%;
 }
 
-.content-view__cloud {
-  height: 240px;
-  width: 100%;
-}
-
 .entry-date-link {
   color: var(--lb-accent);
   text-decoration: none;
@@ -149,8 +144,5 @@ code {
     padding: 0.5rem;
   }
 
-  .content-view__cloud {
-    height: 150px;
-  }
 }
 </style>
