@@ -1,20 +1,31 @@
 <template>
   <el-container class="lb-auth">
     <el-card shadow="never">
-      <template #header><div class="clearfix">Logbook</div></template>
+      <template #header><div class="lb-auth__title">Logbook</div></template>
       <el-main>
-        <el-row>
-          <el-form ref="ruleFormRef" label-position="left" :model="form" status-icon :rules="rules" label-width="60px">
-            <el-form-item label="邮箱" prop="name">
-              <el-input v-model="form.name" type="text" autocomplete="off" />
-            </el-form-item>
+        <el-form
+          ref="ruleFormRef"
+          label-position="left"
+          :model="form"
+          status-icon
+          :rules="rules"
+          label-width="60px"
+          @submit.prevent
+        >
+          <el-form-item label="邮箱" prop="name">
+            <el-input v-model="form.name" type="text" autocomplete="off" />
+          </el-form-item>
 
-            <el-form-item label="密码" prop="pwd">
-              <el-input v-model="form.pwd" type="password" autocomplete="off" />
-            </el-form-item>
-          </el-form>
-          <el-button type="primary" size="medium" round @click="submitForm">注册/登录</el-button>
-        </el-row>
+          <el-form-item label="密码" prop="pwd">
+            <el-input v-model="form.pwd" type="password" autocomplete="off" show-password />
+          </el-form-item>
+
+          <el-form-item label-width="0">
+            <el-button class="lb-auth__submit" type="primary" size="default" round @click="submitForm">
+              注册/登录
+            </el-button>
+          </el-form-item>
+        </el-form>
         <el-row class="alert-row">
           <div v-if="errors.length">
             <div v-for="(error, key) in errors" :key="key">
@@ -86,11 +97,11 @@ const login = async () => {
 </script>
 
 <style scoped>
-.lb-auth {
+.lb-auth__title {
   text-align: center;
 }
 
-.el-card__header div {
-  font-size: 1.5rem;
+.lb-auth__submit {
+  width: 100%;
 }
 </style>
