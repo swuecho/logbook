@@ -1,6 +1,8 @@
 module Note
 
+open System
 open System.Net
+open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
 open Falco
 open System.Security.Claims
@@ -87,13 +89,77 @@ let addNotePart: HttpHandler =
                 let userId = getUserId ctx.User
                 let conn = ctx.getNpgsql ()
 
-                Diary.AddNote
-                    conn
-                    { NoteId = note.NoteId
-                      UserId = userId
-                      Note = note.Note }
+                let saved =
+                    Diary.AddNote
+                        conn
+                        { NoteId = note.NoteId
+                          UserId = userId
+                          Note = note.Note }
+
+                Jieba.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+
+                saved
                 |> Json.Response.ofJson)
             ctx
+
+type DiarySearchResult =
+    { NoteId: string
+      Snippet: string
+      Rank: int
+      LastUpdated: DateTime }
+
+let private compactText (text: string) =
+    Regex.Replace(text, @"\s+", " ").Trim()
+
+let private buildSnippet (terms: string array) (searchText: string) =
+    let text = compactText searchText
+
+    if text.Length <= 180 then
+        text
+    else
+        let lowerText = text.ToLowerInvariant()
+
+        let firstMatch =
+            terms
+            |> Array.choose (fun term ->
+                let idx = lowerText.IndexOf(term, StringComparison.Ordinal)
+                if idx >= 0 then Some idx else None)
+            |> Array.sort
+            |> Array.tryHead
+
+        let center = defaultArg firstMatch 0
+        let start = max 0 (center - 60)
+        let length = min (text.Length - start) 180
+        let snippet = text.Substring(start, length)
+
+        let prefix = if start > 0 then "..." else ""
+        let suffix = if start + length < text.Length then "..." else ""
+        prefix + snippet + suffix
+
+let searchDiaryPart: HttpHandler =
+    fun ctx ->
+        let query =
+            match ctx.Request.Query.TryGetValue("q") with
+            | true, value -> value.ToString()
+            | false, _ -> ""
+
+        let terms = Jieba.searchTerms query
+
+        if terms.Length = 0 then
+            Json.Response.ofJson ([]: DiarySearchResult list) ctx
+        else
+            let userId = getUserId ctx.User
+            let conn = ctx.getNpgsql ()
+
+            let results =
+                Diary.SearchDiary conn { UserId = userId; QueryTerms = terms }
+                |> List.map (fun row ->
+                    { NoteId = row.NoteId
+                      Snippet = buildSnippet terms row.SearchText
+                      Rank = row.Rank
+                      LastUpdated = row.LastUpdated })
+
+            Json.Response.ofJson results ctx
 
 let noteByIdPartDebug: HttpHandler =
     fun ctx ->

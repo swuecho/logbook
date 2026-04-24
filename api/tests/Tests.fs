@@ -15,6 +15,43 @@ let ``My test2`` () =
 //Assert.True(seq)
 
 [<Fact>]
+let ``searchTerms tokenizes mixed Chinese and English text`` () =
+    let terms = Jieba.searchTerms "Vue 中文 搜索"
+    Assert.Contains("vue", terms)
+    Assert.Contains("中文", terms)
+    Assert.Contains("搜索", terms)
+
+[<Fact>]
+let ``searchTerms supports Chinese word queries`` () =
+    let terms = Jieba.searchTerms "今天心情很好 机器学习"
+    Assert.True(terms |> Array.exists (fun term -> term.Contains("今天") || term.Contains("心情")))
+    Assert.True(terms |> Array.exists (fun term -> term.Contains("机器") || term.Contains("学习")))
+
+[<Fact>]
+let ``searchIndexOfNote extracts text from tiptap json`` () =
+    let json =
+        """
+    {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Vue 中文 搜索"
+                    }
+                ]
+            }
+        ]
+    }
+    """
+
+    let searchText, terms = Jieba.searchIndexOfNote json
+    Assert.Contains("Vue", searchText)
+    Assert.Contains("vue", terms)
+
+[<Fact>]
 let ``tipTapDocJsonToMarkdown test`` () =
     let json =
         """

@@ -1,22 +1,55 @@
 module Jieba
 
-open System.Text
+open System
+open System.Text.RegularExpressions
 open JiebaNet
 
-let freqs text =
-    let wordRegex = RegularExpressions.Regex "\\w"
-    let resourceDir = __SOURCE_DIRECTORY__ + "/Resources/jieba"
+let private resourceDir = __SOURCE_DIRECTORY__ + "/Resources/jieba"
+let private searchableToken = Regex(@"[\p{L}\p{N}]", RegexOptions.Compiled)
 
+let private segment (text: string) =
     Segmenter.ConfigManager.ConfigFileBaseDir <- resourceDir
-
     let seg = Segmenter.JiebaSegmenter()
-    let words = seg.Cut(text)
+    seg.Cut(text)
+
+let searchTerms (text: string) =
+    if String.IsNullOrWhiteSpace text then
+        [||]
+    else
+        text
+        |> segment
+        |> Seq.map (fun word -> word.Trim().ToLowerInvariant())
+        |> Seq.filter (fun word -> word.Length > 0 && searchableToken.IsMatch word)
+        |> Seq.distinct
+        |> Seq.toArray
+
+let searchIndexOfNote (note: string) =
+    let searchText = note |> TipTap.getTextFromNote
+    searchText, searchTerms searchText
+
+let updateSearchIndex conn (noteId: string) (userId: int) (note: string) =
+    let searchText, terms = searchIndexOfNote note
+
+    Diary.UpdateDiarySearch
+        conn
+        { NoteId = noteId
+          UserId = userId
+          SearchText = searchText
+          SearchTerms = terms }
+    |> ignore
+
+let refreshSearchIndex conn =
+    Diary.ListMissingSearchIndex conn
+    |> List.iter (fun diary -> updateSearchIndex conn diary.NoteId diary.UserId diary.Note)
+
+let freqs text =
+    let words = segment text
 
     words
     |> Seq.countBy id
     |> Seq.sortBy (snd >> (~-))
     |> Seq.truncate 40
-    |> Seq.filter (fun (a, b) -> wordRegex.IsMatch a)
+    |> Seq.filter (fun (a, _) -> searchableToken.IsMatch a)
     |> dict
 
 

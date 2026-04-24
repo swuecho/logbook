@@ -91,6 +91,13 @@ let authService (services: IServiceCollection) =
 // init db
 Database.InitDB.init Database.Config.connStr |> ignore
 
+let initializeSearchIndex () =
+    use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
+    pgConn.Open()
+    Jieba.refreshSearchIndex pgConn
+
+initializeSearchIndex()
+
 let endpoints =
     [
         post "/api/login" Note.login
@@ -98,6 +105,7 @@ let endpoints =
         get "/api/diary_ids" Note.listDiaryIds
         get "/api/users/with-diary" Note.getUsersWithDiaryCount
         get "/api/diary" Note.noteAllPart
+        get "/api/diary/search" Note.searchDiaryPart
         get "/api/diary/{id}" Note.noteByIdPartDebug
         put "/api/diary/{id}" Note.addNotePart
         get "/api/todo" Note.todoListsHandler

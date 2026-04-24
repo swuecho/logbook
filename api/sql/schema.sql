@@ -30,11 +30,17 @@ CREATE TABLE IF NOT EXISTS diary (
     user_id INTEGER NOT NULL REFERENCES auth_user(id),
     note_id character varying(8) NOT NULL,
     note text DEFAULT '' NOT NULL,
+    search_text text DEFAULT '' NOT NULL,
+    search_terms text[] DEFAULT ARRAY[]::text[] NOT NULL,
     last_updated timestamp with time zone DEFAULT NOW() NOT NULL
 );
 
+ALTER TABLE diary ADD COLUMN IF NOT EXISTS search_text text DEFAULT '' NOT NULL;
+ALTER TABLE diary ADD COLUMN IF NOT EXISTS search_terms text[] DEFAULT ARRAY[]::text[] NOT NULL;
+
 -- note_id and user_id are unique together
 CREATE UNIQUE INDEX IF NOT EXISTS diary_id_user_id_idx ON diary (note_id, user_id);
+CREATE INDEX IF NOT EXISTS diary_search_terms_idx ON diary USING GIN (search_terms);
 
 CREATE TABLE IF NOT EXISTS summary (
     id SERIAL PRIMARY KEY,
@@ -47,5 +53,3 @@ CREATE TABLE IF NOT EXISTS summary (
 
 -- note_id and user_id are unique together
 CREATE UNIQUE INDEX IF NOT EXISTS summary_id_user_id_idx ON summary (note_id, user_id);
-
-
