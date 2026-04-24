@@ -101,7 +101,7 @@ const emptyMessage = computed(() => (
 
 watch(todoContent, (value) => {
   if (editorRef.value && value) {
-    editorRef.value.setContent(value);
+    editorRef.value.commands.setContent(value);
   }
 });
 
@@ -168,11 +168,11 @@ function extractTodoItems(doc) {
       if (headingText) currentNoteId = headingText;
     }
 
-    if (node.type === 'todo_item') {
+    if (node.type === 'todo_item' || node.type === 'taskItem') {
       const text = flattenText(node).trim();
       items.push({
         text,
-        done: Boolean(node.attrs && node.attrs.done),
+        done: Boolean(node.attrs && (node.attrs.done || node.attrs.checked)),
         noteId: currentNoteId,
       });
       return;

@@ -4,6 +4,23 @@ open FSharp.Data
 
 let LINEBREAK = "\n"
 
+let private isTodoListType (nodeType: string) =
+    nodeType = "todo_list" || nodeType = "taskList"
+
+let private isTodoItemType (nodeType: string) =
+    nodeType = "todo_item" || nodeType = "taskItem"
+
+let private getTodoDoneAttr (element: JsonElement) =
+    match element.TryGetProperty("attrs") with
+    | true, attrs ->
+        match attrs.TryGetProperty("done") with
+        | true, doneAttr -> doneAttr.GetBoolean()
+        | false, _ ->
+            match attrs.TryGetProperty("checked") with
+            | true, checkedAttr -> checkedAttr.GetBoolean()
+            | false, _ -> false
+    | false, _ -> false
+
 let rec getContent (jv: JsonValue) =
     let extractProperty (x, y) =
         match (x, y) with
@@ -27,7 +44,7 @@ let getTextFromNote (note: string) =
     | Some(json) -> getContent json
     | None -> content
 
-// find all todo_list in note and return todo_list as json str
+// find all todo_list/taskList nodes in note and return them as json
 let extractTodoList (note: string) =
 
     let rec extractTodoItems (element: JsonElement) =
@@ -35,7 +52,7 @@ let extractTodoList (note: string) =
             match element.ValueKind with
             | JsonValueKind.Object ->
                 match element.TryGetProperty("type") with
-                | true, typeProperty when typeProperty.GetString() = "todo_list" -> yield element
+                | true, typeProperty when isTodoListType (typeProperty.GetString()) -> yield element
                 | _ ->
                     for property in element.EnumerateObject() do
                         yield! extractTodoItems property.Value
@@ -145,13 +162,13 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
         match element.TryGetProperty("text") with 
         | false, _ -> LINEBREAK 
         | true, text -> text.GetString()
-    | "todo_list" ->
+    | nodeType when isTodoListType nodeType ->
         element.GetProperty("content")
         |> _.EnumerateArray()
         |> Seq.map tipTapDocToMarkdown
         |> String.concat LINEBREAK
-    | "todo_item" ->
-        let doneAttr = element.GetProperty("attrs").GetProperty("done").GetBoolean()
+    | nodeType when isTodoItemType nodeType ->
+        let doneAttr = getTodoDoneAttr element
         let prefix = if doneAttr then "- [x] " else "- [ ] "
         let content =
             element.GetProperty("content")
