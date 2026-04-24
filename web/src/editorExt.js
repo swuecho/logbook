@@ -1,5 +1,5 @@
 import {
-  Doc,
+  Document,
   Text,
   Paragraph,
   Heading,
@@ -36,7 +36,7 @@ import 'codemirror/addon/edit/closetag.js';
 
 export function createExtensions() {
   return [
-    Doc,
+    Document,
     Text,
     Paragraph,
     Heading.configure({ levels: [1, 2, 3] }),
