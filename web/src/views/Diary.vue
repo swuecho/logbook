@@ -1,9 +1,7 @@
 <template>
   <div class="app-page app-page--shell diary-view">
     <div class="app-shell app-shell--narrow">
-      <section class="app-panel app-panel--soft diary-view__editor">
-        <DiaryEditor :date="date" />
-      </section>
+      <DiaryEditor :date="date" />
     </div>
   </div>
 </template>
@@ -24,9 +22,3 @@ watch(
   { immediate: true }
 );
 </script>
-
-<style scoped>
-.diary-view__editor {
-  padding: 1rem;
-}
-</style>

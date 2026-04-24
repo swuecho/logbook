@@ -1,27 +1,16 @@
 <template>
   <el-container class="calendar-page app-page app-page--shell">
     <div class="app-shell">
-      <section class="app-page__hero calendar-page__hero">
-        <p class="app-page__eyebrow">Overview</p>
-        <div class="app-page__title-row">
-          <div>
-            <h1 class="app-page__title">Calendar</h1>
-            <p class="app-page__subtitle">Scan the full year, spot days with entries instantly, and jump into any note without leaving the broader timeline.</p>
-          </div>
-          <div class="app-page__meta">Year {{ yearTitle }}</div>
-        </div>
-      </section>
       <el-header class="app-header-bar calendar-page__header">
         <button type="button" class="linkish" aria-label="Home" @click="goHome">
           <Icon :icon="homeIcon" height="24" />
-          <span>Home</span>
         </button>
 
         <div class="year-row">
           <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
             ‹
           </button>
-          <h2 class="year-heading">{{ yearTitle }}</h2>
+          <h1 class="year-heading">{{ yearTitle }}</h1>
           <button type="button" class="linkish year-arrow" aria-label="Next year" @click="nextYear">
             ›
           </button>
@@ -32,7 +21,7 @@
 
       <el-main v-loading="loading" class="app-main-padded calendar-page__main">
         <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
-        <div class="year-months app-panel app-panel--soft">
+        <div class="year-months">
           <section
             v-for="(block, mi) in yearMonths"
             :key="mi"
@@ -229,7 +218,6 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: 2rem 1.5rem;
-  padding: 1.25rem;
 }
 
 .month-block {
@@ -273,13 +261,12 @@ onMounted(async () => {
   max-height: 2.25rem;
   margin: 0;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.66);
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   font: inherit;
   cursor: pointer;
   color: var(--lb-text);
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .day-num {
@@ -290,8 +277,6 @@ onMounted(async () => {
 
 .day:hover {
   background: var(--lb-hover);
-  border-color: var(--lb-border);
-  transform: translateY(-1px);
 }
 
 .day:focus {
@@ -326,8 +311,6 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .year-months {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1rem;
   }
 
   .day {

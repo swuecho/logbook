@@ -1,16 +1,10 @@
 <template>
         <div class="lb-admin admin-dashboard">
                 <div class="app-shell">
-                        <section class="app-page__hero admin-dashboard__hero">
-                                <p class="app-page__eyebrow">Workspace</p>
-                                <div class="app-page__title-row">
-                                        <div>
-                                                <h1 class="app-page__title">Admin dashboard</h1>
-                                                <p class="app-page__subtitle">User metrics, search, and account actions now share the same surface treatment and spacing as the rest of the product.</p>
-                                        </div>
-                                        <div class="app-page__meta">{{ users.length }} users</div>
-                                </div>
-                        </section>
+                        <div class="app-header-bar">
+                                <div class="admin-dashboard__title">Admin</div>
+                                <div class="admin-dashboard__meta">{{ users.length }} users</div>
+                        </div>
                 <el-row :gutter="20" class="stats-row">
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
@@ -331,6 +325,17 @@ export default {
 <style scoped>
 .admin-dashboard {
         padding: 0;
+}
+
+.admin-dashboard__title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--lb-text);
+}
+
+.admin-dashboard__meta {
+        color: var(--lb-text-muted);
+        font-size: 0.9rem;
 }
 
 .stats-row {

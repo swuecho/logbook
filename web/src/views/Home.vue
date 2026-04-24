@@ -1,32 +1,19 @@
 <template>
   <div class="app-page app-page--shell home-page">
     <div class="app-shell app-shell--narrow home-page__inner">
-      <section class="app-page__hero home-page__hero">
-        <p class="app-page__eyebrow">Daily log</p>
-        <div class="app-page__title-row">
-          <div>
-            <h1 class="app-page__title">Logbook</h1>
-            <p class="app-page__subtitle">Write fast, keep context nearby, and move between notes, todos, and time views without the interface changing underneath you.</p>
-          </div>
-          <div class="app-page__meta">{{ time }}</div>
-        </div>
-      </section>
       <div class="nav">
         <div class="app-header-bar app-header-bar--dense home-page__top">
-          <div class="home-page__date-label">Today</div>
+          <div class="time-display">{{ time }}</div>
           <div class="right-corner">
             <OnlineStatusIndicator />
             <button type="button" class="linkish" aria-label="Markdown preview" @click="openModalMd">
               <Icon icon="material-symbols:markdown-copy-outline" />
-              <span class="home-page__action-label">Markdown</span>
             </button>
             <a href="/calendar" class="linkish" title="Calendar">
               <Icon :icon="calendarMonth" />
-              <span class="home-page__action-label">Calendar</span>
             </a>
             <a href="/content" class="linkish" title="Browse entries">
               <Icon :icon="tableOfContents" />
-              <span class="home-page__action-label">Entries</span>
             </a>
             <button
               v-if="isAuthenticated"
@@ -37,7 +24,6 @@
               @click="goLogout"
             >
               <Icon :icon="logoutIcon" />
-              <span class="home-page__action-label">Logout</span>
             </button>
           </div>
         </div>
@@ -47,9 +33,7 @@
           <MDView :note-id="date" />
         </el-dialog>
       </div>
-      <section class="app-panel app-panel--soft home-page__editor">
-        <DiaryEditor :date="date"></DiaryEditor>
-      </section>
+      <DiaryEditor :date="date"></DiaryEditor>
     </div>
   </div>
 </template>
@@ -115,47 +99,33 @@ function closeModalMd() {
 
 <style scoped>
 .home-page__inner {
-  padding-top: 0.25rem;
+  padding-top: 0;
   padding-bottom: 2rem;
-}
-
-.home-page__hero {
-  margin-bottom: 1rem;
 }
 
 .nav {
   margin: 0 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.5rem;
 }
 
 .home-page__top {
   margin-bottom: 0.25rem;
 }
 
-.home-page__date-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--lb-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.time-display {
+  font-size: 1.05em;
+  font-weight: 500;
+  color: var(--lb-text);
 }
 
 .right-corner {
   display: flex;
   flex-direction: row;
-  gap: 0.4rem;
+  gap: 0.65rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.home-page__action-label {
-  font-size: 0.86rem;
-}
-
-.home-page__editor {
-  padding: 1rem;
 }
 
 .home-page__dialog :deep(.el-dialog) {
@@ -165,7 +135,7 @@ function closeModalMd() {
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .nav {
-    margin: 0.4rem 0 0.75rem 0;
+    margin: 0.5em 0 0.75rem 0;
     gap: 0.75rem;
   }
 
@@ -175,13 +145,14 @@ function closeModalMd() {
     gap: 0.75rem;
   }
 
-  .home-page__date-label {
+  .time-display {
     text-align: center;
+    font-size: 1.2em;
   }
 
   .right-corner {
     justify-content: center;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 }
 
@@ -191,11 +162,7 @@ function closeModalMd() {
   }
 
   .right-corner {
-    width: 100%;
-  }
-
-  .right-corner :deep(.linkish) {
-    flex: 1 1 calc(50% - 0.5rem);
+    gap: 0.75rem;
   }
 }
 </style>

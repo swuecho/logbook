@@ -1,20 +1,9 @@
 <template>
   <el-container class="app-page app-page--shell content-view">
     <div class="app-shell">
-      <section class="app-page__hero content-view__hero">
-        <p class="app-page__eyebrow">Archive</p>
-        <div class="app-page__title-row">
-          <div>
-            <h1 class="app-page__title">Entry Atlas</h1>
-            <p class="app-page__subtitle">Browse past notes as compact visual summaries. Each card stays aligned with the rest of the product instead of feeling like a separate tool.</p>
-          </div>
-          <div class="app-page__meta">{{ summaries.length }} entries</div>
-        </div>
-      </section>
       <el-header class="app-header-bar app-header-bar--start">
         <button type="button" class="linkish" aria-label="Home" @click="backHome">
           <Icon :icon="icons.homeIcon" height="24" />
-          <span>Home</span>
         </button>
       </el-header>
       <el-main

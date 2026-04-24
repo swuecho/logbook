@@ -125,11 +125,7 @@ function navigateDateToToday() {
   flex-grow: 1;
   overflow: hidden;
   min-height: 60px;
-  padding: 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: var(--lb-shadow-sm);
+  padding: 0.15rem 0;
 }
 
 .date-slider {
@@ -153,10 +149,10 @@ function navigateDateToToday() {
   padding: 8px 12px;
   cursor: pointer;
   text-align: center;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid transparent;
   position: relative;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   min-width: 50px;
   flex-shrink: 0;
 }
@@ -175,7 +171,6 @@ function navigateDateToToday() {
 
 .date-item:hover {
   background-color: var(--lb-hover, #f4f5f7);
-  transform: translateY(-1px);
 }
 
 .date-item.active {
@@ -213,7 +208,6 @@ function navigateDateToToday() {
   align-items: center;
   padding: 0 0.5rem;
   flex-shrink: 0;
-  color: var(--lb-text-muted, #5a6d7e);
 }
 
 /* Mobile optimizations */

@@ -1,14 +1,8 @@
 <template>
   <el-container class="lb-auth">
     <el-card shadow="never">
-      <template #header>
-        <div class="lb-auth__title-wrap">
-          <div class="lb-auth__eyebrow">Welcome back</div>
-          <div class="lb-auth__title">Logbook</div>
-        </div>
-      </template>
+      <template #header><div class="lb-auth__title">Logbook</div></template>
       <el-main>
-        <p class="lb-auth__intro">Sign in to keep your notes, timelines, and todos in one steady workspace.</p>
         <el-form
           ref="ruleFormRef"
           label-position="left"
@@ -103,28 +97,8 @@ const login = async () => {
 </script>
 
 <style scoped>
-.lb-auth__title-wrap {
-  text-align: center;
-}
-
-.lb-auth__eyebrow {
-  margin-bottom: 0.35rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--lb-text-subtle);
-}
-
 .lb-auth__title {
   text-align: center;
-}
-
-.lb-auth__intro {
-  margin: 0 0 1.1rem;
-  text-align: center;
-  color: var(--lb-text-muted);
-  line-height: 1.5;
 }
 
 .lb-auth__submit {

@@ -76,34 +76,25 @@ watch(() => props.noteId, (noteId) => {
   position: relative;
   max-width: 65rem;
   margin: auto;
-  padding: 0.25rem 0 3rem;
 }
 
 .content pre {
-  margin: 0;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--lb-border, #e8eaed);
-  border-radius: 14px;
-  background: #f8fbfa;
-  color: var(--lb-text, #17313a);
   white-space: pre-wrap;
-  word-break: break-word;
-  font-family: var(--lb-font-mono, 'Fira Code', monospace);
 }
 
 .copy-button {
-  background-color: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--lb-border, #e8eaed);
-  color: var(--lb-text, #17313a);
+  background-color: #f1f1f1;
+  border: none;
+  color: black;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
-  border-radius: 999px;
-  padding: 0.65rem;
+  border-radius: 4px;
+  padding: 10px;
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  bottom: 10px;
+  right: 10px;
 }
 
 /* Additional styles... */
