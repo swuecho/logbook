@@ -10,13 +10,17 @@ type DiarySearchResult =
       Rank: int
       LastUpdated: DateTime }
 
+let private maxSnippetLength = 180
+let private snippetContextRadius = 60
+let private minSummaryLength = 2
+
 let compactText (text: string) =
     Regex.Replace(text, @"\s+", " ").Trim()
 
 let buildSnippet (terms: string array) (searchText: string) =
     let text = compactText searchText
 
-    if text.Length <= 180 then
+    if text.Length <= maxSnippetLength then
         text
     else
         let lowerText = text.ToLowerInvariant()
@@ -30,20 +34,29 @@ let buildSnippet (terms: string array) (searchText: string) =
             |> Array.tryHead
 
         let center = defaultArg firstMatch 0
-        let start = max 0 (center - 60)
-        let length = min (text.Length - start) 180
+        let start = max 0 (center - snippetContextRadius)
+        let length = min (text.Length - start) maxSnippetLength
         let snippet = text.Substring(start, length)
 
         let prefix = if start > 0 then "..." else ""
         let suffix = if start + length < text.Length then "..." else ""
         prefix + snippet + suffix
 
+let private hasVisibleSummaryText (summary: Summary.GetSummaryByUserIdRow) =
+    summary.Note.Length > minSummaryLength
+
+let private toSearchResult terms (row: Diary.SearchDiaryRow) =
+    { NoteId = row.NoteId
+      Snippet = buildSnippet terms row.SearchText
+      Rank = row.Rank
+      LastUpdated = row.LastUpdated }
+
 let refreshAndListSummaries (db: DbSession) userId =
     db.WithConnection(fun conn ->
         SummaryService.refreshSummary conn userId
 
         SummaryRepository.getByUserId conn userId
-        |> List.filter (fun x -> x.Note.Length > 2))
+        |> List.filter hasVisibleSummaryText)
 
 let getOrCreateDiary (db: DbSession) userId noteId =
     db.WithConnection(fun conn ->
@@ -67,11 +80,7 @@ let search (db: DbSession) userId query =
     else
         db.WithConnection(fun conn ->
             DiaryRepository.search conn userId terms
-            |> List.map (fun row ->
-                { NoteId = row.NoteId
-                  Snippet = buildSnippet terms row.SearchText
-                  Rank = row.Rank
-                  LastUpdated = row.LastUpdated }))
+            |> List.map (toSearchResult terms))
 
 let extractTodoLists allDiary =
     allDiary

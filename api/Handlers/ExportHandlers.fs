@@ -6,26 +6,30 @@ type ExportDiaryRequest = { Id: string }
 
 let exportDiary: HttpHandler =
     fun ctx ->
+        let requestContext = HandlerContext.authenticated ctx
+
         Request.mapJson
             (fun (request: ExportDiaryRequest) ->
-                let userId = HandlerContext.userId ctx
-
-                ExportService.diaryJson (HandlerContext.dbSession ctx) userId request.Id
+                ExportService.exportDiaryJson requestContext.DbSession requestContext.UserId request.Id
                 |> Json.Response.ofJson)
             ctx
 
 let exportAllDiaries: HttpHandler =
     fun ctx ->
-        let userId = HandlerContext.userId ctx
+        let requestContext = HandlerContext.authenticated ctx
 
-        Json.Response.ofJson (ExportService.allDiaries (HandlerContext.dbSession ctx) userId) ctx
+        Json.Response.ofJson
+            (ExportService.exportAllDiaries requestContext.DbSession requestContext.UserId)
+            ctx
 
 let exportDiaryMarkdown: HttpHandler =
     fun ctx ->
+        let requestContext = HandlerContext.authenticated ctx
+
         Request.mapJson
             (fun (request: ExportDiaryRequest) ->
-                let userId = HandlerContext.userId ctx
+                let markdown =
+                    ExportService.exportDiaryMarkdown requestContext.DbSession requestContext.UserId request.Id
 
-                let markdown = ExportService.diaryMarkdown (HandlerContext.dbSession ctx) userId request.Id
                 Response.ofPlainText markdown)
             ctx

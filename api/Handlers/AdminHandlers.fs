@@ -5,6 +5,7 @@ open Falco
 let usersWithDiaryCount: HttpHandler =
     fun ctx ->
         if HandlerContext.isAdmin ctx then
-            Json.Response.ofJson (AdminService.usersWithDiaryCount (HandlerContext.dbSession ctx)) ctx
+            let dbSession = HandlerContext.dbSession ctx
+            Json.Response.ofJson (AdminService.usersWithDiaryCount dbSession) ctx
         else
             HttpAuth.forbidden ctx

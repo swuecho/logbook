@@ -34,7 +34,7 @@ Most authenticated requests follow this path:
 ```text
 ApiRoutes
   -> Handler
-  -> HandlerContext.userId / HandlerContext.dbSession
+  -> HandlerContext.authenticated / HandlerContext.dbSession
   -> Service
   -> DbSession.WithConnection or DbSession.WithTransaction
   -> Repository
@@ -46,10 +46,10 @@ For example, a diary request should keep HTTP-specific work in the handler:
 ```fsharp
 let listDiaryIds: HttpHandler =
     fun ctx ->
-        let userId = HandlerContext.userId ctx
+        let requestContext = HandlerContext.authenticated ctx
 
         Json.Response.ofJson
-            (DiaryService.listDiaryIds (HandlerContext.dbSession ctx) userId)
+            (DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId)
             ctx
 ```
 

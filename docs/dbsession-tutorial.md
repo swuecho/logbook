@@ -18,14 +18,22 @@ Most handlers should go through `HandlerContext` instead of resolving the sessio
 ```fsharp
 let listDiaryIds: HttpHandler =
     fun ctx ->
-        let userId = HandlerContext.userId ctx
+        let requestContext = HandlerContext.authenticated ctx
 
         Json.Response.ofJson
-            (DiaryService.listDiaryIds (HandlerContext.dbSession ctx) userId)
+            (DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId)
             ctx
 ```
 
-`HandlerContext.dbSession` is a small request helper:
+`HandlerContext.authenticated` bundles request data commonly needed by authenticated handlers:
+
+```fsharp
+type AuthenticatedRequest =
+    { UserId: int
+      DbSession: DbSession }
+```
+
+`HandlerContext.dbSession` is still available as a smaller helper:
 
 ```fsharp
 let dbSession (ctx: HttpContext) =
@@ -78,21 +86,21 @@ The usual flow is:
 1. A route invokes a handler.
 2. The handler receives `ctx: HttpContext`.
 3. The handler reads HTTP data, such as route values, query params, body JSON, or the current user.
-4. The handler calls `HandlerContext.dbSession ctx` and passes the result to a service.
+4. The handler calls `HandlerContext.authenticated ctx` and passes the request context values to a service.
 5. The service uses `DbSession.WithConnection` or `DbSession.WithTransaction`.
 6. Repositories receive a raw `NpgsqlConnection` and execute SQL.
 
 Example:
 
 ```fsharp
-Json.Response.ofJson (DiaryService.listDiaryIds (HandlerContext.dbSession ctx) userId) ctx
+Json.Response.ofJson (DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId) ctx
 ```
 
 This evaluates as:
 
 ```fsharp
-let db = HandlerContext.dbSession ctx
-let result = DiaryService.listDiaryIds db userId
+let requestContext = HandlerContext.authenticated ctx
+let result = DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId
 Json.Response.ofJson result ctx
 ```
 
@@ -142,8 +150,11 @@ open Microsoft.AspNetCore.Http
 
 let getSomething: HttpHandler =
     fun ctx ->
-        let userId = HandlerContext.userId ctx
-        Json.Response.ofJson (MyService.getSomething (HandlerContext.dbSession ctx) userId) ctx
+        let requestContext = HandlerContext.authenticated ctx
+
+        Json.Response.ofJson
+            (MyService.getSomething requestContext.DbSession requestContext.UserId)
+            ctx
 ```
 
 Then write the service function so it accepts `DbSession`:
@@ -170,7 +181,7 @@ let getSomething conn userId =
 
 ## Rules Of Thumb
 
-- Handlers should resolve `DbSession` with `HandlerContext.dbSession ctx`, then pass it to services.
+- Authenticated handlers should usually use `HandlerContext.authenticated ctx`, then pass its `DbSession` and `UserId` to services.
 - Services should decide whether the operation needs `WithConnection` or `WithTransaction`.
 - Repositories should accept raw `NpgsqlConnection` values.
 - Do not open database connections directly in handlers.
