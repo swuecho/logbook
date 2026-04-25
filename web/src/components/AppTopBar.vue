@@ -2,11 +2,15 @@
   <el-header class="app-header-bar app-header-bar--dense app-top-bar">
     <div class="app-top-bar__start">
       <slot name="start">
-        <button v-if="showHome" type="button" class="linkish" aria-label="Home" @click="goHome">
-          <Icon :icon="homeIcon" height="24" />
+        <button v-if="showHome" type="button" class="linkish" aria-label="Home" title="Home" @click="goHome">
+          <Icon :icon="homeIcon" class="app-top-bar__icon" />
         </button>
         <h1 v-if="title" class="app-top-bar__title">{{ title }}</h1>
       </slot>
+    </div>
+
+    <div class="app-top-bar__center">
+      <slot name="center" />
     </div>
 
     <nav class="app-top-bar__actions" aria-label="Main navigation">
@@ -20,19 +24,19 @@
         title="Markdown preview"
         @click="$emit('open-markdown')"
       >
-        <Icon icon="material-symbols:markdown-copy-outline" />
+        <Icon icon="material-symbols:markdown-copy-outline" class="app-top-bar__icon" />
       </button>
       <router-link v-if="showCalendar" to="/calendar" class="linkish" title="Calendar" aria-label="Calendar">
-        <Icon :icon="calendarMonth" />
+        <Icon :icon="calendarMonth" class="app-top-bar__icon" />
       </router-link>
       <router-link v-if="showSearch" to="/search" class="linkish" title="Search entries" aria-label="Search entries">
-        <Icon :icon="magnifyIcon" />
+        <Icon :icon="magnifyIcon" class="app-top-bar__icon" />
       </router-link>
       <router-link v-if="showContent" to="/content" class="linkish" title="Browse entries" aria-label="Browse entries">
-        <Icon :icon="tableOfContents" />
+        <Icon :icon="tableOfContents" class="app-top-bar__icon" />
       </router-link>
       <router-link v-if="isAdmin" to="/admin" class="linkish" title="Admin" aria-label="Admin">
-        <Icon :icon="adminIcon" />
+        <Icon :icon="adminIcon" class="app-top-bar__icon" />
       </router-link>
       <button
         v-if="isAuthenticated"
@@ -42,7 +46,7 @@
         aria-label="Logout"
         @click="goLogout"
       >
-        <Icon :icon="logoutIcon" />
+        <Icon :icon="logoutIcon" class="app-top-bar__icon" />
       </button>
       <slot name="actions-after" />
     </nav>
@@ -125,10 +129,15 @@ function goLogout() {
 
 <style scoped>
 .app-top-bar {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
+  align-items: center;
+  gap: 1rem;
   min-height: 3rem;
 }
 
 .app-top-bar__start,
+.app-top-bar__center,
 .app-top-bar__actions {
   display: flex;
   align-items: center;
@@ -136,9 +145,17 @@ function goLogout() {
   min-width: 0;
 }
 
+.app-top-bar__center {
+  justify-content: center;
+}
+
 .app-top-bar__actions {
-  flex-wrap: wrap;
   justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.app-top-bar__start {
+  justify-content: flex-start;
 }
 
 .app-top-bar__title {
@@ -148,13 +165,26 @@ function goLogout() {
   font-weight: 600;
 }
 
+.app-top-bar__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 @media (max-width: 768px) {
   .app-top-bar {
+    grid-template-columns: 1fr;
     align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .app-top-bar__start,
+  .app-top-bar__center,
+  .app-top-bar__actions {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .app-top-bar__actions {
-    justify-content: center;
     gap: 0.5rem;
   }
 }

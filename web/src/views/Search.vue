@@ -2,17 +2,17 @@
   <el-container class="app-page app-page--shell search-view">
     <div class="app-shell">
       <AppTopBar title="Search" :show-search="false">
-        <template #actions-before>
-        <el-input
-          v-model="searchQuery"
-          class="search-view__input"
-          placeholder="Search entries"
-          clearable
-          size="small"
-          autofocus
-          @input="scheduleSearch"
-          @clear="scheduleSearch"
-        />
+        <template #center>
+          <el-input
+            v-model="searchQuery"
+            class="search-view__input"
+            placeholder="Search entries"
+            clearable
+            size="small"
+            autofocus
+            @input="scheduleSearch"
+            @clear="scheduleSearch"
+          />
         </template>
       </AppTopBar>
 

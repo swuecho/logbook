@@ -2,7 +2,7 @@
   <el-container class="calendar-page app-page app-page--shell">
     <div class="app-shell">
       <AppTopBar title="Calendar" :show-calendar="false">
-        <template #actions-before>
+        <template #center>
           <div class="year-row">
             <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
               ‹
