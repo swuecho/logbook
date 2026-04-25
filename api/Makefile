@@ -9,13 +9,13 @@ tag:
 	git push origin tag release-v$(version)
 
 build:
-	docker build -t $(local_registry)/notepad:$(version) 
-	docker push $(local_registry)/notepad:$(version)
+	docker build -t $(local_registry)/logbook:$(version) 
+	docker push $(local_registry)/logbook:$(version)
 
 push:
-	docker tag $(local_registry)/notepad:$(version) $(github_pkg_registry_surveyresearch)/notepad:$(version)
-	docker tag $(local_registry)/notepad:$(version) $(aliyun_registry_bestqa)/notepad:$(version)
-	docker push $(aliyun_registry_bestqa)/notepad:$(version)
+	docker tag $(local_registry)/logbook:$(version) $(github_pkg_registry_surveyresearch)/logbook:$(version)
+	docker tag $(local_registry)/logbook:$(version) $(aliyun_registry_bestqa)/logbook:$(version)
+	docker push $(aliyun_registry_bestqa)/logbook:$(version)
 
 serve:
 	$(DOTNET) restore

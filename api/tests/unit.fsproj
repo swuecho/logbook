@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Notepad.fsproj" />
+    <ProjectReference Include="..\logbook.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

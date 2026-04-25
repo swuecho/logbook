@@ -18,7 +18,7 @@ open FSharp.Data
 
 #!fsharp
 
-#r "/Users/hwu/dev/notepad/bin/Debug/netframework5.0/Notepad.dll"
+#r "/Users/hwu/dev/logbook/bin/Debug/netframework5.0/logbook.dll"
 
 #!fsharp
 
