@@ -52,7 +52,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Icon } from '@iconify/vue';
-import homeIcon from '@iconify/icons-material-symbols/home';
+import homeIcon from '@iconify/icons-mdi/home-outline';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';
 import magnifyIcon from '@iconify/icons-mdi/magnify';
