@@ -1,29 +1,47 @@
 # Database Connection Lifetime
 
-This note compares the old per-request database connection middleware with the current `withConnection` helper in the API.
+This note compares the database connection approaches used in the API and explains why the current `DbSession` boundary is preferred.
 
-## Current Approach
+## Current Approach: `DbSession`
 
-The API now registers one `NpgsqlDataSource` during startup and opens short-lived connections from it when a handler needs database access.
+The API registers one long-lived `NpgsqlDataSource` during startup, then registers a small `DbSession` wrapper in dependency injection.
 
 ```fsharp
-let withConnection (httpContext: HttpContext) action =
-    use conn = openConnection httpContext
-    action conn
+type DbSession(dataSource: NpgsqlDataSource) =
+    member _.WithConnection(action: NpgsqlConnection -> 'T) : 'T =
+        use conn = dataSource.OpenConnection()
+        action conn
 ```
 
-Handlers use it around the work that needs a connection:
+Handlers resolve the session and pass it to services:
+
+```fsharp
+Json.Response.ofJson (DiaryService.listDiaryIds (dbSession ctx) userId) ctx
+```
+
+Services own connection lifetime:
+
+```fsharp
+let listDiaryIds (db: DbSession) userId =
+    db.WithConnection(fun conn -> DiaryRepository.listIdsByUserId conn userId)
+```
+
+This keeps HTTP handlers focused on HTTP concerns while services and repositories own application/data access work.
+
+## Previous Approach: Handler-Level `withConnection`
+
+The intermediate approach registered `NpgsqlDataSource` in DI but exposed a helper directly to handlers:
 
 ```fsharp
 withConnection ctx (fun conn ->
     Json.Response.ofJson (DiaryService.listDiaryIds conn userId) ctx)
 ```
 
-`NpgsqlDataSource` is the long-lived, DI-owned object. Individual `NpgsqlConnection` values are opened, used, and disposed at the call site.
+This fixed the biggest issue from the old middleware: connections were opened only when needed. However, handlers still managed infrastructure lifetime and services still accepted raw `NpgsqlConnection` values for top-level operations.
 
-## Old Approach
+## Original Approach: Per-Request Middleware
 
-The previous implementation used middleware to open one `NpgsqlConnection` for every request and store it in `HttpContext.Items`.
+The first implementation opened one `NpgsqlConnection` for every request and stored it in `HttpContext.Items`.
 
 ```fsharp
 context.Items.["NpgsqlConnection"] <- connection
@@ -31,47 +49,43 @@ connection.Open()
 return! next.Invoke context
 ```
 
-Handlers then retrieved the connection from request state:
+Handlers retrieved it from request state:
 
 ```fsharp
 let conn = ctx.GetNpgsqlConnection()
 ```
 
-That made every request carry a database connection, even requests that did not use the database.
+That meant every request carried a database connection, including requests that did not use the database.
 
 ## Comparison
 
-| Area | Old per-request middleware | Current `withConnection` |
-| --- | --- | --- |
-| Lifetime | One connection opened for the full request | Connection opened only around database work |
-| Ownership | Hidden in `HttpContext.Items` | Explicit at each handler call site |
-| Dependency source | Custom request storage | ASP.NET Core DI via `NpgsqlDataSource` |
-| Non-DB requests | Still opened a connection | Opens no connection |
-| Failure mode | Missing item caused runtime failure | Missing DI registration fails clearly via service resolution |
-| Testability | Handler depends on custom context mutation | Handler depends on smaller helper boundary |
-| Npgsql pattern | Manual connection construction | Uses modern `NpgsqlDataSource` pooling/configuration |
+| Area | Per-request middleware | Handler `withConnection` | Current `DbSession` |
+| --- | --- | --- | --- |
+| Connection lifetime | Full request | Around handler DB work | Around service DB work |
+| Handler responsibility | Reads hidden request item | Opens connection scope | Resolves session only |
+| Service responsibility | Uses raw connection | Uses raw connection | Owns DB operation boundary |
+| Dependency source | `HttpContext.Items` string key | DI `NpgsqlDataSource` | DI `DbSession` |
+| Non-DB requests | Opened a connection | No connection | No connection |
+| Testability | Hard to isolate | Better, but handlers know DB lifetime | Best current shape |
+| Transaction path | Ad hoc | Handler must coordinate | Can add `DbSession.WithTransaction` |
 
-## Why `withConnection` Is Better Here
+## Why `DbSession` Is Better
 
-The current API handlers are synchronous and each endpoint performs a small number of database operations. For that shape, a scoped helper is simpler and tighter than keeping a connection alive for the whole request.
+`DbSession` keeps the important behavior from `withConnection`: short-lived connections opened from a pooled `NpgsqlDataSource`. The difference is ownership. Handlers no longer decide when to open a database connection; they delegate application work to services.
 
-The main improvement is that database lifetime now matches database usage. Static files, auth failures, and other non-DB paths do not allocate a connection. DB-using handlers show their dependency explicitly:
+This gives cleaner boundaries:
 
-```fsharp
-withConnection ctx (fun conn ->
-    SomeService.doWork conn input)
-```
-
-This also removes the custom `HttpContext.Items` contract, which was easy to break because handlers and middleware had to agree on a string key.
+- Handlers parse requests, read route/query/body data, and format responses.
+- Services describe application operations and connection scope.
+- Repositories call generated SQL modules.
+- `NpgsqlDataSource` remains a DI-owned infrastructure object.
 
 ## Tradeoffs
 
-`withConnection` can open more than one connection inside a single request if a handler calls it multiple times. The current handlers avoid that by wrapping each endpoint once and passing `conn` down through services.
+`DbSession` is still a small infrastructure abstraction, not a full unit-of-work framework. That is intentional for this app. It keeps the code simple while centralizing connection lifetime.
 
-If an endpoint later needs a transaction across multiple service calls, keep one `withConnection` block around the whole operation and start the transaction inside it. Do not call `withConnection` separately for each step of a transactional workflow.
+If a service operation needs multiple repository calls to share one transaction, add a method such as `WithTransaction` to `DbSession` and keep the whole workflow inside one service operation. Avoid opening separate sessions for steps that must commit or roll back together.
 
 ## Recommended Rule
 
-Use one `withConnection` call per handler that needs database access. Open it after request parsing and authorization, then pass the connection into services and repositories.
-
-For future async DB work, add an async equivalent, for example `withConnectionTask`, so connection disposal still remains centralized.
+Handlers should not accept or open `NpgsqlConnection` values. A handler may resolve `DbSession` from the request service provider and pass it to a service. Services should use one `DbSession.WithConnection` block per application operation and pass the raw connection only to repositories or lower-level helpers.

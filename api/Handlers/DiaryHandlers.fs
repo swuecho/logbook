@@ -11,15 +11,13 @@ let listDiaryIds: HttpHandler =
     fun ctx ->
         let userId = currentUserId ctx
 
-        withConnection ctx (fun conn ->
-            Json.Response.ofJson (DiaryService.listDiaryIds conn userId) ctx)
+        Json.Response.ofJson (DiaryService.listDiaryIds (dbSession ctx) userId) ctx
 
 let listSummaries: HttpHandler =
     fun ctx ->
         let userId = currentUserId ctx
 
-        withConnection ctx (fun conn ->
-            Json.Response.ofJson (DiaryService.listSummaries conn userId) ctx)
+        Json.Response.ofJson (DiaryService.listSummaries (dbSession ctx) userId) ctx
 
 let getById: HttpHandler =
     fun ctx ->
@@ -27,8 +25,7 @@ let getById: HttpHandler =
         let noteId = route.GetString("id", "")
         let userId = currentUserId ctx
 
-        withConnection ctx (fun conn ->
-            Json.Response.ofJson (DiaryService.getOrCreateDiary conn userId noteId) ctx)
+        Json.Response.ofJson (DiaryService.getOrCreateDiary (dbSession ctx) userId noteId) ctx
 
 let save: HttpHandler =
     fun ctx ->
@@ -36,9 +33,8 @@ let save: HttpHandler =
             (fun (note: Diary) ->
                 let userId = currentUserId ctx
 
-                withConnection ctx (fun conn ->
-                    DiaryService.saveDiary conn userId note
-                    |> Json.Response.ofJson))
+                DiaryService.saveDiary (dbSession ctx) userId note
+                |> Json.Response.ofJson)
             ctx
 
 let search: HttpHandler =
@@ -50,12 +46,10 @@ let search: HttpHandler =
 
         let userId = currentUserId ctx
 
-        withConnection ctx (fun conn ->
-            Json.Response.ofJson (DiaryService.search conn userId query) ctx)
+        Json.Response.ofJson (DiaryService.search (dbSession ctx) userId query) ctx
 
 let todoLists: HttpHandler =
     fun ctx ->
         let userId = currentUserId ctx
 
-        withConnection ctx (fun conn ->
-            Json.Response.ofJson (DiaryService.todoDocument conn userId) ctx)
+        Json.Response.ofJson (DiaryService.todoDocument (dbSession ctx) userId) ctx

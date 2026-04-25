@@ -52,7 +52,7 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
     services
 
 let addDatabase dataSource services =
-    Database.Connection.addDataSource dataSource services
+    Database.Connection.addDatabase dataSource services
 
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =

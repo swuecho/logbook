@@ -4,6 +4,11 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Npgsql
 
+type DbSession(dataSource: NpgsqlDataSource) =
+    member _.WithConnection(action: NpgsqlConnection -> 'T) : 'T =
+        use conn = dataSource.OpenConnection()
+        action conn
+
 
 module Config =
     /// Custom operator for combining paths
@@ -32,15 +37,10 @@ module Connection =
     let createDataSource (connectionString: string) : NpgsqlDataSource =
         NpgsqlDataSource.Create(connectionString)
 
-    let addDataSource (dataSource: NpgsqlDataSource) (services: IServiceCollection) =
-        services.AddSingleton<NpgsqlDataSource>(dataSource)
+    let addDatabase (dataSource: NpgsqlDataSource) (services: IServiceCollection) =
+        services.AddSingleton<NpgsqlDataSource>(dataSource) |> ignore
+        services.AddSingleton<DbSession>(fun _ -> DbSession(dataSource)) |> ignore
+        services
 
-    let private dataSource (httpContext: HttpContext) =
-        httpContext.RequestServices.GetRequiredService<NpgsqlDataSource>()
-
-    let openConnection (httpContext: HttpContext) =
-        (dataSource httpContext).OpenConnection()
-
-    let withConnection (httpContext: HttpContext) action =
-        use conn = openConnection httpContext
-        action conn
+    let dbSession (httpContext: HttpContext) =
+        httpContext.RequestServices.GetRequiredService<DbSession>()
