@@ -1,6 +1,7 @@
 namespace Database
 
 open Microsoft.AspNetCore.Http
+open System.Threading.Tasks
 
 
 module Config =
@@ -43,7 +44,7 @@ module Connection =
         httpContext.GetNpgsqlConnection()
 
 
-    let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) =
+    let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) : Task =
         task {
             use connection = new NpgsqlConnection(connectionString)
             context.Items.[connectionItemKey] <- connection
@@ -53,3 +54,4 @@ module Connection =
             finally
                 context.Items.Remove(connectionItemKey) |> ignore
         }
+        :> Task
