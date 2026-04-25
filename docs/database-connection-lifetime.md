@@ -25,10 +25,10 @@ type DbSession(dataSource: NpgsqlDataSource) =
             reraise ()
 ```
 
-Handlers resolve the session and pass it to services:
+Handlers resolve the session through `HandlerContext` and pass it to services:
 
 ```fsharp
-Json.Response.ofJson (DiaryService.listDiaryIds (dbSession ctx) userId) ctx
+Json.Response.ofJson (DiaryService.listDiaryIds (HandlerContext.dbSession ctx) userId) ctx
 ```
 
 Services own connection lifetime:

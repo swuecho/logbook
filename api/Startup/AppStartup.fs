@@ -10,12 +10,14 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.IdentityModel.Tokens
 open Npgsql
 
-let jwtAudienceName = "logbook"
 let corsPolicyName = "MyCorsPolicy"
+
+let private publicApiPaths =
+    ApiPaths.publicApiPaths |> List.map PathString
 
 let initializeJwtConfig (dataSource: NpgsqlDataSource) : JwtService.JwtConfig =
     use pgConn = dataSource.OpenConnection()
-    let jwtSecret = JwtService.getOrCreateJwtSecret pgConn jwtAudienceName
+    let jwtSecret = JwtService.getOrCreateJwtSecret pgConn AppIdentity.jwtAudienceName
     { Secret = jwtSecret.Secret
       Audience = jwtSecret.Audience }
 
@@ -58,11 +60,15 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity <> null && context.User.Identity.IsAuthenticated
 
+    let isApiRequest (context: HttpContext) =
+        context.Request.Path.StartsWithSegments(PathString(ApiPaths.apiPrefix))
+
+    let isPublicApiRequest (context: HttpContext) =
+        publicApiPaths
+        |> List.exists (fun path -> context.Request.Path.Equals(path))
+
     let middleware (context: HttpContext) (next: RequestDelegate) : Task =
-        if
-            context.Request.Path.StartsWithSegments(PathString("/api"))
-            && context.Request.Path.ToString() <> "/api/login"
-        then
+        if isApiRequest context && not (isPublicApiRequest context) then
             if isAuthenticated context then
                 next.Invoke context
             else

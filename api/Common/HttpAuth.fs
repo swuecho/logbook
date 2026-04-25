@@ -15,4 +15,4 @@ let forbidden =
 let AuthRequired h = Request.ifAuthenticated h forbidden
 
 let getUserId (user: ClaimsPrincipal) =
-    user.FindFirst("user_id").Value |> int
+    user.FindFirst(AppIdentity.userIdClaim).Value |> int

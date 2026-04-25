@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common/Util.fs" />
+    <Compile Include="Common/AppIdentity.fs" />
+    <Compile Include="Common/ApiPaths.fs" />
     <Compile Include="Common/TipTap.fs" />
     <Compile Include="Common/Auth.fs" />
     <Compile Include="Common/HttpAuth.fs" />

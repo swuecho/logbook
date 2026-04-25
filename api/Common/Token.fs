@@ -34,8 +34,8 @@ let generateToken (userId: int) (role: string) (secret: string) (audience: strin
     let signingCredentials =
         SigningCredentials(key = securityKey, algorithm = SecurityAlgorithms.HmacSha256)
 
-    let roleClaim = Claim("role", role)
-    let userIdClaim = Claim("user_id", userId |> string)
+    let roleClaim = Claim(AppIdentity.roleClaim, role)
+    let userIdClaim = Claim(AppIdentity.userIdClaim, userId |> string)
 
     let token =
         JwtSecurityToken(

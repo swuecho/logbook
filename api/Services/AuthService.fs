@@ -17,15 +17,12 @@ type LoginResult =
     | LoginSucceeded of AccessTokenResponse
     | LoginFailed of LoginFailure
 
-let private issuer = "logbook-swuecho.github.com"
-let private jwtAudienceName = "logbook"
-
 let private createNewUser conn email password =
     let passwordHash = Auth.generatePasswordHash password
     AuthUserRepository.create conn email passwordHash "" "" email false false
 
 let private tokenResponse userId role jwtKey audience =
-    let jwt = Token.generateToken userId role jwtKey audience issuer
+    let jwt = Token.generateToken userId role jwtKey audience AppIdentity.jwtIssuer
 
     { AccessToken = jwt.AccessToken
       ExpiresIn = jwt.ExpiresIn }
@@ -33,14 +30,18 @@ let private tokenResponse userId role jwtKey audience =
 let login (db: DbSession) (credentials: Login) =
     db.WithConnection(fun conn ->
         let email = credentials.Username
-        let secret = JwtSecretRepository.getByName conn jwtAudienceName
+        let secret = JwtSecretRepository.getByName conn AppIdentity.jwtAudienceName
         let jwtKey = secret.Secret
         let audience = secret.Audience
 
         if AuthUserRepository.existsByEmail conn email then
             let user = AuthUserRepository.getByEmail conn email
             let passwordMatches = Auth.validatePassword credentials.Password user.Password
-            let role = if user.IsSuperuser then "admin" else "user"
+            let role =
+                if user.IsSuperuser then
+                    AppIdentity.adminRole
+                else
+                    AppIdentity.userRole
 
             if passwordMatches then
                 AuthUserRepository.updateLastLogin conn user.Id
@@ -51,4 +52,4 @@ let login (db: DbSession) (credentials: Login) =
                       Message = "Login failed. password or email is wrong" }
         else
             let authUser = createNewUser conn email credentials.Password
-            LoginSucceeded(tokenResponse authUser.Id "user" jwtKey audience))
+            LoginSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtKey audience))

@@ -9,5 +9,5 @@ let dbSession (ctx: HttpContext) =
     Database.Connection.dbSession ctx
 
 let isAdmin (ctx: HttpContext) =
-    ctx.User.IsInRole "admin"
+    ctx.User.IsInRole AppIdentity.adminRole
 
