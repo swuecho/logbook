@@ -3,13 +3,12 @@ module HttpAuth
 open System
 open System.Net
 open System.Security.Claims
-open Falco
 
 let private errorResponse statusCode code message ctx =
-    (Response.withStatusCode statusCode
-     >> Response.ofJson
-         {| code = code
-            message = message |})
+    HandlerResponse.jsonWithStatus
+        statusCode
+        {| code = code
+           message = message |}
         ctx
 
 let unauthorized ctx =

@@ -19,8 +19,7 @@ let listSummaries: HttpHandler =
 let getById: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
-        let route = Request.getRoute ctx
-        let noteId = route.GetString("id", "")
+        let noteId = HandlerContext.routeValue "id" "" ctx
 
         DiaryService.getOrCreateDiary requestContext.DbSession requestContext.UserId noteId
         |> HandlerResponse.json ctx
@@ -39,10 +38,7 @@ let search: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        let query =
-            match ctx.Request.Query.TryGetValue("q") with
-            | true, value -> value.ToString()
-            | false, _ -> ""
+        let query = HandlerContext.queryValue "q" "" ctx
 
         DiaryService.search requestContext.DbSession requestContext.UserId query
         |> HandlerResponse.json ctx

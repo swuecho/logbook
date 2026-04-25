@@ -12,3 +12,6 @@ let jsonWithStatus statusCode value =
     Response.withStatusCode statusCode
     >> Json.Response.ofJson value
 
+let plainText value =
+    Response.ofPlainText value
+

@@ -1,6 +1,7 @@
 module HandlerContext
 
 open Database
+open Falco
 open Microsoft.AspNetCore.Http
 
 type AuthenticatedRequest =
@@ -19,4 +20,13 @@ let authenticated (ctx: HttpContext) =
 
 let isAdmin (ctx: HttpContext) =
     ctx.User.IsInRole AppIdentity.adminRole
+
+let routeValue name defaultValue (ctx: HttpContext) =
+    let route = Request.getRoute ctx
+    route.GetString(name, defaultValue)
+
+let queryValue name defaultValue (ctx: HttpContext) =
+    match ctx.Request.Query.TryGetValue(name) with
+    | true, value -> value.ToString()
+    | false, _ -> defaultValue
 

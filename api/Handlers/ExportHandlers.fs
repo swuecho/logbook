@@ -30,5 +30,5 @@ let exportDiaryMarkdown: HttpHandler =
                 let markdown =
                     ExportService.exportDiaryMarkdown requestContext.DbSession requestContext.UserId request.Id
 
-                Response.ofPlainText markdown)
+                HandlerResponse.plainText markdown)
             ctx
