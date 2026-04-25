@@ -1,11 +1,18 @@
-﻿open Falco
+open Falco
 open Microsoft.AspNetCore.Builder
 
-AppStartup.initializeDatabase()
-let jwtConfig = AppStartup.initializeJwtConfig()
-AppStartup.initializeSearchIndex()
+let dataSource = Database.Connection.createDataSource Database.Config.connStr
+
+if AppStartup.isEnvFlagEnabled "LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP" then
+    AppStartup.initializeDatabase dataSource
+
+let jwtConfig = AppStartup.initializeJwtConfig dataSource
+
+if AppStartup.isEnvFlagEnabled "LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP" then
+    AppStartup.initializeSearchIndex dataSource
 
 let builder = WebApplication.CreateBuilder()
+builder.Services |> AppStartup.addDatabase dataSource |> ignore
 builder.Services |> AppStartup.addAuthentication jwtConfig |> ignore
 builder.Services |> AppStartup.addCors |> ignore
 
@@ -16,7 +23,6 @@ wapp.UseRouting()
     .UseIf(isDevelopment, DeveloperExceptionPageExtensions.UseDeveloperExceptionPage)
     .UseCors(AppStartup.corsPolicyName)
     .UseAuthentication()
-    .Use(AppStartup.usePerRequestConnection)
     .Use(AppStartup.requireAuthenticatedApiRoutes)
     .UseFalco(ApiRoutes.endpoints)
     .Use(AppStartup.serveVueFiles)

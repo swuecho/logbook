@@ -1,7 +1,16 @@
 module Util
+
+open System
 open System.Text
 
-let getEnvVar varName = System.Environment.GetEnvironmentVariable(varName) 
+let getEnvVar varName =
+    Environment.GetEnvironmentVariable(varName)
+
+let requiredEnvVar varName =
+    match getEnvVar varName with
+    | value when String.IsNullOrWhiteSpace(value) ->
+        invalidOp $"Missing required environment variable: {varName}"
+    | value -> value
 
 /// Join a sequence of strings using a delimiter.
 /// Equivalent to String.Join() but without arrays.

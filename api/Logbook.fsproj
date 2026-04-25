@@ -1,22 +1,32 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common/Util.fs" />
+    <Compile Include="Common/AppIdentity.fs" />
+    <Compile Include="Common/ApiPaths.fs" />
     <Compile Include="Common/TipTap.fs" />
     <Compile Include="Common/Auth.fs" />
-    <Compile Include="Common/HttpAuth.fs" />
     <Compile Include="Common/Token.fs" />
     <Compile Include="Common/Json.fs" />
+    <Compile Include="Common/HandlerResponse.fs" />
+    <Compile Include="Common/HttpAuth.fs" />
     <Compile Include="queries/model_from_schema.fs" />
     <Compile Include="queries/jwt_secrets.sql.fs" />
     <Compile Include="queries/auth_user.sql.fs" />
     <Compile Include="queries/diary.sql.fs" />
     <Compile Include="queries/summary.sql.fs" />
+    <Compile Include="Repositories/DiaryRepository.fs" />
+    <Compile Include="Repositories/AuthUserRepository.fs" />
+    <Compile Include="Repositories/SummaryRepository.fs" />
+    <Compile Include="Repositories/JwtSecretRepository.fs" />
     <Compile Include="Infrastructure/Database.fs" />
-    <Compile Include="Services/SearchService.fs" />
+    <Compile Include="Common/HandlerContext.fs" />
+    <Compile Include="Services/TextAnalysis.fs" />
+    <Compile Include="Services/SearchIndexService.fs" />
+    <Compile Include="Services/SummaryService.fs" />
     <Compile Include="Infrastructure/JwtService.fs" />
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/DiaryService.fs" />

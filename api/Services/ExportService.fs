@@ -1,13 +1,14 @@
 module ExportService
 
-open Npgsql
+open Database
 
-let diaryJson (conn: NpgsqlConnection) userId noteId =
-    Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
+let exportDiaryJson (db: DbSession) userId noteId =
+    db.WithConnection(fun conn -> DiaryRepository.getByUserAndNoteId conn userId noteId)
 
-let allDiaries (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryByUserID conn userId
+let exportAllDiaries (db: DbSession) userId =
+    db.WithConnection(fun conn -> DiaryRepository.listByUserId conn userId)
 
-let diaryMarkdown (conn: NpgsqlConnection) userId noteId =
-    let diary = diaryJson conn userId noteId
-    TipTap.tipTapDocJsonToMarkdown diary.Note
+let exportDiaryMarkdown (db: DbSession) userId noteId =
+    db.WithConnection(fun conn ->
+        let diary = DiaryRepository.getByUserAndNoteId conn userId noteId
+        TipTap.tipTapDocJsonToMarkdown diary.Note)

@@ -1,18 +1,39 @@
 module HttpAuth
 
+open System
 open System.Net
 open System.Security.Claims
-open Falco
 
-let forbidden =
-    let message = "Access to the resource is forbidden."
-
-    Response.withStatusCode 403
-    >> Response.ofJson
-        {| code = HttpStatusCode.Forbidden
+let private errorResponse statusCode code message ctx =
+    HandlerResponse.jsonWithStatus
+        statusCode
+        {| code = code
            message = message |}
+        ctx
 
-let AuthRequired h = Request.ifAuthenticated h forbidden
+let unauthorized ctx =
+    errorResponse
+        401
+        HttpStatusCode.Unauthorized
+        "Authentication is required to access this resource."
+        ctx
+
+let forbidden ctx =
+    errorResponse
+        403
+        HttpStatusCode.Forbidden
+        "Access to the resource is forbidden."
+        ctx
+
+let tryGetUserId (user: ClaimsPrincipal) =
+    match user.FindFirst(AppIdentity.userIdClaim) with
+    | null -> None
+    | claim ->
+        match Int32.TryParse(claim.Value) with
+        | true, userId -> Some userId
+        | false, _ -> None
 
 let getUserId (user: ClaimsPrincipal) =
-    user.FindFirst("user_id").Value |> int
+    match tryGetUserId user with
+    | Some userId -> userId
+    | None -> invalidOp $"Authenticated user is missing a valid {AppIdentity.userIdClaim} claim."

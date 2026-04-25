@@ -9,10 +9,7 @@ let hashAlgorithm = HashAlgorithmName.SHA256
 let passwordHashScheme = "pbkdf2_sha256"
 
 let generateSalt () =
-    let salt = Array.zeroCreate saltSize
-    let rng = RandomNumberGenerator.Create()
-    rng.GetBytes(salt)
-    salt
+    RandomNumberGenerator.GetBytes(saltSize)
 
 let private derivePasswordHashBytes (password: string) (salt: byte array) =
     Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, hashAlgorithm, keySize)
@@ -34,14 +31,12 @@ let validatePassword (password: string) (hash: string) =
 
         let computedHash = derivePasswordHashBytes password salt
 
-        if decodedHash = computedHash then true else false
+        CryptographicOperations.FixedTimeEquals(decodedHash, computedHash)
     | _ -> false
 
 let generateRandomPassword () =
     let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-    let password = Array.zeroCreate 12
-    let rng = RandomNumberGenerator.Create()
-    rng.GetBytes password
+    let password = RandomNumberGenerator.GetBytes(12)
 
     password
     |> Array.map (fun x -> letters.[int (x) % letters.Length])

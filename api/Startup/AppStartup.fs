@@ -1,5 +1,6 @@
 module AppStartup
 
+open System
 open System.Threading.Tasks
 open Falco
 open Microsoft.AspNetCore.Authentication.JwtBearer
@@ -8,25 +9,36 @@ open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.IdentityModel.Tokens
+open Npgsql
 
-let jwtAudienceName = "logbook"
 let corsPolicyName = "MyCorsPolicy"
 
-let initializeJwtConfig () : JwtService.JwtConfig =
-    use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
-    pgConn.Open()
+let private publicApiPaths =
+    ApiPaths.publicApiPaths |> List.map PathString
 
-    let jwtSecret = JwtService.getOrCreateJwtSecret pgConn jwtAudienceName
+let private enabledValues =
+    set [ "1"; "true"; "yes"; "on" ]
+
+let isEnvFlagEnabled name =
+    let value = Environment.GetEnvironmentVariable(name)
+
+    if String.IsNullOrWhiteSpace(value) then
+        false
+    else
+        enabledValues.Contains(value.Trim().ToLowerInvariant())
+
+let initializeJwtConfig (dataSource: NpgsqlDataSource) : JwtService.JwtConfig =
+    use pgConn = dataSource.OpenConnection()
+    let jwtSecret = JwtService.getOrCreateJwtSecret pgConn AppIdentity.jwtAudienceName
     { Secret = jwtSecret.Secret
       Audience = jwtSecret.Audience }
 
-let initializeDatabase () =
-    Database.InitDB.init Database.Config.connStr |> ignore
+let initializeDatabase (dataSource: NpgsqlDataSource) =
+    Database.InitDB.init dataSource |> ignore
 
-let initializeSearchIndex () =
-    use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
-    pgConn.Open()
-    SearchService.refreshSearchIndex pgConn
+let initializeSearchIndex (dataSource: NpgsqlDataSource) =
+    use pgConn = dataSource.OpenConnection()
+    SearchIndexService.refreshSearchIndex pgConn
 
 let corsPolicy (policyBuilder: CorsPolicyBuilder) =
     // Note: This is a very lax setting, but a good fit for local development.
@@ -42,7 +54,8 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
             options.TokenValidationParameters <-
                 TokenValidationParameters(
                     ValidateLifetime = true,
-                    ValidateIssuer = false,
+                    ValidateIssuer = true,
+                    ValidIssuer = AppIdentity.jwtIssuer,
                     ValidateAudience = true,
                     ValidAudience = jwtConfig.Audience,
                     ValidateIssuerSigningKey = true,
@@ -53,30 +66,35 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
 
     services
 
-let usePerRequestConnection (app: IApplicationBuilder) =
-    app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
+let addDatabase dataSource services =
+    Database.Connection.addDatabase dataSource services
 
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity <> null && context.User.Identity.IsAuthenticated
 
+    let hasRequiredClaims (context: HttpContext) =
+        HttpAuth.tryGetUserId context.User |> Option.isSome
+
+    let isApiRequest (context: HttpContext) =
+        context.Request.Path.StartsWithSegments(PathString(ApiPaths.apiPrefix))
+
+    let isPublicApiRequest (context: HttpContext) =
+        publicApiPaths
+        |> List.exists (fun path -> context.Request.Path.Equals(path))
+
     let middleware (context: HttpContext) (next: RequestDelegate) : Task =
-        if
-            context.Request.Path.StartsWithSegments(PathString("/api"))
-            && context.Request.Path.ToString() <> "/api/login"
-        then
-            if isAuthenticated context then
+        if isApiRequest context && not (isPublicApiRequest context) then
+            if isAuthenticated context && hasRequiredClaims context then
                 next.Invoke context
             else
-                context.Response.StatusCode <- 401
-                context.Response.WriteAsync "Unauthorized"
+                HttpAuth.unauthorized context
         else
             next.Invoke context
 
     app.Use(middleware)
 
 let serveVueFiles (app: IApplicationBuilder) =
-    app.UseRouting() |> ignore
     app.UseDefaultFiles() |> ignore
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)

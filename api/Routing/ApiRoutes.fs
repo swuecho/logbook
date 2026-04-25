@@ -4,16 +4,16 @@ open Falco.Routing
 
 let endpoints =
     [
-        post "/api/login" AuthHandlers.login
-        post "/api/logout" AuthHandlers.logout
-        get "/api/diary_ids" DiaryHandlers.listDiaryIds
-        get "/api/users/with-diary" AdminHandlers.usersWithDiaryCount
-        get "/api/diary" DiaryHandlers.listSummaries
-        get "/api/diary/search" DiaryHandlers.search
-        get "/api/diary/{id}" DiaryHandlers.getById
-        put "/api/diary/{id}" DiaryHandlers.save
-        get "/api/todo" DiaryHandlers.todoLists
-        post "/api/export_json" ExportHandlers.exportDiary
-        post "/api/export_md" ExportHandlers.exportDiaryMarkdown
-        get "/api/export_all" ExportHandlers.exportAllDiaries
+        post ApiPaths.login AuthHandlers.login
+        post ApiPaths.logout AuthHandlers.logout
+        get ApiPaths.diaryIds DiaryHandlers.listDiaryIds
+        get ApiPaths.usersWithDiaryCount AdminHandlers.usersWithDiaryCount
+        get ApiPaths.diary DiaryHandlers.listSummaries
+        get ApiPaths.diarySearch DiaryHandlers.search
+        get ApiPaths.diaryById DiaryHandlers.getById
+        put ApiPaths.diaryById DiaryHandlers.save
+        get ApiPaths.todo DiaryHandlers.todoLists
+        post ApiPaths.exportJson ExportHandlers.exportDiary
+        post ApiPaths.exportMarkdown ExportHandlers.exportDiaryMarkdown
+        get ApiPaths.exportAll ExportHandlers.exportAllDiaries
     ]

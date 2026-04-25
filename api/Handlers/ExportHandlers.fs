@@ -1,35 +1,34 @@
 module ExportHandlers
 
 open Falco
-open Database.Connection
 
 type ExportDiaryRequest = { Id: string }
 
 let exportDiary: HttpHandler =
     fun ctx ->
-        Request.mapJson
-            (fun (request: ExportDiaryRequest) ->
-                let conn = ctx.GetNpgsqlConnection()
-                let userId = HttpAuth.getUserId ctx.User
+        let requestContext = HandlerContext.authenticated ctx
 
-                ExportService.diaryJson conn userId request.Id
-                |> Json.Response.ofJson)
+        Json.Request.mapJson
+            (fun (request: ExportDiaryRequest) ->
+                ExportService.exportDiaryJson requestContext.DbSession requestContext.UserId request.Id
+                |> HandlerResponse.jsonHandler)
             ctx
 
 let exportAllDiaries: HttpHandler =
     fun ctx ->
-        let conn = ctx.GetNpgsqlConnection()
-        let userId = HttpAuth.getUserId ctx.User
+        let requestContext = HandlerContext.authenticated ctx
 
-        Json.Response.ofJson (ExportService.allDiaries conn userId) ctx
+        ExportService.exportAllDiaries requestContext.DbSession requestContext.UserId
+        |> HandlerResponse.json ctx
 
 let exportDiaryMarkdown: HttpHandler =
     fun ctx ->
-        Request.mapJson
-            (fun (request: ExportDiaryRequest) ->
-                let conn = ctx.GetNpgsqlConnection()
-                let userId = HttpAuth.getUserId ctx.User
-                let markdown = ExportService.diaryMarkdown conn userId request.Id
+        let requestContext = HandlerContext.authenticated ctx
 
-                Response.ofPlainText markdown)
+        Json.Request.mapJson
+            (fun (request: ExportDiaryRequest) ->
+                let markdown =
+                    ExportService.exportDiaryMarkdown requestContext.DbSession requestContext.UserId request.Id
+
+                HandlerResponse.plainText markdown)
             ctx

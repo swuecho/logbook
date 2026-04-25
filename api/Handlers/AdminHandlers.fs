@@ -1,13 +1,11 @@
 module AdminHandlers
 
 open Falco
-open Database.Connection
 
 let usersWithDiaryCount: HttpHandler =
     fun ctx ->
-        if ctx.User.IsInRole "admin" then
-            let conn = ctx.GetNpgsqlConnection()
-
-            Json.Response.ofJson (AdminService.usersWithDiaryCount conn) ctx
+        if HandlerContext.isAdmin ctx then
+            let dbSession = HandlerContext.dbSession ctx
+            AdminService.usersWithDiaryCount dbSession |> HandlerResponse.json ctx
         else
             HttpAuth.forbidden ctx

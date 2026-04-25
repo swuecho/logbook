@@ -1,6 +1,6 @@
 module AdminService
 
-open Npgsql
+open Database
 
-let usersWithDiaryCount (conn: NpgsqlConnection) =
-    AuthUser.GetUsersWithDiaryCount conn
+let usersWithDiaryCount (db: DbSession) =
+    db.WithConnection(AuthUserRepository.getUsersWithDiaryCount)

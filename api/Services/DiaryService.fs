@@ -2,7 +2,7 @@ module DiaryService
 
 open System
 open System.Text.RegularExpressions
-open Npgsql
+open Database
 
 type DiarySearchResult =
     { NoteId: string
@@ -10,13 +10,17 @@ type DiarySearchResult =
       Rank: int
       LastUpdated: DateTime }
 
+let private maxSnippetLength = 180
+let private snippetContextRadius = 60
+let private minSummaryLength = 2
+
 let compactText (text: string) =
     Regex.Replace(text, @"\s+", " ").Trim()
 
 let buildSnippet (terms: string array) (searchText: string) =
     let text = compactText searchText
 
-    if text.Length <= 180 then
+    if text.Length <= maxSnippetLength then
         text
     else
         let lowerText = text.ToLowerInvariant()
@@ -30,53 +34,53 @@ let buildSnippet (terms: string array) (searchText: string) =
             |> Array.tryHead
 
         let center = defaultArg firstMatch 0
-        let start = max 0 (center - 60)
-        let length = min (text.Length - start) 180
+        let start = max 0 (center - snippetContextRadius)
+        let length = min (text.Length - start) maxSnippetLength
         let snippet = text.Substring(start, length)
 
         let prefix = if start > 0 then "..." else ""
         let suffix = if start + length < text.Length then "..." else ""
         prefix + snippet + suffix
 
-let listSummaries (conn: NpgsqlConnection) userId =
-    SearchService.refreshSummary conn userId
+let private hasVisibleSummaryText (summary: Summary.GetSummaryByUserIdRow) =
+    summary.Note.Length > minSummaryLength
 
-    Summary.GetSummaryByUserId conn userId
-    |> List.filter (fun x -> x.Note.Length > 2)
+let private toSearchResult terms (row: Diary.SearchDiaryRow) =
+    { NoteId = row.NoteId
+      Snippet = buildSnippet terms row.SearchText
+      Rank = row.Rank
+      LastUpdated = row.LastUpdated }
 
-let getOrCreateDiary (conn: NpgsqlConnection) userId noteId =
-    try
-        Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
-    with :? NoResultsException ->
-        Diary.AddNote
-            conn
-            { NoteId = noteId
-              UserId = userId
-              Note = "" }
+let refreshAndListSummaries (db: DbSession) userId =
+    db.WithConnection(fun conn ->
+        SummaryService.refreshSummary conn userId
 
-let saveDiary (conn: NpgsqlConnection) userId (note: Diary) =
-    let saved =
-        Diary.AddNote
-            conn
-            { NoteId = note.NoteId
-              UserId = userId
-              Note = note.Note }
+        SummaryRepository.getByUserId conn userId
+        |> List.filter hasVisibleSummaryText)
 
-    SearchService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
-    saved
+let getOrCreateDiary (db: DbSession) userId noteId =
+    db.WithConnection(fun conn ->
+        try
+            DiaryRepository.getByUserAndNoteId conn userId noteId
+        with :? NoResultsException ->
+            DiaryRepository.addOrUpdate conn noteId userId "")
 
-let search (conn: NpgsqlConnection) userId query =
-    let terms = SearchService.searchTerms query
+let saveDiary (db: DbSession) userId (note: Diary) =
+    db.WithTransaction(fun conn ->
+        let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+
+        SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+        saved)
+
+let search (db: DbSession) userId query =
+    let terms = TextAnalysis.searchTerms query
 
     if terms.Length = 0 then
         []
     else
-        Diary.SearchDiary conn { UserId = userId; QueryTerms = terms }
-        |> List.map (fun row ->
-            { NoteId = row.NoteId
-              Snippet = buildSnippet terms row.SearchText
-              Rank = row.Rank
-              LastUpdated = row.LastUpdated })
+        db.WithConnection(fun conn ->
+            DiaryRepository.search conn userId terms
+            |> List.map (toSearchResult terms))
 
 let extractTodoLists allDiary =
     allDiary
@@ -90,10 +94,11 @@ let extractTodoLists allDiary =
                 {| noteId = diary.NoteId
                    todoList = todoList |})
 
-let todoDocument (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryByUserID conn userId
-    |> extractTodoLists
-    |> TipTap.constructTipTapDoc
+let todoDocument (db: DbSession) userId =
+    db.WithConnection(fun conn ->
+        DiaryRepository.listByUserId conn userId
+        |> extractTodoLists
+        |> TipTap.constructTipTapDoc)
 
-let listDiaryIds (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryIDByUserID conn userId
+let listDiaryIds (db: DbSession) userId =
+    db.WithConnection(fun conn -> DiaryRepository.listIdsByUserId conn userId)
