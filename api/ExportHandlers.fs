@@ -1,0 +1,35 @@
+module ExportHandlers
+
+open Falco
+open Database.Connection
+
+type ExportDiaryRequest = { Id: string }
+
+let exportDiary: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (request: ExportDiaryRequest) ->
+                let conn = ctx.GetNpgsqlConnection()
+                let userId = HttpAuth.getUserId ctx.User
+
+                ExportService.diaryJson conn userId request.Id
+                |> Json.Response.ofJson)
+            ctx
+
+let exportAllDiaries: HttpHandler =
+    fun ctx ->
+        let conn = ctx.GetNpgsqlConnection()
+        let userId = HttpAuth.getUserId ctx.User
+
+        Json.Response.ofJson (ExportService.allDiaries conn userId) ctx
+
+let exportDiaryMarkdown: HttpHandler =
+    fun ctx ->
+        Request.mapJson
+            (fun (request: ExportDiaryRequest) ->
+                let conn = ctx.GetNpgsqlConnection()
+                let userId = HttpAuth.getUserId ctx.User
+                let markdown = ExportService.diaryMarkdown conn userId request.Id
+
+                Response.ofPlainText markdown)
+            ctx
