@@ -19,8 +19,8 @@
         Another tab is active. Close other tabs to edit.
       </div>
     </div>
-    <div v-if="isLoading" class="loading">
-      <Icon icon="eos-icons:bubble-loading" />
+    <div v-if="isFetching" class="loading" aria-live="polite" aria-label="Loading note">
+      <Icon icon="eos-icons:bubble-loading" class="loading__icon" />
     </div>
   </div>
 </template>
@@ -59,7 +59,7 @@ const noteJsonRef = ref(null);
 const lastSavedAt = ref(null);
 const saveError = ref('');
 const queryKey = computed(() => ['diaryContent', props.date]);
-const { data: noteData, isLoading, error: getNoteError } = useQuery({
+const { data: noteData, isLoading, isFetching, error: getNoteError } = useQuery({
   queryKey: queryKey,
   queryFn: () => fetchNote(props.date),
   retry: false,
@@ -232,5 +232,20 @@ pre code {
   padding: 0.6rem 0.9rem;
   border-radius: 6px;
   font-size: 0.95rem;
+}
+
+.loading {
+  position: absolute;
+  inset: 1.8rem 0 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 72%);
+  color: var(--lb-text-muted, #5a6d7e);
+  pointer-events: none;
+}
+
+.loading__icon {
+  width: 2rem;
+  height: 2rem;
 }
 </style>
