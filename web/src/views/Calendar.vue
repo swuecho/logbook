@@ -1,31 +1,29 @@
 <template>
   <el-container class="calendar-page app-page app-page--shell">
     <div class="app-shell">
-      <el-header class="app-header-bar calendar-page__header">
-        <button type="button" class="linkish" aria-label="Home" @click="goHome">
-          <Icon :icon="homeIcon" height="24" />
-        </button>
+      <AppTopBar title="Calendar" :show-calendar="false">
+        <template #actions-before>
+          <div class="year-row">
+            <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
+              ‹
+            </button>
+            <h2 class="year-heading">{{ yearTitle }}</h2>
+            <button type="button" class="linkish year-arrow" aria-label="Next year" @click="nextYear">
+              ›
+            </button>
+          </div>
 
-        <div class="year-row">
-          <button type="button" class="linkish year-arrow" aria-label="Previous year" @click="prevYear">
-            ‹
-          </button>
-          <h1 class="year-heading">{{ yearTitle }}</h1>
-          <button type="button" class="linkish year-arrow" aria-label="Next year" @click="nextYear">
-            ›
-          </button>
-        </div>
+          <el-input
+            v-model="searchQuery"
+            class="calendar-page__search"
+            placeholder="Search entries"
+            clearable
+            size="small"
+          />
 
-        <el-input
-          v-model="searchQuery"
-          class="calendar-page__search"
-          placeholder="Search entries"
-          clearable
-          size="small"
-        />
-
-        <button type="button" class="linkish" @click="goThisYear">This year</button>
-      </el-header>
+          <button type="button" class="linkish" @click="goThisYear">This year</button>
+        </template>
+      </AppTopBar>
 
       <el-main v-loading="loading" class="app-main-padded calendar-page__main">
         <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
@@ -75,8 +73,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import moment from 'moment';
-import { Icon } from '@iconify/vue';
-import homeIcon from '@iconify/icons-material-symbols/home';
+import AppTopBar from '@/components/AppTopBar.vue';
 import router from '@/router';
 import { getDiaryIds, searchDiary } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -179,10 +176,6 @@ function goThisYear() {
 
 function openDay(day) {
   router.push({ path: '/view', query: { date: day.format('YYYYMMDD') } });
-}
-
-function goHome() {
-  router.push('/');
 }
 
 async function fetchSearchResults() {

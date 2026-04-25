@@ -26,7 +26,7 @@
             {{ item.text || 'Untitled task' }}
           </span>
           <a v-if="item.noteId" class="todo-strip__note" :href="`/view?date=${item.noteId}`">
-            {{ item.noteId }}
+            {{ formatNoteId(item.noteId) }}
           </a>
         </li>
       </transition-group>
@@ -49,6 +49,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import moment from 'moment';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchTodoContent } from '@/services/todo';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -142,6 +143,11 @@ function itemKey(item, index) {
     return `${item.noteId}-${displayIndex}`;
   }
   return `todo-${displayIndex}`;
+}
+
+function formatNoteId(noteId) {
+  const parsed = moment(String(noteId), 'YYYYMMDD', true);
+  return parsed.isValid() ? parsed.format('MMM D') : noteId;
 }
 
 function normalizeTodoDoc(payload) {

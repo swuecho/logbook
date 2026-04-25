@@ -1,10 +1,11 @@
 <template>
         <div class="lb-admin admin-dashboard">
                 <div class="app-shell">
-                        <div class="app-header-bar">
-                                <div class="admin-dashboard__title">Admin</div>
-                                <div class="admin-dashboard__meta">{{ users.length }} users</div>
-                        </div>
+                        <AppTopBar title="Admin">
+                                <template #actions-before>
+                                        <div class="admin-dashboard__meta">{{ users.length }} users</div>
+                                </template>
+                        </AppTopBar>
                 <el-row :gutter="20" class="stats-row">
                         <el-col :span="6">
                                 <el-card shadow="never" class="stats-card">
@@ -170,12 +171,13 @@
 import { format, isToday, differenceInDays, differenceInWeeks } from 'date-fns'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Icon } from '@iconify/vue'
+import AppTopBar from '@/components/AppTopBar.vue'
 import { fetchUsersWithDiary, deleteUser } from '@/services/users';
 import { getApiErrorMessage } from '@/services/apiError';
 
 export default {
         name: 'AdminDashboard',
-        components: { Icon },
+        components: { Icon, AppTopBar },
         data() {
                 return {
                         users: [],

@@ -1,11 +1,7 @@
 <template>
   <el-container class="app-page app-page--shell content-view">
     <div class="app-shell">
-      <el-header class="app-header-bar app-header-bar--start">
-        <button type="button" class="linkish" aria-label="Home" @click="backHome">
-          <Icon :icon="icons.homeIcon" height="24" />
-        </button>
-      </el-header>
+      <AppTopBar title="Browse" :show-content="false" />
       <el-main
         v-loading="loading"
         class="app-main-padded content-view__main"
@@ -15,7 +11,7 @@
           <div v-for="(item, row_idx) in summaries" :key="row_idx" class="grid-item">
             <el-card class="lb-card-flat content-view__card" shadow="never">
               <template #header>
-                <a class="entry-date-link" :href="'/view?date=' + item.id">{{ item.id }}</a>
+                <a class="entry-date-link" :href="'/view?date=' + item.id">{{ formatEntryDate(item.id) }}</a>
               </template>
               <vue-word-cloud
                 style="height: 240px; width: 100%;"
@@ -33,22 +29,19 @@
 
 <script>
 import VueWordCloud from 'vuewordcloud';
-import { Icon } from '@iconify/vue';
-import homeIcon from '@iconify/icons-material-symbols/home';
+import moment from 'moment';
+import AppTopBar from '@/components/AppTopBar.vue';
 import { getDiarySummaries } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
 export default {
   components: {
     VueWordCloud,
-    Icon,
+    AppTopBar,
   },
   data() {
     return {
       loading: true,
       summaries: [],
-      icons: {
-        homeIcon,
-      },
     };
   },
   async created() {
@@ -62,14 +55,15 @@ export default {
       }
       return lol;
     },
-    backHome() {
-      this.$router.push('/')
-    },
     wordColor([, weight]) {
       if (weight > 14) return '#236747';
       if (weight > 8) return '#2d8659';
       if (weight > 4) return '#5a6d7e';
       return '#8a9aa8';
+    },
+    formatEntryDate(noteId) {
+      const parsed = moment(String(noteId), 'YYYYMMDD', true);
+      return parsed.isValid() ? parsed.format('MMM D, YYYY') : noteId;
     },
     async fetchDiaryNotes() {
       this.loading = true;

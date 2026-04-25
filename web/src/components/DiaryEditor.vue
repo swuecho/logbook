@@ -1,5 +1,8 @@
 <template>
   <div class="content">
+    <div class="editor-status" :class="editorStatusClass" aria-live="polite">
+      {{ editorStatusText }}
+    </div>
     <div class="editor">
       <el-tiptap
         :key="'editor-' + date"
@@ -53,6 +56,8 @@ const extensions = createExtensions();
 
 const content = ref(emptyDoc());
 const noteJsonRef = ref(null);
+const lastSavedAt = ref(null);
+const saveError = ref('');
 const queryKey = computed(() => ['diaryContent', props.date]);
 const { data: noteData, isLoading, error: getNoteError } = useQuery({
   queryKey: queryKey,
@@ -98,13 +103,31 @@ const onCreate = ({ editor }) => {
 };
 
 
-const { mutate: updateNote } = useMutation({
+const editorStatusText = computed(() => {
+  if (!isPrimaryTab.value) return 'Read-only in this tab';
+  if (isLoading.value) return 'Loading entry...';
+  if (saveError.value) return saveError.value;
+  if (isSaving.value) return 'Saving...';
+  if (lastSavedAt.value) return `Saved ${moment(lastSavedAt.value).format('h:mm a')}`;
+  return 'Autosaves changes';
+});
+
+const editorStatusClass = computed(() => ({
+  'editor-status--error': Boolean(saveError.value),
+  'editor-status--muted': !saveError.value,
+}));
+
+const { mutate: updateNote, isPending: isSaving } = useMutation({
   mutationFn: saveNote,
   networkMode: 'always',
+  onMutate: () => {
+    saveError.value = '';
+  },
   onSuccess: () => {
     // queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date, ] });
     // if invalid the diaryContent, it will cause the editor to refresh content. 
     // will overwrite the current content delta.  (typed in after last put request)
+    lastSavedAt.value = new Date();
     queryClient.invalidateQueries({ queryKey: ['todoContent'] });
     queryClient.invalidateQueries({ queryKey: ['MdContent', props.date] });
   },
@@ -112,6 +135,7 @@ const { mutate: updateNote } = useMutation({
     if (isUnauthorized(error)) {
       router.push({ name: 'login' });
     }
+    saveError.value = getApiErrorMessage(error, 'Could not save changes.');
     console.error(getApiErrorMessage(error, 'Error updating diary.'));
   },
   staleTime: 500,
@@ -142,6 +166,22 @@ pre code {
 
 .content {
   position: relative;
+}
+
+.editor-status {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 1.45rem;
+  margin: -0.2rem 0 0.35rem;
+  font-size: 0.78rem;
+}
+
+.editor-status--muted {
+  color: var(--lb-text-subtle, #8a9aa8);
+}
+
+.editor-status--error {
+  color: var(--lb-error, #b03a2e);
 }
 
 .editor {

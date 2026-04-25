@@ -1,7 +1,7 @@
 <template>
   <div class="date-nav">
     <div class="date-slider" ref="dateSliderRef">
-      <div v-for="d in datesToShow" :key="d.format('YYYYMMDD')" @click="setDate(d.format('YYYYMMDD'))" :class="{
+      <button v-for="d in datesToShow" :key="d.format('YYYYMMDD')" type="button" @click="setDate(d.format('YYYYMMDD'))" :aria-label="dateLabel(d)" :class="{
         'date-item': true,
         'active': d.format('YYYYMMDD') === modelValue,
         'today': d.format('YYYYMMDD') === today,
@@ -11,11 +11,11 @@
           {{ d.format('MMM') }}
         </div>
         <div class="day-number">{{ d.format('DD') }}</div>
-      </div>
+      </button>
     </div>
-    <div v-if="modelValue != today" @click="navigateDateToToday" class="icon-container">
+    <button v-if="modelValue != today" type="button" @click="navigateDateToToday" class="icon-container" aria-label="Go to today">
       <Icon icon="fluent:arrow-next-16-regular" width="1.2rem" height="1.2rem" />
-    </div>
+    </button>
   </div>
 </template>
 
@@ -91,6 +91,13 @@ function hasDiary(d) {
   return props.diaryIds.has(d.format('YYYYMMDD'));
 }
 
+function dateLabel(d) {
+  const label = d.format('MMMM D, YYYY');
+  if (d.format('YYYYMMDD') === today.value) return `${label}, today`;
+  if (hasDiary(d)) return `${label}, has entry`;
+  return label;
+}
+
 const datesToShow = computed(() => {
   const dates = [];
   const todayMoment = moment();
@@ -152,13 +159,25 @@ function navigateDateToToday() {
   text-align: center;
   border-radius: var(--lb-radius-md, 8px);
   border: 1px solid transparent;
+  background: transparent;
   position: relative;
+  font: inherit;
   transition:
     background-color 0.18s ease,
     border-color 0.18s ease,
     color 0.18s ease;
   min-width: 3.15rem;
   flex-shrink: 0;
+}
+
+.date-item:focus {
+  outline: none;
+}
+
+.date-item:focus-visible,
+.icon-container:focus-visible {
+  outline: 2px solid var(--lb-accent, #2d8659);
+  outline-offset: 2px;
 }
 
 .day-number {
@@ -219,6 +238,8 @@ function navigateDateToToday() {
   height: 2rem;
   margin-left: 0.35rem;
   border-radius: var(--lb-radius-sm, 6px);
+  border: none;
+  background: transparent;
   color: var(--lb-text-muted, #5a6d7e);
   cursor: pointer;
   flex-shrink: 0;

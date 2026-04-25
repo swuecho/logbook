@@ -1,10 +1,8 @@
 <template>
   <el-container class="app-page app-page--shell search-view">
     <div class="app-shell">
-      <el-header class="app-header-bar app-header-bar--start">
-        <button type="button" class="linkish" aria-label="Home" @click="backHome">
-          <Icon :icon="homeIcon" height="24" />
-        </button>
+      <AppTopBar title="Search" :show-search="false">
+        <template #actions-before>
         <el-input
           v-model="searchQuery"
           class="search-view__input"
@@ -15,7 +13,8 @@
           @input="scheduleSearch"
           @clear="scheduleSearch"
         />
-      </el-header>
+        </template>
+      </AppTopBar>
 
       <el-main class="app-main-padded search-view__main">
         <p v-if="searchError" class="search-view__error" role="alert">{{ searchError }}</p>
@@ -35,9 +34,11 @@
             shadow="never"
           >
             <template #header>
-              <a class="search-view__date" :href="'/view?date=' + item.noteId">{{ item.noteId }}</a>
+              <a class="search-view__date" :href="'/view?date=' + item.noteId">
+                {{ formatEntryDate(item.noteId) }}
+              </a>
             </template>
-            <p class="search-view__snippet">{{ item.snippet }}</p>
+            <p class="search-view__snippet" v-html="highlightSnippet(item.snippet)"></p>
           </el-card>
         </div>
       </el-main>
@@ -47,9 +48,8 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { Icon } from '@iconify/vue';
-import homeIcon from '@iconify/icons-material-symbols/home';
-import router from '@/router';
+import moment from 'moment';
+import AppTopBar from '@/components/AppTopBar.vue';
 import { searchDiary } from '@/services/diary';
 import { getApiErrorMessage } from '@/services/apiError';
 
@@ -61,10 +61,6 @@ const searchSeq = ref(0);
 let searchTimer = null;
 
 const isSearchActive = computed(() => searchQuery.value.trim().length > 0);
-
-function backHome() {
-  router.push('/');
-}
 
 function scheduleSearch() {
   if (searchTimer) {
@@ -106,6 +102,33 @@ async function fetchSearchResults() {
   }
 }
 
+function formatEntryDate(noteId) {
+  const parsed = moment(String(noteId), 'YYYYMMDD', true);
+  return parsed.isValid() ? parsed.format('MMM D, YYYY') : noteId;
+}
+
+function highlightSnippet(snippet) {
+  const escapedSnippet = escapeHtml(snippet || '');
+  const query = searchQuery.value.trim();
+  if (!query) return escapedSnippet;
+
+  const escapedQuery = escapeRegExp(escapeHtml(query));
+  return escapedSnippet.replace(new RegExp(`(${escapedQuery})`, 'ig'), '<mark>$1</mark>');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 onBeforeUnmount(() => {
   if (searchTimer) {
     clearTimeout(searchTimer);
@@ -140,9 +163,10 @@ onBeforeUnmount(() => {
 }
 
 .search-view__results {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
 }
 
 .search-view__result {
@@ -166,14 +190,16 @@ onBeforeUnmount(() => {
   line-height: 1.75;
 }
 
+.search-view__snippet :deep(mark) {
+  padding: 0 0.12rem;
+  border-radius: 3px;
+  background: #eef8f2;
+  color: var(--lb-accent-strong);
+}
+
 @media (max-width: 480px) {
   .search-view__input {
     width: 100%;
-  }
-
-  .search-view__results {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
   }
 
   .search-view__result :deep(.el-card__header),

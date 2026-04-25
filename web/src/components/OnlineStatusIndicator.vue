@@ -1,14 +1,16 @@
 <!-- OnlineStatusIndicator.vue -->
 <template>
-  <div class="online-status">
+  <div class="online-status" role="status" :aria-label="statusLabel" :title="statusLabel">
     <span :class="{ 'online': isOnline, 'offline': !isOnline }"></span>
   </div>
 </template>
 
 <script setup>
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { computed } from 'vue';
 
 const { isOnline } = useOnlineStatus();
+const statusLabel = computed(() => (isOnline.value ? 'Online' : 'Offline'));
 </script>
 
 <style scoped>
