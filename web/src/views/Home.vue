@@ -18,6 +18,9 @@
             <a href="/content" class="linkish" title="Browse entries">
               <Icon :icon="tableOfContents" />
             </a>
+            <a v-if="isAdmin" href="/admin" class="linkish" title="Admin">
+              <Icon :icon="adminIcon" />
+            </a>
             <button
               v-if="isAuthenticated"
               type="button"
@@ -49,6 +52,7 @@ import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';
 import magnifyIcon from '@iconify/icons-mdi/magnify';
 import logoutIcon from '@iconify/icons-mdi/logout';
+import adminIcon from '@iconify/icons-mdi/shield-account-outline';
 import DiaryEditor from "@/components/DiaryEditor";
 import TodoStrip from '@/components/TodoStrip.vue';
 import MDView from '@/components/MDView.vue';
@@ -56,6 +60,7 @@ import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
 import DateNavigation from '@/components/DateNavigation.vue';
 import { getDiaryIds } from '@/services/diary';
 import router from '@/router';
+import { parseJwt } from '@/util';
 
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
@@ -86,6 +91,19 @@ const isAuthenticated = computed(() => {
   const token = localStorage.getItem('JWT_TOKEN');
   const expiresAt = Number(localStorage.getItem('JWT_EXPIRES_AT'));
   return Boolean(token) && Boolean(expiresAt) && expiresAt > Date.now();
+});
+
+const isAdmin = computed(() => {
+  const token = localStorage.getItem('JWT_TOKEN');
+  if (!token || !isAuthenticated.value) return false;
+
+  try {
+    const claims = parseJwt(token);
+    return claims.role === 'admin';
+  } catch (error) {
+    console.error('Failed to parse auth token:', error);
+    return false;
+  }
 });
 
 const goLogout = () => {
