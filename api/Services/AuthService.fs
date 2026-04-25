@@ -22,17 +22,7 @@ let private jwtAudienceName = "logbook"
 
 let createNewUser (conn: NpgsqlConnection) email password =
     let passwordHash = Auth.generatePasswordHash password
-
-    let newUser: AuthUser.CreateAuthUserParams =
-        { Email = email
-          Password = passwordHash
-          FirstName = ""
-          LastName = ""
-          Username = email
-          IsStaff = false
-          IsSuperuser = false }
-
-    AuthUser.CreateAuthUser conn newUser
+    AuthUserRepository.create conn email passwordHash "" "" email false false
 
 let private tokenResponse userId role jwtKey audience =
     let jwt = Token.generateToken userId role jwtKey audience issuer
@@ -42,17 +32,17 @@ let private tokenResponse userId role jwtKey audience =
 
 let login (conn: NpgsqlConnection) (credentials: Login) =
     let email = credentials.Username
-    let secret = JwtSecrets.GetJwtSecret conn jwtAudienceName
+    let secret = JwtSecretRepository.getByName conn jwtAudienceName
     let jwtKey = secret.Secret
     let audience = secret.Audience
 
-    if AuthUser.CheckUserExists conn email then
-        let user = AuthUser.GetUserByEmail conn email
+    if AuthUserRepository.existsByEmail conn email then
+        let user = AuthUserRepository.getByEmail conn email
         let passwordMatches = Auth.validatePassword credentials.Password user.Password
         let role = if user.IsSuperuser then "admin" else "user"
 
         if passwordMatches then
-            AuthUser.UpdateLastLogin conn user.Id |> ignore
+            AuthUserRepository.updateLastLogin conn user.Id
             LoginSucceeded(tokenResponse user.Id role jwtKey audience)
         else
             LoginFailed

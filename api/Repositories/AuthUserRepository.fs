@@ -1,0 +1,27 @@
+module AuthUserRepository
+
+open Npgsql
+
+let existsByEmail (conn: NpgsqlConnection) email =
+    AuthUser.CheckUserExists conn email
+
+let getByEmail (conn: NpgsqlConnection) email =
+    AuthUser.GetUserByEmail conn email
+
+let create (conn: NpgsqlConnection) email password firstName lastName username isStaff isSuperuser =
+    let user: AuthUser.CreateAuthUserParams =
+        { Email = email
+          Password = password
+          FirstName = firstName
+          LastName = lastName
+          Username = username
+          IsStaff = isStaff
+          IsSuperuser = isSuperuser }
+
+    AuthUser.CreateAuthUser conn user
+
+let updateLastLogin (conn: NpgsqlConnection) userId =
+    AuthUser.UpdateLastLogin conn userId |> ignore
+
+let getUsersWithDiaryCount (conn: NpgsqlConnection) =
+    AuthUser.GetUsersWithDiaryCount conn

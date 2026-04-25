@@ -8,7 +8,7 @@ type JwtConfig =
 let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getExistingSecret () =
         try
-            let secret = JwtSecrets.GetJwtSecret pgConn jwtAudienceName
+            let secret = JwtSecretRepository.getByName pgConn jwtAudienceName
             printfn "Existing JWT Secret found for %s" jwtAudienceName
             Some secret
         with :? NoResultsException ->
@@ -34,12 +34,7 @@ let getOrCreateJwtSecret pgConn jwtAudienceName =
         | aud -> aud
 
     let createNewSecret () =
-        let jwtSecretParams: JwtSecrets.CreateJwtSecretParams =
-            { Name = jwtAudienceName
-              Secret = getJwtKey ()
-              Audience = getAudience () }
-
-        let createdSecret = JwtSecrets.CreateJwtSecret pgConn jwtSecretParams
+        let createdSecret = JwtSecretRepository.create pgConn jwtAudienceName (getJwtKey ()) (getAudience ())
         printfn "New JWT Secret created for %s" jwtAudienceName
         createdSecret
 

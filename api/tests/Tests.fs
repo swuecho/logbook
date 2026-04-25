@@ -30,20 +30,20 @@ let ``My test2`` () =
     let ins =
         "在数学和计算机科学之中，算法（algorithm）为任何良定义的具体计算步骤的一个序列，常用于计算、数据处理和自动推理。精确而言，算法是一个表示为有限长列表的有效方法。算法应包含清晰定义的指令用于计算函数"
 
-    let seq = SearchService.freqs ins
+    let seq = TextAnalysis.freqs ins
     Assert.True(true)
 //Assert.True(seq)
 
 [<Fact>]
 let ``searchTerms tokenizes mixed Chinese and English text`` () =
-    let terms = SearchService.searchTerms "Vue 中文 搜索"
+    let terms = TextAnalysis.searchTerms "Vue 中文 搜索"
     Assert.Contains("vue", terms)
     Assert.Contains("中文", terms)
     Assert.Contains("搜索", terms)
 
 [<Fact>]
 let ``searchTerms supports Chinese word queries`` () =
-    let terms = SearchService.searchTerms "今天心情很好 机器学习"
+    let terms = TextAnalysis.searchTerms "今天心情很好 机器学习"
     Assert.True(terms |> Array.exists (fun term -> term.Contains("今天") || term.Contains("心情")))
     Assert.True(terms |> Array.exists (fun term -> term.Contains("机器") || term.Contains("学习")))
 
@@ -67,7 +67,7 @@ let ``searchIndexOfNote extracts text from tiptap json`` () =
     }
     """
 
-    let searchText, terms = SearchService.searchIndexOfNote json
+    let searchText, terms = TextAnalysis.searchIndexOfNote json
     Assert.Contains("Vue", searchText)
     Assert.Contains("vue", terms)
 

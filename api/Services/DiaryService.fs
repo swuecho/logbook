@@ -39,39 +39,30 @@ let buildSnippet (terms: string array) (searchText: string) =
         prefix + snippet + suffix
 
 let listSummaries (conn: NpgsqlConnection) userId =
-    SearchService.refreshSummary conn userId
+    SummaryService.refreshSummary conn userId
 
-    Summary.GetSummaryByUserId conn userId
+    SummaryRepository.getByUserId conn userId
     |> List.filter (fun x -> x.Note.Length > 2)
 
 let getOrCreateDiary (conn: NpgsqlConnection) userId noteId =
     try
-        Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
+        DiaryRepository.getByUserAndNoteId conn userId noteId
     with :? NoResultsException ->
-        Diary.AddNote
-            conn
-            { NoteId = noteId
-              UserId = userId
-              Note = "" }
+        DiaryRepository.addOrUpdate conn noteId userId ""
 
 let saveDiary (conn: NpgsqlConnection) userId (note: Diary) =
-    let saved =
-        Diary.AddNote
-            conn
-            { NoteId = note.NoteId
-              UserId = userId
-              Note = note.Note }
+    let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
 
-    SearchService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+    SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
     saved
 
 let search (conn: NpgsqlConnection) userId query =
-    let terms = SearchService.searchTerms query
+    let terms = TextAnalysis.searchTerms query
 
     if terms.Length = 0 then
         []
     else
-        Diary.SearchDiary conn { UserId = userId; QueryTerms = terms }
+        DiaryRepository.search conn userId terms
         |> List.map (fun row ->
             { NoteId = row.NoteId
               Snippet = buildSnippet terms row.SearchText
@@ -91,9 +82,9 @@ let extractTodoLists allDiary =
                    todoList = todoList |})
 
 let todoDocument (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryByUserID conn userId
+    DiaryRepository.listByUserId conn userId
     |> extractTodoLists
     |> TipTap.constructTipTapDoc
 
 let listDiaryIds (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryIDByUserID conn userId
+    DiaryRepository.listIdsByUserId conn userId

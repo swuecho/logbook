@@ -3,10 +3,10 @@ module ExportService
 open Npgsql
 
 let diaryJson (conn: NpgsqlConnection) userId noteId =
-    Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
+    DiaryRepository.getByUserAndNoteId conn userId noteId
 
 let allDiaries (conn: NpgsqlConnection) userId =
-    Diary.ListDiaryByUserID conn userId
+    DiaryRepository.listByUserId conn userId
 
 let diaryMarkdown (conn: NpgsqlConnection) userId noteId =
     let diary = diaryJson conn userId noteId

@@ -26,7 +26,7 @@ let initializeDatabase () =
 let initializeSearchIndex () =
     use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
     pgConn.Open()
-    SearchService.refreshSearchIndex pgConn
+    SearchIndexService.refreshSearchIndex pgConn
 
 let corsPolicy (policyBuilder: CorsPolicyBuilder) =
     // Note: This is a very lax setting, but a good fit for local development.
