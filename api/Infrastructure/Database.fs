@@ -9,6 +9,18 @@ type DbSession(dataSource: NpgsqlDataSource) =
         use conn = dataSource.OpenConnection()
         action conn
 
+    member _.WithTransaction(action: NpgsqlConnection -> 'T) : 'T =
+        use conn = dataSource.OpenConnection()
+        use transaction = conn.BeginTransaction()
+
+        try
+            let result = action conn
+            transaction.Commit()
+            result
+        with _ ->
+            transaction.Rollback()
+            reraise ()
+
 
 module Config =
     /// Custom operator for combining paths

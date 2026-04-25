@@ -11,6 +11,18 @@ type DbSession(dataSource: NpgsqlDataSource) =
     member _.WithConnection(action: NpgsqlConnection -> 'T) : 'T =
         use conn = dataSource.OpenConnection()
         action conn
+
+    member _.WithTransaction(action: NpgsqlConnection -> 'T) : 'T =
+        use conn = dataSource.OpenConnection()
+        use transaction = conn.BeginTransaction()
+
+        try
+            let result = action conn
+            transaction.Commit()
+            result
+        with _ ->
+            transaction.Rollback()
+            reraise ()
 ```
 
 Handlers resolve the session and pass it to services:
@@ -24,6 +36,16 @@ Services own connection lifetime:
 ```fsharp
 let listDiaryIds (db: DbSession) userId =
     db.WithConnection(fun conn -> DiaryRepository.listIdsByUserId conn userId)
+```
+
+Write workflows that update more than one database concern use a transaction boundary:
+
+```fsharp
+let saveDiary (db: DbSession) userId note =
+    db.WithTransaction(fun conn ->
+        let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+        SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+        saved)
 ```
 
 This keeps HTTP handlers focused on HTTP concerns while services and repositories own application/data access work.
@@ -84,8 +106,27 @@ This gives cleaner boundaries:
 
 `DbSession` is still a small infrastructure abstraction, not a full unit-of-work framework. That is intentional for this app. It keeps the code simple while centralizing connection lifetime.
 
-If a service operation needs multiple repository calls to share one transaction, add a method such as `WithTransaction` to `DbSession` and keep the whole workflow inside one service operation. Avoid opening separate sessions for steps that must commit or roll back together.
+If a service operation needs multiple repository calls to share one transaction, use `WithTransaction` and keep the whole workflow inside one service operation. Avoid opening separate sessions for steps that must commit or roll back together.
+
+`Npgsql.FSharp` also has `Sql.executeTransaction`, which is a good fit for a batch of SQL statements and parameter sets:
+
+```fsharp
+connectionString
+|> Sql.connect
+|> Sql.executeTransaction
+    [
+        "INSERT INTO ... VALUES (@number)", [
+            [ "@number", Sql.int 1 ]
+            [ "@number", Sql.int 2 ]
+        ]
+        "UPDATE ... SET meta = @meta", [
+            [ "@meta", Sql.text value ]
+        ]
+    ]
+```
+
+That is not the best fit for the current diary save workflow because the app uses generated query functions, needs the saved diary row returned from the first query, and then uses that result to update the search index. The Npgsql.FSharp docs recommend creating an explicit `NpgsqlTransaction` for arbitrary code between SQL calls, which is what `DbSession.WithTransaction` centralizes.
 
 ## Recommended Rule
 
-Handlers should not accept or open `NpgsqlConnection` values. A handler may resolve `DbSession` from the request service provider and pass it to a service. Services should use one `DbSession.WithConnection` block per application operation and pass the raw connection only to repositories or lower-level helpers.
+Handlers should not accept or open `NpgsqlConnection` values. A handler may resolve `DbSession` from the request service provider and pass it to a service. Services should use one `DbSession.WithConnection` block for read-only single-operation workflows, or one `DbSession.WithTransaction` block for multi-step writes. Raw connections should only be passed to repositories or lower-level helpers.

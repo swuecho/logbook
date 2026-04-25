@@ -53,7 +53,7 @@ let getOrCreateDiary (db: DbSession) userId noteId =
             DiaryRepository.addOrUpdate conn noteId userId "")
 
 let saveDiary (db: DbSession) userId (note: Diary) =
-    db.WithConnection(fun conn ->
+    db.WithTransaction(fun conn ->
         let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
 
         SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
