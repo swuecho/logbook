@@ -6,17 +6,15 @@ let listDiaryIds: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        Json.Response.ofJson
-            (DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId)
-            ctx
+        DiaryService.listDiaryIds requestContext.DbSession requestContext.UserId
+        |> HandlerResponse.json ctx
 
 let listSummaries: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        Json.Response.ofJson
-            (DiaryService.refreshAndListSummaries requestContext.DbSession requestContext.UserId)
-            ctx
+        DiaryService.refreshAndListSummaries requestContext.DbSession requestContext.UserId
+        |> HandlerResponse.json ctx
 
 let getById: HttpHandler =
     fun ctx ->
@@ -24,18 +22,17 @@ let getById: HttpHandler =
         let route = Request.getRoute ctx
         let noteId = route.GetString("id", "")
 
-        Json.Response.ofJson
-            (DiaryService.getOrCreateDiary requestContext.DbSession requestContext.UserId noteId)
-            ctx
+        DiaryService.getOrCreateDiary requestContext.DbSession requestContext.UserId noteId
+        |> HandlerResponse.json ctx
 
 let save: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        Request.mapJson
+        Json.Request.mapJson
             (fun (note: Diary) ->
                 DiaryService.saveDiary requestContext.DbSession requestContext.UserId note
-                |> Json.Response.ofJson)
+                |> HandlerResponse.jsonHandler)
             ctx
 
 let search: HttpHandler =
@@ -47,14 +44,12 @@ let search: HttpHandler =
             | true, value -> value.ToString()
             | false, _ -> ""
 
-        Json.Response.ofJson
-            (DiaryService.search requestContext.DbSession requestContext.UserId query)
-            ctx
+        DiaryService.search requestContext.DbSession requestContext.UserId query
+        |> HandlerResponse.json ctx
 
 let todoLists: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        Json.Response.ofJson
-            (DiaryService.todoDocument requestContext.DbSession requestContext.UserId)
-            ctx
+        DiaryService.todoDocument requestContext.DbSession requestContext.UserId
+        |> HandlerResponse.json ctx

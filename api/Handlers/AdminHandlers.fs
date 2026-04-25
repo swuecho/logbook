@@ -6,6 +6,6 @@ let usersWithDiaryCount: HttpHandler =
     fun ctx ->
         if HandlerContext.isAdmin ctx then
             let dbSession = HandlerContext.dbSession ctx
-            Json.Response.ofJson (AdminService.usersWithDiaryCount dbSession) ctx
+            AdminService.usersWithDiaryCount dbSession |> HandlerResponse.json ctx
         else
             HttpAuth.forbidden ctx

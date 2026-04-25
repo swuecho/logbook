@@ -75,7 +75,7 @@ Handlers should:
 - Parse route values, query strings, JSON bodies, and user claims.
 - Resolve request helpers through `HandlerContext`.
 - Call one service function for the application operation.
-- Return HTTP responses.
+- Return HTTP responses through `HandlerResponse` for standard JSON output.
 
 Handlers should not:
 

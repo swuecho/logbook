@@ -6,13 +6,13 @@ let login: HttpHandler =
     fun ctx ->
         let dbSession = HandlerContext.dbSession ctx
 
-        Request.mapJson
+        Json.Request.mapJson
             (fun (credentials: AuthService.Login) ->
                 match AuthService.loginOrRegister dbSession credentials with
-                | AuthService.LoginSucceeded token -> Json.Response.ofJson token
+                | AuthService.LoginSucceeded token -> HandlerResponse.jsonHandler token
                 | AuthService.LoginFailed failure ->
-                    Response.withStatusCode (int failure.Code)
-                    >> Json.Response.ofJson
+                    HandlerResponse.jsonWithStatus
+                        (int failure.Code)
                         {| code = failure.Code
                            message = failure.Message |})
             ctx
@@ -21,7 +21,6 @@ let logout: HttpHandler =
     fun ctx ->
         let userId = HandlerContext.userId ctx
 
-        Json.Response.ofJson
-            {| userId = userId
-               message = "Logged out successfully" |}
-            ctx
+        {| userId = userId
+           message = "Logged out successfully" |}
+        |> HandlerResponse.json ctx
