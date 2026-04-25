@@ -68,11 +68,6 @@ function closeModalMd() {
 </script>
 
 <style scoped>
-.home-page__inner {
-  padding-top: 0;
-  padding-bottom: 2rem;
-}
-
 .nav {
   margin: 0 0 1.1rem;
   display: flex;
@@ -95,7 +90,7 @@ function closeModalMd() {
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .nav {
-    margin: 0.5em 0 0.75rem 0;
+    margin: 0 0 0.75rem;
     gap: 0.75rem;
   }
 
@@ -107,7 +102,7 @@ function closeModalMd() {
 
 @media (max-width: 480px) {
   .nav {
-    margin: 0.25em 0;
+    margin: 0;
   }
 }
 </style>

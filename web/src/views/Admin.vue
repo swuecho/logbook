@@ -1,5 +1,5 @@
 <template>
-        <div class="lb-admin admin-dashboard">
+        <div class="app-page app-page--shell lb-admin admin-dashboard">
                 <div class="app-shell">
                         <AppTopBar title="Admin">
                                 <template #actions-before>

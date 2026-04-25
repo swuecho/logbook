@@ -137,12 +137,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.search-view :deep(.el-header) {
-  padding: 0;
-  height: auto !important;
-  background: transparent;
-}
-
 .search-view__input {
   width: min(30rem, 100%);
 }

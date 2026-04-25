@@ -263,8 +263,6 @@ a.linkish {
 
 /* Admin: calmer dashboard surface */
 .lb-admin {
-  min-height: 100vh;
-  padding: var(--lb-page-top) 0 var(--lb-page-bottom);
   background: var(--lb-bg);
   color: var(--lb-text);
 }

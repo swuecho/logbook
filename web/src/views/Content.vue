@@ -92,12 +92,6 @@ export default {
 </script>
 
 <style scoped>
-.content-view :deep(.el-header) {
-  padding: 0;
-  height: auto !important;
-  background: transparent;
-}
-
 .content-view .app-shell {
   max-width: 88rem;
 }

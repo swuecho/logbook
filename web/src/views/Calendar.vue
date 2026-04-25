@@ -244,11 +244,6 @@ onMounted(async () => {
   max-width: 100%;
 }
 
-.calendar-page :deep(.el-header) {
-  padding: 0;
-  background: transparent;
-}
-
 .year-row {
   display: flex;
   align-items: center;
