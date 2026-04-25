@@ -4,7 +4,7 @@ open System
 open System.Text.RegularExpressions
 open JiebaNet
 
-let private resourceDir = __SOURCE_DIRECTORY__ + "/Resources/jieba"
+let private resourceDir = __SOURCE_DIRECTORY__ + "/../Resources/jieba"
 let private searchableToken = Regex(@"[\p{L}\p{N}]", RegexOptions.Compiled)
 
 let private segment (text: string) =
