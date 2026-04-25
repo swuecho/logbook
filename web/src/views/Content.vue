@@ -20,7 +20,7 @@
               <vue-word-cloud
                 style="height: 240px; width: 100%;"
                 :words="item.note"
-                :color="([, weight]) => weight > 10 ? '#0f766e' : weight > 5 ? '#2563eb' : '#475569'"
+                :color="wordColor"
                 font-family="Fira Code"
               />
             </el-card>
@@ -64,6 +64,12 @@ export default {
     },
     backHome() {
       this.$router.push('/')
+    },
+    wordColor([, weight]) {
+      if (weight > 14) return '#236747';
+      if (weight > 8) return '#2d8659';
+      if (weight > 4) return '#5a6d7e';
+      return '#8a9aa8';
     },
     async fetchDiaryNotes() {
       this.loading = true;
@@ -110,7 +116,7 @@ export default {
   display: grid;
   gap: 1.25rem;
   padding: 0;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .grid-item {
@@ -137,6 +143,12 @@ export default {
 
 code {
   line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .grid-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 480px) {
