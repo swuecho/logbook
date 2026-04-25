@@ -1,7 +1,8 @@
 namespace Database
 
 open Microsoft.AspNetCore.Http
-open System.Threading.Tasks
+open Microsoft.Extensions.DependencyInjection
+open Npgsql
 
 
 module Config =
@@ -19,10 +20,8 @@ module Config =
         pgConnStr + ";Timeout=300;CommandTimeout=300"
 
 module InitDB =
-    open Npgsql
-    let init (connectionString: string) =
-        use conn = new NpgsqlConnection(connectionString)
-        conn.Open()
+    let init (dataSource: NpgsqlDataSource) =
+        use conn = dataSource.OpenConnection()
         // run the init script from file api/sql/schema.sql
         let initScript = System.IO.File.ReadAllText(__SOURCE_DIRECTORY__ + "/../sql/schema.sql")
         use cmd = new NpgsqlCommand(initScript, conn)
@@ -30,28 +29,18 @@ module InitDB =
 
 
 module Connection =
-    open Npgsql
+    let createDataSource (connectionString: string) : NpgsqlDataSource =
+        NpgsqlDataSource.Create(connectionString)
 
-    let private connectionItemKey = "NpgsqlConnection"
+    let addDataSource (dataSource: NpgsqlDataSource) (services: IServiceCollection) =
+        services.AddSingleton<NpgsqlDataSource>(dataSource)
 
-    type HttpContext with
-        member this.GetNpgsqlConnection() =
-            match this.Items.[connectionItemKey] with
-            | :? NpgsqlConnection as connection -> connection
-            | _ -> failwith "can not get connection"
+    let private dataSource (httpContext: HttpContext) =
+        httpContext.RequestServices.GetRequiredService<NpgsqlDataSource>()
 
-    let getConn (httpContext: HttpContext) =
-        httpContext.GetNpgsqlConnection()
+    let openConnection (httpContext: HttpContext) =
+        (dataSource httpContext).OpenConnection()
 
-
-    let UseNpgsqlConnectionMiddleware (connectionString: string) (context: HttpContext) (next: RequestDelegate) : Task =
-        task {
-            use connection = new NpgsqlConnection(connectionString)
-            context.Items.[connectionItemKey] <- connection
-            connection.Open()
-            try
-                return! next.Invoke context
-            finally
-                context.Items.Remove(connectionItemKey) |> ignore
-        }
-        :> Task
+    let withConnection (httpContext: HttpContext) action =
+        use conn = openConnection httpContext
+        action conn

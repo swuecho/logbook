@@ -1,11 +1,14 @@
 ﻿open Falco
 open Microsoft.AspNetCore.Builder
 
-AppStartup.initializeDatabase()
-let jwtConfig = AppStartup.initializeJwtConfig()
-AppStartup.initializeSearchIndex()
+let dataSource = Database.Connection.createDataSource Database.Config.connStr
+
+AppStartup.initializeDatabase dataSource
+let jwtConfig = AppStartup.initializeJwtConfig dataSource
+AppStartup.initializeSearchIndex dataSource
 
 let builder = WebApplication.CreateBuilder()
+builder.Services |> AppStartup.addDatabase dataSource |> ignore
 builder.Services |> AppStartup.addAuthentication jwtConfig |> ignore
 builder.Services |> AppStartup.addCors |> ignore
 
@@ -16,7 +19,6 @@ wapp.UseRouting()
     .UseIf(isDevelopment, DeveloperExceptionPageExtensions.UseDeveloperExceptionPage)
     .UseCors(AppStartup.corsPolicyName)
     .UseAuthentication()
-    .Use(AppStartup.usePerRequestConnection)
     .Use(AppStartup.requireAuthenticatedApiRoutes)
     .UseFalco(ApiRoutes.endpoints)
     .Use(AppStartup.serveVueFiles)

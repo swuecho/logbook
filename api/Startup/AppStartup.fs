@@ -8,24 +8,22 @@ open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.IdentityModel.Tokens
+open Npgsql
 
 let jwtAudienceName = "logbook"
 let corsPolicyName = "MyCorsPolicy"
 
-let initializeJwtConfig () : JwtService.JwtConfig =
-    use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
-    pgConn.Open()
-
+let initializeJwtConfig (dataSource: NpgsqlDataSource) : JwtService.JwtConfig =
+    use pgConn = dataSource.OpenConnection()
     let jwtSecret = JwtService.getOrCreateJwtSecret pgConn jwtAudienceName
     { Secret = jwtSecret.Secret
       Audience = jwtSecret.Audience }
 
-let initializeDatabase () =
-    Database.InitDB.init Database.Config.connStr |> ignore
+let initializeDatabase (dataSource: NpgsqlDataSource) =
+    Database.InitDB.init dataSource |> ignore
 
-let initializeSearchIndex () =
-    use pgConn = new Npgsql.NpgsqlConnection(Database.Config.connStr)
-    pgConn.Open()
+let initializeSearchIndex (dataSource: NpgsqlDataSource) =
+    use pgConn = dataSource.OpenConnection()
     SearchIndexService.refreshSearchIndex pgConn
 
 let corsPolicy (policyBuilder: CorsPolicyBuilder) =
@@ -53,8 +51,8 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
 
     services
 
-let usePerRequestConnection (app: IApplicationBuilder) =
-    app.Use(Database.Connection.UseNpgsqlConnectionMiddleware Database.Config.connStr)
+let addDatabase dataSource services =
+    Database.Connection.addDataSource dataSource services
 
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
