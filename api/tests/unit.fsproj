@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\logbook.fsproj" />
+    <ProjectReference Include="..\Logbook.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
