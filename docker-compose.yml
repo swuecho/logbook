@@ -1,9 +1,6 @@
 version: "3"
 services:
   web:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
     image: echowuhao/logbook:latest
     environment:
       DATABASE_URL: "postgresql://postgres:thisisapassword@db:5432/postgres"
