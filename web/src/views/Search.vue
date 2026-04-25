@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
 
 .search-view__results {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: 1rem;
 }
 
@@ -163,7 +163,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--lb-text);
   font-size: 0.85rem;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
 @media (max-width: 480px) {
@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
   }
 
   .search-view__results {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 

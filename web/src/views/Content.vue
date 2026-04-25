@@ -110,7 +110,7 @@ export default {
   display: grid;
   gap: 1.25rem;
   padding: 0;
-  grid-template-columns: repeat(3, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
 .grid-item {
@@ -119,6 +119,10 @@ export default {
 
 .content-view__card {
   height: 100%;
+}
+
+.content-view__card :deep(.el-card__body) {
+  padding: 0.75rem 1rem 1rem;
 }
 
 .entry-date-link {
@@ -138,7 +142,7 @@ code {
 @media (max-width: 480px) {
   .grid-container {
     gap: 0.75rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .content-view__card :deep(.el-card__header) {

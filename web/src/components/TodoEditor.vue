@@ -27,9 +27,9 @@ defineProps({
 <style scoped>
 .todo :deep(.el-tiptap-editor__content) {
         border: 1px solid var(--lb-border, #ebeef5) !important;
-        border-radius: var(--lb-radius-md, 8px) !important;
+        border-radius: var(--lb-radius-lg, 10px) !important;
         background: #fff !important;
-        padding: 0.4rem 0.5rem !important;
+        padding: 0.5rem 0.65rem !important;
 }
 
 .todo :deep(.el-tiptap-editor__menu-bar) {
@@ -40,6 +40,9 @@ defineProps({
         display: none;
 }
 
+.todo :deep(.ProseMirror) {
+        line-height: 1.65;
+}
 
 .todo :deep(pre code) {
         font-family: var(--lb-font-mono, "Fira Code", Courier, Monaco, monospace);

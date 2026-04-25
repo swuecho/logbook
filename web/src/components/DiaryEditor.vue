@@ -144,21 +144,41 @@ pre code {
   position: relative;
 }
 
+.editor {
+  border-radius: var(--lb-radius-lg, 10px);
+}
+
 .editor :deep(.el-tiptap-editor) {
   border: 1px solid var(--lb-border, #e8eaed);
-  border-radius: 8px;
+  border-radius: var(--lb-radius-lg, 10px);
   overflow: hidden;
   background: #fff;
 }
 
 .editor :deep(.el-tiptap-editor__menu-bar) {
   border-bottom: 1px solid var(--lb-border, #e8eaed);
-  background: #fff;
+  background: var(--lb-bg-soft, #fafbfc);
+}
+
+.editor :deep(.el-tiptap-editor__menu-bubble),
+.editor :deep(.el-tiptap-editor__menu-bar) {
+  color: var(--lb-text-muted, #5a6d7e);
 }
 
 .editor :deep(.el-tiptap-editor__content) {
   min-height: 60vh;
   background: #fff;
+  padding: 0.15rem 0.2rem;
+}
+
+.editor :deep(.ProseMirror) {
+  color: var(--lb-text, #2c3e50);
+  line-height: 1.75;
+  padding: 1rem 1.15rem;
+}
+
+.editor :deep(.ProseMirror:focus) {
+  outline: none;
 }
 
 .lock-warning {

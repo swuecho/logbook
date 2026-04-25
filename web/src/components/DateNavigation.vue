@@ -124,8 +124,8 @@ function navigateDateToToday() {
   white-space: nowrap;
   flex-grow: 1;
   overflow: hidden;
-  min-height: 60px;
-  padding: 0.15rem 0;
+  min-height: 58px;
+  padding: 0.25rem 0;
 }
 
 .date-slider {
@@ -138,6 +138,7 @@ function navigateDateToToday() {
   /* Firefox */
   flex: 1;
   gap: 0.25rem;
+  padding: 0.1rem 0;
 }
 
 .date-slider::-webkit-scrollbar {
@@ -146,27 +147,34 @@ function navigateDateToToday() {
 }
 
 .date-item {
-  padding: 8px 12px;
+  padding: 0.45rem 0.7rem 0.65rem;
   cursor: pointer;
   text-align: center;
-  border-radius: 8px;
+  border-radius: var(--lb-radius-md, 8px);
   border: 1px solid transparent;
   position: relative;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-  min-width: 50px;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+  min-width: 3.15rem;
   flex-shrink: 0;
 }
 
 .day-number {
-  font-size: 1.1em;
-  font-weight: 500;
+  font-size: 1.05em;
+  font-weight: 600;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
 }
 
 .month-label {
-  font-size: 0.75em;
+  font-size: 0.72em;
   font-weight: 500;
   color: var(--lb-text-subtle, #8a9aa8);
-  height: 1.2em;
+  height: 1.25em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .date-item:hover {
@@ -174,7 +182,7 @@ function navigateDateToToday() {
 }
 
 .date-item.active {
-  background-color: var(--lb-hover, #f4f5f7);
+  background-color: #f3faf6;
   border-color: var(--lb-accent, #2d8659);
 }
 
@@ -189,8 +197,8 @@ function navigateDateToToday() {
   bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   background-color: var(--lb-accent, #2d8659);
   border-radius: 50%;
 }
@@ -206,24 +214,35 @@ function navigateDateToToday() {
 .icon-container {
   display: flex;
   align-items: center;
-  padding: 0 0.5rem;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: 0.35rem;
+  border-radius: var(--lb-radius-sm, 6px);
+  color: var(--lb-text-muted, #5a6d7e);
+  cursor: pointer;
   flex-shrink: 0;
+}
+
+.icon-container:hover {
+  background: var(--lb-hover, #f4f5f7);
+  color: var(--lb-text, #2c3e50);
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .date-nav {
-    min-height: 70px;
+    min-height: 64px;
     margin: 0;
   }
 
   .date-item {
-    padding: 10px 14px;
-    min-width: 60px;
+    padding: 0.55rem 0.8rem 0.75rem;
+    min-width: 3.6rem;
   }
 
   .day-number {
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 
   .month-label {
@@ -233,8 +252,8 @@ function navigateDateToToday() {
 
 @media (max-width: 480px) {
   .date-item {
-    padding: 8px 10px;
-    min-width: 50px;
+    padding: 0.5rem 0.65rem 0.7rem;
+    min-width: 3.1rem;
   }
 
   .day-number {

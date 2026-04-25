@@ -270,8 +270,8 @@ onMounted(async () => {
   margin: 0;
   min-width: 4.5ch;
   text-align: center;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--lb-text);
 }
@@ -297,15 +297,19 @@ onMounted(async () => {
 .year-months {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2rem 1.5rem;
+  gap: 1.25rem;
 }
 
 .month-block {
   min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--lb-border);
+  border-radius: var(--lb-radius-lg);
+  background: #fff;
 }
 
 .month-name {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.65rem;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--lb-text);
@@ -321,12 +325,13 @@ onMounted(async () => {
   text-align: center;
   font-size: 0.65rem;
   color: var(--lb-text-subtle);
+  font-weight: 600;
 }
 
 .day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
 }
 
 .day {
@@ -341,7 +346,7 @@ onMounted(async () => {
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   font: inherit;
   cursor: pointer;
@@ -370,6 +375,10 @@ onMounted(async () => {
 .day--today .day-num {
   font-weight: 600;
   color: var(--lb-accent);
+}
+
+.day--today {
+  box-shadow: inset 0 0 0 1px rgba(45, 134, 89, 0.22);
 }
 
 .day--note::after {
@@ -409,8 +418,12 @@ onMounted(async () => {
   }
 
   .year-months {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem 0.75rem;
+  }
+
+  .month-block {
+    padding: 0.65rem;
   }
 
   .month-name {

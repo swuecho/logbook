@@ -339,7 +339,8 @@ export default {
 }
 
 .stats-row {
-        margin-bottom: 20px;
+        margin-top: 1.25rem;
+        margin-bottom: 1.25rem;
         margin-left: auto;
         margin-right: auto;
         display: flex;
@@ -349,15 +350,14 @@ export default {
 .stats-card {
         display: flex;
         align-items: center;
-        padding: 1.25rem;
+        padding: 1rem;
         height: 100%;
 }
 
 .stats-icon {
-        font-size: 2.5rem;
         margin-right: 1rem;
-        padding: 0.85rem;
-        border-radius: 8px;
+        padding: 0.65rem;
+        border-radius: var(--lb-radius-md, 8px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -369,20 +369,22 @@ export default {
 }
 
 .stats-title {
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.35rem;
+        color: var(--lb-text-subtle);
 }
 
 .stats-value {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
         font-weight: 600;
+        font-variant-numeric: tabular-nums;
 }
 
 .header-actions {
         display: flex;
-        gap: 10px;
+        gap: 0.65rem;
         align-items: center;
-        padding: 20px 20px 0 20px;
+        padding: 1rem;
         flex-wrap: wrap;
 }
 
@@ -397,14 +399,14 @@ export default {
 }
 
 .pagination-container {
-        margin-top: 20px;
+        margin-top: 1rem;
         display: flex;
         justify-content: flex-end;
-        padding: 0 20px 20px 20px;
+        padding: 0 1rem 1rem;
 }
 
 .user-details {
-        padding: 20px;
+        padding: 0;
 }
 
 @media (max-width: 992px) {

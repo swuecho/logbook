@@ -108,26 +108,29 @@ function closeModalMd() {
 }
 
 .nav {
-  margin: 0 0 1rem;
+  margin: 0 0 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
 }
 
 .home-page__top {
-  margin-bottom: 0.25rem;
+  min-height: 3rem;
+  margin-bottom: 0.1rem;
 }
 
 .time-display {
-  font-size: 1.05em;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--lb-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .right-corner {
   display: flex;
   flex-direction: row;
-  gap: 0.65rem;
+  gap: 0.35rem;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -156,7 +159,7 @@ function closeModalMd() {
 
   .right-corner {
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
   }
 }
 
@@ -166,7 +169,7 @@ function closeModalMd() {
   }
 
   .right-corner {
-    gap: 0.75rem;
+    gap: 0.45rem;
   }
 }
 </style>

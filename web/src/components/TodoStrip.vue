@@ -218,8 +218,8 @@ function stopSlideShow() {
 <style scoped>
 .todo-strip {
   border: 1px solid var(--lb-border, #e8eaed);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  border-radius: var(--lb-radius-lg, 10px);
+  padding: 0.7rem 0.85rem;
   background: var(--lb-bg, #fff);
 }
 
@@ -232,6 +232,7 @@ function stopSlideShow() {
 
 .todo-strip__count {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--lb-text-muted, #5a6d7e);
 }
 
@@ -243,6 +244,10 @@ function stopSlideShow() {
   border-radius: var(--lb-radius-sm, 6px);
   font-size: 0.8rem;
   cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .todo-strip__actions {
@@ -253,22 +258,27 @@ function stopSlideShow() {
 
 .todo-strip__filter {
   border: 1px solid var(--lb-border, #e8eaed);
-  background: var(--lb-hover, #f4f5f7);
+  background: var(--lb-bg-soft, #fafbfc);
   color: var(--lb-text-muted, #5a6d7e);
   padding: 0.25rem 0.6rem;
   border-radius: var(--lb-radius-sm, 6px);
   font-size: 0.8rem;
   cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .todo-strip__toggle:hover,
 .todo-strip__filter:hover {
   border-color: var(--lb-border-strong, #dde2e6);
+  background: var(--lb-hover, #f4f5f7);
   color: var(--lb-text, #2c3e50);
 }
 
 .todo-strip__body {
-  margin-top: 0.4rem;
+  margin-top: 0.55rem;
   overflow: hidden;
 }
 
@@ -278,7 +288,7 @@ function stopSlideShow() {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
   position: relative;
 }
 
@@ -286,14 +296,14 @@ function stopSlideShow() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0;
+  padding: 0.1rem 0;
   border-bottom: none;
 }
 
 .todo-strip__check {
   width: 0.75rem;
   height: 0.75rem;
-  border: 1.5px solid #9ca3af;
+  border: 1.5px solid var(--lb-border-strong, #d8dee4);
   border-radius: 3px;
   flex: 0 0 auto;
 }
@@ -306,7 +316,8 @@ function stopSlideShow() {
 .todo-strip__text {
   flex: 1;
   color: var(--lb-text, #2c3e50);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -324,12 +335,17 @@ function stopSlideShow() {
   border: 1px solid var(--lb-border, #e8eaed);
   padding: 0.1rem 0.35rem;
   border-radius: 6px;
-  background: var(--lb-hover, #f4f5f7);
+  background: var(--lb-bg-soft, #fafbfc);
   flex: 0 0 auto;
 }
 
+.todo-strip__note:hover {
+  border-color: var(--lb-border-strong, #d8dee4);
+  background: var(--lb-hover, #f4f5f7);
+}
+
 .todo-strip__more {
-  margin-top: 0.4rem;
+  margin-top: 0.45rem;
   font-size: 0.8rem;
   color: var(--lb-text-muted, #5a6d7e);
 }
