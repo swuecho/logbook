@@ -130,9 +130,10 @@ function goLogout() {
 <style scoped>
 .app-top-bar {
   display: grid;
-  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
+  width: 100%;
   min-height: 3rem;
 }
 
