@@ -2,6 +2,7 @@ version=0.0.16
 aliyun_registry_bestqa=registry.cn-shanghai.aliyuncs.com/bestqa
 local_registry=192.168.0.100:5555
 github_pkg_registry_surveyresearch=docker.pkg.github.com/swuecho/surveyresearch
+DOTNET ?= dotnet
 
 tag:
 	git tag release-v$(version)
@@ -17,9 +18,9 @@ push:
 	docker push $(aliyun_registry_bestqa)/notepad:$(version)
 
 serve:
-	dotnet restore
-	dotnet build
-	echo $(JWT_SECRET)
-	echo $(JWT_AUDIENCE)
-	echo $(DATABASE_URL)
-	dotnet watch run
+	$(DOTNET) restore
+	$(DOTNET) build
+	$(DOTNET) watch run
+
+migrate:
+	$(DOTNET) run --project Migrations -- "$(DATABASE_URL)"

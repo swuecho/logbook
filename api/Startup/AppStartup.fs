@@ -1,5 +1,6 @@
 module AppStartup
 
+open System
 open System.Threading.Tasks
 open Falco
 open Microsoft.AspNetCore.Authentication.JwtBearer
@@ -14,6 +15,17 @@ let corsPolicyName = "MyCorsPolicy"
 
 let private publicApiPaths =
     ApiPaths.publicApiPaths |> List.map PathString
+
+let private enabledValues =
+    set [ "1"; "true"; "yes"; "on" ]
+
+let isEnvFlagEnabled name =
+    let value = Environment.GetEnvironmentVariable(name)
+
+    if String.IsNullOrWhiteSpace(value) then
+        false
+    else
+        enabledValues.Contains(value.Trim().ToLowerInvariant())
 
 let initializeJwtConfig (dataSource: NpgsqlDataSource) : JwtService.JwtConfig =
     use pgConn = dataSource.OpenConnection()
