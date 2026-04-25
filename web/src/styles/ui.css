@@ -20,6 +20,8 @@
   --lb-radius-sm: 6px;
   --lb-radius-md: 8px;
   --lb-radius-lg: 10px;
+  --lb-page-top: 0.75rem;
+  --lb-page-bottom: 2rem;
   --lb-font: 'Fira Code', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
   --lb-font-mono: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
@@ -72,7 +74,7 @@ a {
 }
 
 .app-page--shell {
-  padding: 1.5rem 0 2.25rem;
+  padding: var(--lb-page-top) 0 var(--lb-page-bottom);
 }
 
 /* Top bar */
@@ -262,7 +264,7 @@ a.linkish {
 /* Admin: calmer dashboard surface */
 .lb-admin {
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: var(--lb-page-top) 0 var(--lb-page-bottom);
   background: var(--lb-bg);
   color: var(--lb-text);
 }
@@ -368,7 +370,7 @@ a.linkish {
 
 @media (max-width: 768px) {
   .app-page--shell {
-    padding: 1rem 0 1.5rem;
+    padding: var(--lb-page-top) 0 1.5rem;
   }
 
   .app-header-bar,

@@ -325,10 +325,6 @@ export default {
 </script>
 
 <style scoped>
-.admin-dashboard {
-        padding: 0;
-}
-
 .admin-dashboard__title {
         font-size: 1rem;
         font-weight: 600;
