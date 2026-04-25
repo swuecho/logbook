@@ -116,7 +116,7 @@ export default {
   display: grid;
   gap: 1.25rem;
   padding: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(18rem, 1fr));
 }
 
 .grid-item {
@@ -147,11 +147,11 @@ code {
 
 @media (max-width: 900px) {
   .grid-container {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(16rem, 1fr));
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 680px) {
   .grid-container {
     gap: 0.75rem;
     grid-template-columns: 1fr;
