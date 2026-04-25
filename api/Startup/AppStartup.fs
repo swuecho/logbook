@@ -42,7 +42,8 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
             options.TokenValidationParameters <-
                 TokenValidationParameters(
                     ValidateLifetime = true,
-                    ValidateIssuer = false,
+                    ValidateIssuer = true,
+                    ValidIssuer = AppIdentity.jwtIssuer,
                     ValidateAudience = true,
                     ValidAudience = jwtConfig.Audience,
                     ValidateIssuerSigningKey = true,
@@ -60,6 +61,9 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity <> null && context.User.Identity.IsAuthenticated
 
+    let hasRequiredClaims (context: HttpContext) =
+        HttpAuth.tryGetUserId context.User |> Option.isSome
+
     let isApiRequest (context: HttpContext) =
         context.Request.Path.StartsWithSegments(PathString(ApiPaths.apiPrefix))
 
@@ -69,18 +73,16 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
 
     let middleware (context: HttpContext) (next: RequestDelegate) : Task =
         if isApiRequest context && not (isPublicApiRequest context) then
-            if isAuthenticated context then
+            if isAuthenticated context && hasRequiredClaims context then
                 next.Invoke context
             else
-                context.Response.StatusCode <- 401
-                context.Response.WriteAsync "Unauthorized"
+                HttpAuth.unauthorized context
         else
             next.Invoke context
 
     app.Use(middleware)
 
 let serveVueFiles (app: IApplicationBuilder) =
-    app.UseRouting() |> ignore
     app.UseDefaultFiles() |> ignore
     app.UseStaticFiles() |> ignore
     app.UseEndpoints(fun endpoints -> endpoints.MapFallbackToFile("/index.html") |> ignore)

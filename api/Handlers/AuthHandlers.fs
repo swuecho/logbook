@@ -8,7 +8,7 @@ let login: HttpHandler =
 
         Request.mapJson
             (fun (credentials: AuthService.Login) ->
-                match AuthService.login dbSession credentials with
+                match AuthService.loginOrRegister dbSession credentials with
                 | AuthService.LoginSucceeded token -> Json.Response.ofJson token
                 | AuthService.LoginFailed failure ->
                     Response.withStatusCode (int failure.Code)

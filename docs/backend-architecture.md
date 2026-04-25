@@ -112,8 +112,8 @@ Startup code should make infrastructure order clear:
 - Create the shared `NpgsqlDataSource`.
 - Initialize schema and startup data.
 - Register `DbSession` and other services in DI.
-- Configure authentication and middleware.
-- Register routes.
+- Configure authentication and CORS.
+- Run the middleware pipeline once: routing, development errors, CORS, authentication, API auth gate, Falco routes, then static Vue files and SPA fallback.
 
 If startup grows, split it by concern rather than adding more logic directly to `Program.fs`.
 
@@ -133,6 +133,10 @@ let userIdClaim = "user_id"
 ```
 
 Use these constants instead of repeating role or JWT strings in handlers, services, or startup code.
+
+## Auth Semantics
+
+`AuthService.loginOrRegister` intentionally preserves the current product behavior: existing users are authenticated, and unknown emails are created as new users before returning a token. Keep that behavior explicit in names and docs so the `/api/login` route is not mistaken for a strict login-only endpoint.
 
 ## API Paths
 

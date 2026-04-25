@@ -51,7 +51,7 @@ let private createAndLoginUser conn credentials jwtKey audience =
     let authUser = createNewUser conn credentials.Username credentials.Password
     LoginSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtKey audience)
 
-let login (db: DbSession) (credentials: Login) =
+let loginOrRegister (db: DbSession) (credentials: Login) =
     db.WithConnection(fun conn ->
         let email = credentials.Username
         let secret = JwtSecretRepository.getByName conn AppIdentity.jwtAudienceName
