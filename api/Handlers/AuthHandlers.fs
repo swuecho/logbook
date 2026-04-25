@@ -1,13 +1,12 @@
 module AuthHandlers
 
 open Falco
-open Database.Connection
 
 let login: HttpHandler =
     fun ctx ->
         Request.mapJson
             (fun (credentials: AuthService.Login) ->
-                match AuthService.login (dbSession ctx) credentials with
+                match AuthService.login (HandlerContext.dbSession ctx) credentials with
                 | AuthService.LoginSucceeded token -> Json.Response.ofJson token
                 | AuthService.LoginFailed failure ->
                     Response.withStatusCode (int failure.Code)
@@ -18,7 +17,7 @@ let login: HttpHandler =
 
 let logout: HttpHandler =
     fun ctx ->
-        let userId = HttpAuth.getUserId ctx.User
+        let userId = HandlerContext.userId ctx
 
         Json.Response.ofJson
             {| userId = userId

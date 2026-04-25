@@ -38,7 +38,7 @@ let buildSnippet (terms: string array) (searchText: string) =
         let suffix = if start + length < text.Length then "..." else ""
         prefix + snippet + suffix
 
-let listSummaries (db: DbSession) userId =
+let refreshAndListSummaries (db: DbSession) userId =
     db.WithConnection(fun conn ->
         SummaryService.refreshSummary conn userId
 
