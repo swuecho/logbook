@@ -119,7 +119,7 @@ let InsertSummary (db: NpgsqlConnection)  (arg: InsertSummaryParams)  =
   db 
   |> Sql.existingConnection
   |> Sql.query insertSummary
-  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@content", Sql.jsonb arg.Content ]
+  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@content", Sql.string arg.Content ]
   |> Sql.executeNonQuery
 
 
