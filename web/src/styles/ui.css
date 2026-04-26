@@ -117,6 +117,47 @@ html[data-theme='daisy'] {
   --el-fill-color-blank: #ffffff;
 }
 
+html[data-theme='park'] {
+  --park-green-deep: #313b1d;
+  --park-green: #4b572a;
+  --park-green-soft: #62703a;
+  --park-green-light: #7b8e41;
+  --park-blossom-deep: #795a51;
+  --park-blossom: #ab8e88;
+  --park-blossom-light: #cab8b2;
+  --park-path-dark: #70685f;
+  --park-path: #999491;
+  --park-path-light: #b2b5b4;
+  --park-sky: #dfe2e9;
+  --park-rail-blue: #9aa5ad;
+
+  --lb-text: #2f3522;
+  --lb-text-muted: var(--park-path-dark);
+  --lb-text-subtle: #868582;
+  --lb-border: #deded7;
+  --lb-border-strong: #c5c7bf;
+  --lb-accent: var(--park-green-soft);
+  --lb-accent-strong: var(--park-green);
+  --lb-bg: #f7f7f3;
+  --lb-bg-elevated: #ffffff;
+  --lb-bg-soft: #f0f1ea;
+  --lb-hover: #e9ece0;
+  --lb-error: #b03a2e;
+  --lb-shadow-sm: none;
+  --lb-shadow-md: none;
+  --lb-focus-ring: rgba(98, 112, 58, 0.22);
+
+  /* Element Plus theme bridge */
+  --el-color-primary: var(--lb-accent);
+  --el-border-color: var(--lb-border);
+  --el-border-color-light: #e8e8df;
+  --el-border-radius-base: var(--lb-radius-sm);
+  --el-font-family: var(--lb-font);
+  --el-bg-color: #ffffff;
+  --el-fill-color-light: var(--lb-hover);
+  --el-fill-color-blank: #ffffff;
+}
+
 html,
 body {
   min-height: 100%;

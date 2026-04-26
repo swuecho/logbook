@@ -4,7 +4,8 @@ const THEME_STORAGE_KEY = 'LOGBOOK_THEME';
 const DEFAULT_THEME = 'default';
 const VINE_THEME = 'vine';
 const DAISY_THEME = 'daisy';
-const THEMES = [DEFAULT_THEME, VINE_THEME, DAISY_THEME] as const;
+const PARK_THEME = 'park';
+const THEMES = [DEFAULT_THEME, VINE_THEME, DAISY_THEME, PARK_THEME] as const;
 
 type ThemeName = (typeof THEMES)[number];
 
@@ -13,6 +14,7 @@ const themeLabels: Record<ThemeName, string> = {
   default: 'Default',
   vine: 'Vine',
   daisy: 'Daisy',
+  park: 'Park',
 };
 const themeOptions = THEMES.map((value) => ({
   value,
