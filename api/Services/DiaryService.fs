@@ -68,9 +68,11 @@ let getOrCreateDiary (db: DbSession) userId noteId =
 let saveDiary (db: DbSession) userId (note: Diary) =
     db.WithTransaction(fun conn ->
         let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+        let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
 
-        SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
-        saved)
+        { saved with
+            SearchText = searchText
+            SearchTerms = searchTerms })
 
 let search (db: DbSession) userId query =
     let terms = TextAnalysis.searchTerms query

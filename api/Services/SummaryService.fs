@@ -42,4 +42,6 @@ let freqsOfNote (conn: NpgsqlConnection) (note: Diary) =
       NoteId = note.NoteId
       Note = note |> noteSummary conn
       UserId = note.UserId
+      SearchText = note.SearchText
+      SearchTerms = note.SearchTerms
       LastUpdated = note.LastUpdated }

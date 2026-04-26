@@ -14,7 +14,7 @@ open System
 let addNote = """-- name: AddNote :one
 INSERT INTO diary (note_id, user_id, note, last_updated) VALUES (@note_id, @user_id, @note, now())  
 ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
-returning id, user_id, note_id, note, last_updated
+RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated
 """
 
 
@@ -25,14 +25,16 @@ type AddNoteParams = {
 }
 
 let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
-
+  
   let reader = fun (read:RowReader) -> {
     Id = read.int "id"
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
-
+  
 
   db
   |> Sql.existingConnection
@@ -40,108 +42,6 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
 
-
-
-let updateDiarySearch = """-- name: UpdateDiarySearch :exec
-UPDATE diary
-SET search_text = @search_text,
-    search_terms =
-        CASE
-            WHEN @search_terms = '' THEN ARRAY[]::text[]
-            ELSE string_to_array(@search_terms, @separator)
-        END
-WHERE note_id = @note_id AND user_id = @user_id
-"""
-
-let private searchTermSeparator = "\u001F"
-
-let private joinSearchTerms (terms: string array) =
-  terms |> String.concat searchTermSeparator
-
-
-type UpdateDiarySearchParams = {
-  NoteId: string;
-  UserId: int32;
-  SearchText: string;
-  SearchTerms: string array;
-}
-
-let UpdateDiarySearch (db: NpgsqlConnection) (arg: UpdateDiarySearchParams) =
-  db
-  |> Sql.existingConnection
-  |> Sql.query updateDiarySearch
-  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.string (joinSearchTerms arg.SearchTerms); "@separator", Sql.string searchTermSeparator ]
-  |> Sql.executeNonQuery
-
-
-let searchDiary = """-- name: SearchDiary :many
-WITH query_terms AS (
-  SELECT
-    CASE
-      WHEN @query_terms = '' THEN ARRAY[]::text[]
-      ELSE string_to_array(@query_terms, @separator)
-    END AS terms
-)
-SELECT d.note_id, d.search_text, d.last_updated,
-       (
-         SELECT COUNT(*)
-         FROM unnest(d.search_terms) term
-         WHERE term = ANY(query_terms.terms)
-       )::int AS rank
-FROM diary d
-CROSS JOIN query_terms
-WHERE d.user_id = @user_id
-  AND d.search_terms && query_terms.terms
-ORDER BY rank DESC, d.last_updated DESC, d.note_id DESC
-"""
-
-
-type SearchDiaryParams = {
-  UserId: int32;
-  QueryTerms: string array;
-}
-
-type SearchDiaryRow = {
-  NoteId: string;
-  SearchText: string;
-  Rank: int32;
-  LastUpdated: DateTime;
-}
-
-let SearchDiary (db: NpgsqlConnection) (arg: SearchDiaryParams) =
-  let reader = fun (read:RowReader) -> {
-    NoteId = read.string "note_id"
-    SearchText = read.string "search_text"
-    Rank = read.int "rank"
-    LastUpdated = read.dateTime "last_updated"}
-
-  db
-  |> Sql.existingConnection
-  |> Sql.query searchDiary
-  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@query_terms", Sql.string (joinSearchTerms arg.QueryTerms); "@separator", Sql.string searchTermSeparator ]
-  |> Sql.execute reader
-
-
-
-let listMissingSearchIndex = """-- name: ListMissingSearchIndex :many
-SELECT id, user_id, note_id, note, last_updated
-FROM diary
-WHERE note != '' AND (search_text = '' OR search_terms = ARRAY[]::text[])
-"""
-
-
-let ListMissingSearchIndex (db: NpgsqlConnection) =
-  let reader = fun (read:RowReader) -> {
-    Id = read.int "id"
-    UserId = read.int "user_id"
-    NoteId = read.string "note_id"
-    Note = read.string "note"
-    LastUpdated = read.dateTime "last_updated"}
-
-  db
-  |> Sql.existingConnection
-  |> Sql.query listMissingSearchIndex
-  |> Sql.execute reader
 
 
 
@@ -191,7 +91,7 @@ let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
 
 let createDiary = """-- name: CreateDiary :one
 INSERT INTO diary (id, note) VALUES (@id, @note)
-RETURNING id, user_id, note_id, note, last_updated
+RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated
 """
 
 
@@ -207,6 +107,8 @@ let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
 
@@ -254,7 +156,7 @@ let DeleteDiary (db: NpgsqlConnection)  (id: int32)  =
 
 
 let diaryByID = """-- name: DiaryByID :one
-SELECT id, user_id, note_id, note, last_updated FROM diary WHERE id = @id
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE id = @id
 """
 
 
@@ -266,6 +168,8 @@ let DiaryByID (db: NpgsqlConnection)  (id: int32)  =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
 
@@ -287,7 +191,7 @@ let DiaryByID (db: NpgsqlConnection)  (id: int32)  =
 
 
 let diaryByUserIDAndID = """-- name: DiaryByUserIDAndID :one
-SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id and note_id=@note_id
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE user_id = @user_id and note_id=@note_id
 """
 
 
@@ -303,6 +207,8 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
 
@@ -328,7 +234,7 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
 
 
 let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
-SELECT d.id, d.user_id, d.note_id, d.note, d.last_updated
+SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
 FROM diary d
 LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id 
 WHERE (s.id IS NULL OR d.last_updated > s.last_updated) AND d.user_id = @user_id
@@ -343,6 +249,8 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
   db 
@@ -369,7 +277,7 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 let listDiaries = """-- name: ListDiaries :many
-SELECT id, user_id, note_id, note, last_updated FROM diary ORDER BY last_updated DESC
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary ORDER BY last_updated DESC
 """
 
 
@@ -381,6 +289,8 @@ let ListDiaries (db: NpgsqlConnection)  =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
   db 
@@ -398,7 +308,7 @@ let ListDiaries (db: NpgsqlConnection)  =
 
 
 let listDiaryByUserID = """-- name: ListDiaryByUserID :many
-SELECT id, user_id, note_id, note, last_updated FROM diary WHERE user_id = @user_id order by note_id DESC
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE user_id = @user_id order by note_id DESC
 """
 
 
@@ -410,6 +320,8 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
   db 
@@ -452,11 +364,101 @@ let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+let listMissingSearchIndex = """-- name: ListMissingSearchIndex :many
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
+FROM diary
+WHERE note != '' AND (search_text = '' OR search_terms = ARRAY[]::text[])
+"""
+
+
+
+
+let ListMissingSearchIndex (db: NpgsqlConnection)  =
+  let reader = fun (read:RowReader) -> {
+    Id = read.int "id"
+    UserId = read.int "user_id"
+    NoteId = read.string "note_id"
+    Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
+    LastUpdated = read.dateTime "last_updated"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listMissingSearchIndex
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
+let searchDiary = """-- name: SearchDiary :many
+WITH query_terms AS (
+  SELECT
+    CASE
+      WHEN @query_terms = '' THEN ARRAY[]::text[]
+      ELSE string_to_array(@query_terms, @separator)
+    END AS terms
+)
+SELECT d.note_id, d.search_text, d.last_updated,
+       (
+         SELECT COUNT(*)
+         FROM unnest(d.search_terms) term
+         WHERE term = ANY(query_terms.terms)
+       )::int AS rank
+FROM diary d
+CROSS JOIN query_terms
+WHERE d.user_id = @user_id
+  AND d.search_terms && query_terms.terms
+ORDER BY rank DESC, d.last_updated DESC, d.note_id DESC
+"""
+
+
+type SearchDiaryParams = {
+  UserId: int32;
+  QueryTerms: string option;
+  Separator: string;
+}
+type SearchDiaryRow = {
+  NoteId: string;
+  SearchText: string;
+  LastUpdated: DateTime;
+  Rank: int32;
+}
+
+
+let SearchDiary (db: NpgsqlConnection)  (arg: SearchDiaryParams) =
+  let reader = fun (read:RowReader) -> {
+    NoteId = read.string "note_id"
+    SearchText = read.string "search_text"
+    LastUpdated = read.dateTime "last_updated"
+    Rank = read.int "rank"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query searchDiary
+  |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@query_terms", Sql.stringOrNone arg.QueryTerms; "@separator", Sql.string arg.Separator ]
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+
+
 
 
 let updateDiary = """-- name: UpdateDiary :one
 UPDATE diary SET note = @note, last_updated = NOW() WHERE id = @id
-RETURNING id, user_id, note_id, note, last_updated
+RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated
 """
 
 
@@ -472,6 +474,8 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
     UserId = read.int "user_id"
     NoteId = read.string "note_id"
     Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
     LastUpdated = read.dateTime "last_updated"}
   
 
@@ -480,6 +484,51 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   |> Sql.query updateDiary
   |> Sql.parameters  [ "@id", Sql.int arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
+
+
+
+
+
+
+
+
+
+
+
+
+let updateDiarySearch = """-- name: UpdateDiarySearch :exec
+UPDATE diary
+SET search_text = @search_text,
+    search_terms =
+        CASE
+            WHEN @search_terms = '' THEN ARRAY[]::text[]
+            ELSE string_to_array(@search_terms, @separator)
+        END
+WHERE note_id = @note_id AND user_id = @user_id
+"""
+
+
+type UpdateDiarySearchParams = {
+  NoteId: string;
+  UserId: int32;
+  SearchText: string;
+  SearchTerms: string option;
+  Separator: string;
+}
+
+
+
+
+let UpdateDiarySearch (db: NpgsqlConnection)  (arg: UpdateDiarySearchParams)  = 
+  db 
+  |> Sql.existingConnection
+  |> Sql.query updateDiarySearch
+  |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.stringOrNone arg.SearchTerms; "@separator", Sql.string arg.Separator ]
+  |> Sql.executeNonQuery
+
+
+
+
 
 
 

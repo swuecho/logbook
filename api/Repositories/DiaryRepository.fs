@@ -2,6 +2,11 @@ module DiaryRepository
 
 open Npgsql
 
+let private searchTermSeparator = "\u001F"
+
+let private joinSearchTerms (terms: string array) =
+    terms |> String.concat searchTermSeparator
+
 let addOrUpdate (conn: NpgsqlConnection) noteId userId note =
     Diary.AddNote
         conn
@@ -19,7 +24,11 @@ let listIdsByUserId (conn: NpgsqlConnection) userId =
     Diary.ListDiaryIDByUserID conn userId
 
 let search (conn: NpgsqlConnection) userId terms =
-    Diary.SearchDiary conn { UserId = userId; QueryTerms = terms }
+    Diary.SearchDiary
+        conn
+        { UserId = userId
+          QueryTerms = Some(joinSearchTerms terms)
+          Separator = searchTermSeparator }
 
 let updateSearchIndex (conn: NpgsqlConnection) noteId userId searchText searchTerms =
     Diary.UpdateDiarySearch
@@ -27,7 +36,8 @@ let updateSearchIndex (conn: NpgsqlConnection) noteId userId searchText searchTe
         { NoteId = noteId
           UserId = userId
           SearchText = searchText
-          SearchTerms = searchTerms }
+          SearchTerms = Some(joinSearchTerms searchTerms)
+          Separator = searchTermSeparator }
     |> ignore
 
 let listMissingSearchIndex (conn: NpgsqlConnection) =

@@ -79,7 +79,18 @@ export function normalizeTiptapDoc(value) {
   return normalizeNode(value);
 }
 
-export function createExtensions() {
+const hiddenToolbarButton = { button: null, bubble: false };
+
+function toolbarOptions(toolbar, extensionOptions = {}) {
+  if (toolbar !== 'writing') return extensionOptions;
+
+  return {
+    ...extensionOptions,
+    ...hiddenToolbarButton,
+  };
+}
+
+export function createExtensions({ toolbar = 'full' } = {}) {
   return [
     Document,
     Text,
@@ -89,23 +100,24 @@ export function createExtensions() {
     Underline,
     Italic,
     Strike,
-    Color,
-    Highlight,
+    Color.configure(toolbarOptions(toolbar)),
+    Highlight.configure(toolbarOptions(toolbar)),
     Blockquote,
-    Code,
-    CodeBlock.configure({ bubble: true }),
+    Code.configure(toolbarOptions(toolbar)),
+    CodeBlock.configure(toolbarOptions(toolbar, { bubble: true })),
     TaskList.configure({ bubble: true }),
-    LineHeight,
+    LineHeight.configure(toolbarOptions(toolbar)),
     BulletList,
     OrderedList,
-    Indent,
-    TextAlign,
+    Indent.configure(toolbarOptions(toolbar)),
+    TextAlign.configure(toolbarOptions(toolbar)),
     Link,
-    Image,
-    Iframe,
-    Fullscreen,
-    FormatClear.configure({ bubble: true }),
+    Image.configure(toolbarOptions(toolbar)),
+    Iframe.configure(toolbarOptions(toolbar)),
+    Fullscreen.configure(toolbarOptions(toolbar)),
+    FormatClear.configure(toolbarOptions(toolbar, { bubble: true })),
     CodeView.configure({
+      ...toolbarOptions(toolbar),
       codemirror,
       codemirrorOptions: {
         styleActiveLine: true,
