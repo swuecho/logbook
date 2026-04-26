@@ -38,38 +38,38 @@
 }
 
 html[data-theme='vine'] {
-  --vine-stone-dark: #5d6053;
-  --vine-stone: #6e6d63;
-  --vine-stone-light: #7d7b72;
-  --vine-concrete-soft: #8c8b83;
-  --vine-leaf-deep: #606f42;
-  --vine-leaf: #819253;
-  --vine-leaf-light: #a6b566;
-  --vine-leaf-sunlit: #c9d682;
-  --vine-leaf-glow: #d6df84;
-  --vine-sky-pale: #e2eef9;
-  --vine-mist-green: #d3dcc4;
+  --vine-stone-dark: #54584a;
+  --vine-stone: #686759;
+  --vine-stone-light: #7a7469;
+  --vine-concrete-soft: #858176;
+  --vine-leaf-deep: #535e4a;
+  --vine-leaf: #69775a;
+  --vine-leaf-light: #90a655;
+  --vine-leaf-sunlit: #cddf5b;
+  --vine-leaf-glow: #e2eec3;
+  --vine-sky-pale: #e2f0ff;
+  --vine-mist-green: #e0ecbf;
 
-  --lb-text: #34372f;
+  --lb-text: #30352b;
   --lb-text-muted: var(--vine-stone-dark);
   --lb-text-subtle: var(--vine-concrete-soft);
-  --lb-border: #d9decf;
-  --lb-border-strong: #c4cab7;
+  --lb-border: #dde2d2;
+  --lb-border-strong: #c4cbb8;
   --lb-accent: var(--vine-leaf);
   --lb-accent-strong: var(--vine-leaf-deep);
-  --lb-bg: #f7f8f1;
+  --lb-bg: #f8faf3;
   --lb-bg-elevated: #ffffff;
-  --lb-bg-soft: #f1f3e9;
-  --lb-hover: #eaeee0;
+  --lb-bg-soft: #f1f5e8;
+  --lb-hover: #e9f0dd;
   --lb-error: #b03a2e;
   --lb-shadow-sm: none;
   --lb-shadow-md: none;
-  --lb-focus-ring: rgba(129, 146, 83, 0.22);
+  --lb-focus-ring: rgba(105, 119, 90, 0.24);
 
   /* Element Plus theme bridge */
   --el-color-primary: var(--lb-accent);
   --el-border-color: var(--lb-border);
-  --el-border-color-light: #e8ecdd;
+  --el-border-color-light: #e9eedf;
   --el-border-radius-base: var(--lb-radius-sm);
   --el-font-family: var(--lb-font);
   --el-bg-color: #ffffff;
