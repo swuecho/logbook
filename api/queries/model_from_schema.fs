@@ -25,6 +25,8 @@ type Diary = {
      UserId: int32
      NoteId: string
      Note: string
+     SearchText: string
+     SearchTerms: string[]
      LastUpdated: DateTime
 }
 

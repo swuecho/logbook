@@ -5,7 +5,7 @@
     </div>
     <div class="editor">
       <el-tiptap
-        :key="'editor-' + date"
+        :key="editorKey"
         output="json"
         :content="content"
         :extensions="extensions"
@@ -27,16 +27,10 @@
 
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import moment from 'moment';
 import { Icon } from '@iconify/vue';
-import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import { createExtensions, emptyDoc, normalizeTiptapDoc } from '@/editorExt.js';
-import codemirror from 'codemirror';
-import 'codemirror/lib/codemirror.css'; // import base style
-import 'codemirror/mode/xml/xml.js'; // language
-import 'codemirror/addon/selection/active-line.js'; // require active-line.js
-import 'codemirror/addon/edit/closetag.js'; // autoCloseTags
 import { useMutation, useQuery } from '@tanstack/vue-query';
 import router from '@/router';
 import { debounce } from 'lodash';
@@ -52,12 +46,47 @@ const props = defineProps({
   date: String
 });
 
-const extensions = createExtensions();
-
 const content = ref(emptyDoc());
 const noteJsonRef = ref(null);
 const lastSavedAt = ref(null);
 const saveError = ref('');
+const isMobileToolbar = ref(false);
+let mobileToolbarMediaQuery = null;
+
+const toolbarMode = computed(() => (isMobileToolbar.value ? 'writing' : 'full'));
+const editorKey = computed(() => `editor-${props.date}-${toolbarMode.value}`);
+const extensions = computed(() => createExtensions({ toolbar: toolbarMode.value }));
+
+function updateMobileToolbar(event) {
+  if (editorRef.value && event.matches !== isMobileToolbar.value) {
+    content.value = normalizeTiptapDoc(editorRef.value.getJSON());
+  }
+  isMobileToolbar.value = event.matches;
+}
+
+onMounted(() => {
+  if (typeof window === 'undefined' || !window.matchMedia) return;
+
+  mobileToolbarMediaQuery = window.matchMedia('(max-width: 768px)');
+  updateMobileToolbar(mobileToolbarMediaQuery);
+
+  if (mobileToolbarMediaQuery.addEventListener) {
+    mobileToolbarMediaQuery.addEventListener('change', updateMobileToolbar);
+  } else {
+    mobileToolbarMediaQuery.addListener(updateMobileToolbar);
+  }
+});
+
+onUnmounted(() => {
+  if (!mobileToolbarMediaQuery) return;
+
+  if (mobileToolbarMediaQuery.removeEventListener) {
+    mobileToolbarMediaQuery.removeEventListener('change', updateMobileToolbar);
+  } else {
+    mobileToolbarMediaQuery.removeListener(updateMobileToolbar);
+  }
+});
+
 const queryKey = computed(() => ['diaryContent', props.date]);
 const { data: noteData, isLoading, isFetching, error: getNoteError } = useQuery({
   queryKey: queryKey,
@@ -219,6 +248,52 @@ pre code {
 
 .editor :deep(.ProseMirror:focus) {
   outline: none;
+}
+
+@media (max-width: 768px) {
+  .editor-status {
+    min-height: 1.1rem;
+    margin: -0.25rem 0 0.2rem;
+    font-size: 0.72rem;
+  }
+
+  .editor :deep(.el-tiptap-editor__menu-bar) {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.1rem;
+    min-height: 2.35rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.25rem 0.35rem;
+    white-space: nowrap;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .editor :deep(.el-tiptap-editor__menu-bar::-webkit-scrollbar) {
+    display: none;
+  }
+
+  .editor :deep(.el-tiptap-editor__menu-bar > *) {
+    flex: 0 0 auto;
+  }
+
+  .editor :deep(.el-tiptap-editor__command-button) {
+    width: 1.9rem;
+    height: 1.9rem;
+    margin: 0;
+    border-radius: var(--lb-radius-sm, 6px);
+  }
+
+  .editor :deep(.el-tiptap-editor__command-button svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .editor :deep(.ProseMirror) {
+    padding: 0.85rem 0.95rem;
+  }
 }
 
 .lock-warning {
