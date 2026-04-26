@@ -7,6 +7,7 @@ module AuthUser
 open Npgsql
 open Npgsql.FSharp
 open System
+open System.Data
 
 
 
@@ -28,8 +29,6 @@ let CheckUserExists (db: NpgsqlConnection)  (email: string)  =
   |> Sql.query checkUserExists
   |> Sql.parameters  [ "@email", Sql.string email ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -91,8 +90,6 @@ let CreateAuthUser (db: NpgsqlConnection)  (arg: CreateAuthUserParams)  =
 
 
 
-
-
 let deleteAuthUser = """-- name: DeleteAuthUser :exec
 DELETE FROM auth_user WHERE email = @email
 """
@@ -108,8 +105,6 @@ let DeleteAuthUser (db: NpgsqlConnection)  (email: string)  =
   |> Sql.query deleteAuthUser
   |> Sql.parameters  [ "@email", Sql.string email ]
   |> Sql.executeNonQuery
-
-
 
 
 
@@ -152,8 +147,6 @@ let GetAllAuthUsers (db: NpgsqlConnection)  =
 
 
 
-
-
 let getAuthUserByEmail = """-- name: GetAuthUserByEmail :one
 SELECT id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined FROM auth_user WHERE email = @email
 """
@@ -181,8 +174,6 @@ let GetAuthUserByEmail (db: NpgsqlConnection)  (email: string)  =
   |> Sql.query getAuthUserByEmail
   |> Sql.parameters  [ "@email", Sql.string email ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -234,8 +225,6 @@ let GetAuthUserByID (db: NpgsqlConnection)  (id: int32)  =
 
 
 
-
-
 let getTotalActiveUserCount = """-- name: GetTotalActiveUserCount :one
 SELECT COUNT(*) FROM auth_user WHERE is_active = true
 """
@@ -250,8 +239,6 @@ let GetTotalActiveUserCount (db: NpgsqlConnection)   =
   |> Sql.existingConnection
   |> Sql.query getTotalActiveUserCount
   |> Sql.executeRow reader
-
-
 
 
 
@@ -289,8 +276,6 @@ let GetUserByEmail (db: NpgsqlConnection)  (email: string)  =
   |> Sql.query getUserByEmail
   |> Sql.parameters  [ "@email", Sql.string email ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -352,8 +337,6 @@ let GetUsersWithDiaryCount (db: NpgsqlConnection)  =
 
 
 
-
-
 let listAuthUsers = """-- name: ListAuthUsers :many
 SELECT id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined FROM auth_user ORDER BY id LIMIT @limit OFFSET @offset
 """
@@ -384,8 +367,6 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
   |> Sql.query listAuthUsers
   |> Sql.parameters  [ "@limit", Sql.int arg.Limit; "@offset", Sql.int arg.Offset ]
   |> Sql.execute reader
-
-
 
 
 
@@ -440,8 +421,6 @@ let UpdateAuthUser (db: NpgsqlConnection)  (arg: UpdateAuthUserParams)  =
 
 
 
-
-
 let updateAuthUserByEmail = """-- name: UpdateAuthUserByEmail :one
 UPDATE auth_user SET first_name = @first_name, last_name= @last_name, last_login = now() 
 WHERE email = @email
@@ -485,8 +464,6 @@ let UpdateAuthUserByEmail (db: NpgsqlConnection)  (arg: UpdateAuthUserByEmailPar
 
 
 
-
-
 let updateLastLogin = """-- name: UpdateLastLogin :exec
 UPDATE auth_user SET last_login = now()  WHERE id = @id
 """
@@ -502,8 +479,6 @@ let UpdateLastLogin (db: NpgsqlConnection)  (id: int32)  =
   |> Sql.query updateLastLogin
   |> Sql.parameters  [ "@id", Sql.int id ]
   |> Sql.executeNonQuery
-
-
 
 
 
@@ -529,8 +504,6 @@ let UpdateUserPassword (db: NpgsqlConnection)  (arg: UpdateUserPasswordParams)  
   |> Sql.query updateUserPassword
   |> Sql.parameters  [ "@email", Sql.string arg.Email; "@password", Sql.string arg.Password ]
   |> Sql.executeNonQuery
-
-
 
 
 

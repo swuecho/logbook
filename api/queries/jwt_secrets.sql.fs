@@ -7,6 +7,7 @@ module JwtSecrets
 open Npgsql
 open Npgsql.FSharp
 open System
+open System.Data
 
 
 
@@ -52,8 +53,6 @@ let CreateJwtSecret (db: NpgsqlConnection)  (arg: CreateJwtSecretParams)  =
 
 
 
-
-
 let deleteAllJwtSecrets = """-- name: DeleteAllJwtSecrets :execrows
 DELETE FROM jwt_secrets
 """
@@ -70,8 +69,6 @@ let DeleteAllJwtSecrets (db: NpgsqlConnection)  =
   |> Sql.existingConnection
   |> Sql.query deleteAllJwtSecrets
   |> Sql.executeNonQuery
-
-
 
 
 
@@ -103,8 +100,6 @@ let GetJwtSecret (db: NpgsqlConnection)  (name: string)  =
   |> Sql.query getJwtSecret
   |> Sql.parameters  [ "@name", Sql.string name ]
   |> Sql.executeRow reader
-
-
 
 
 

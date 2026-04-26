@@ -7,6 +7,7 @@ module Summary
 open Npgsql
 open Npgsql.FSharp
 open System
+open System.Data
 
 
 
@@ -63,8 +64,6 @@ let GetSummaryByUserIDAndID (db: NpgsqlConnection)  (arg: GetSummaryByUserIDAndI
 
 
 
-
-
 let getSummaryByUserId = """-- name: GetSummaryByUserId :many
 select note_id, content as note from summary where user_id = @user_id order by note_id desc
 """
@@ -86,8 +85,6 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
   |> Sql.query getSummaryByUserId
   |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
-
-
 
 
 
@@ -127,8 +124,6 @@ let InsertSummary (db: NpgsqlConnection)  (arg: InsertSummaryParams)  =
 
 
 
-
-
 let lastUpdated = """-- name: LastUpdated :one
 select last_updated from summary where note_id = @note_id and user_id = @user_id
 """
@@ -148,8 +143,6 @@ let LastUpdated (db: NpgsqlConnection)  (arg: LastUpdatedParams)  =
   |> Sql.query lastUpdated
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId ]
   |> Sql.executeRow reader
-
-
 
 
 

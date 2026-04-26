@@ -7,6 +7,7 @@ module Diary
 open Npgsql
 open Npgsql.FSharp
 open System
+open System.Data
 
 
 
@@ -51,8 +52,6 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
 
 
 
-
-
 let checkIdStale = """-- name: CheckIdStale :one
 SELECT count(*)  > 0 as stale
 FROM diary d
@@ -75,8 +74,6 @@ let CheckIdStale (db: NpgsqlConnection)  (arg: CheckIdStaleParams)  =
   |> Sql.query checkIdStale
   |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@note_id", Sql.string arg.NoteId ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -130,8 +127,6 @@ let CreateDiary (db: NpgsqlConnection)  (arg: CreateDiaryParams)  =
 
 
 
-
-
 let deleteDiary = """-- name: DeleteDiary :exec
 DELETE FROM diary WHERE id = @id
 """
@@ -147,8 +142,6 @@ let DeleteDiary (db: NpgsqlConnection)  (id: int32)  =
   |> Sql.query deleteDiary
   |> Sql.parameters  [ "@id", Sql.int id ]
   |> Sql.executeNonQuery
-
-
 
 
 
@@ -188,8 +181,6 @@ let DiaryByID (db: NpgsqlConnection)  (id: int32)  =
 
 
 
-
-
 let diaryByUserIDAndID = """-- name: DiaryByUserIDAndID :one
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE user_id = @user_id and note_id=@note_id
 """
@@ -217,8 +208,6 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
   |> Sql.query diaryByUserIDAndID
   |> Sql.parameters  [ "@user_id", Sql.int arg.UserId; "@note_id", Sql.string arg.NoteId ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -274,8 +263,6 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
-
-
 let listDiaries = """-- name: ListDiaries :many
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary ORDER BY last_updated DESC
 """
@@ -297,8 +284,6 @@ let ListDiaries (db: NpgsqlConnection)  =
   |> Sql.existingConnection
   |> Sql.query listDiaries
   |> Sql.execute reader
-
-
 
 
 
@@ -337,8 +322,6 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 
 
-
-
 let listDiaryIDByUserID = """-- name: ListDiaryIDByUserID :many
 SELECT note_id FROM diary WHERE user_id = @user_id AND note != '' order by note_id DESC
 """
@@ -354,8 +337,6 @@ let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
   |> Sql.query listDiaryIDByUserID
   |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
-
-
 
 
 
@@ -387,8 +368,6 @@ let ListMissingSearchIndex (db: NpgsqlConnection)  =
   |> Sql.existingConnection
   |> Sql.query listMissingSearchIndex
   |> Sql.execute reader
-
-
 
 
 
@@ -454,8 +433,6 @@ let SearchDiary (db: NpgsqlConnection)  (arg: SearchDiaryParams) =
 
 
 
-
-
 let updateDiary = """-- name: UpdateDiary :one
 UPDATE diary SET note = @note, last_updated = NOW() WHERE id = @id
 RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated
@@ -484,8 +461,6 @@ let UpdateDiary (db: NpgsqlConnection)  (arg: UpdateDiaryParams)  =
   |> Sql.query updateDiary
   |> Sql.parameters  [ "@id", Sql.int arg.Id; "@note", Sql.string arg.Note ]
   |> Sql.executeRow reader
-
-
 
 
 
@@ -525,8 +500,6 @@ let UpdateDiarySearch (db: NpgsqlConnection)  (arg: UpdateDiarySearchParams)  =
   |> Sql.query updateDiarySearch
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.stringOrNone arg.SearchTerms; "@separator", Sql.string arg.Separator ]
   |> Sql.executeNonQuery
-
-
 
 
 
