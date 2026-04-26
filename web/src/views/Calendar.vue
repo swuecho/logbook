@@ -20,8 +20,6 @@
             clearable
             size="small"
           />
-
-          <button type="button" class="linkish" @click="goThisYear">This year</button>
         </template>
       </AppTopBar>
 
@@ -170,10 +168,6 @@ function nextYear() {
   visibleYear.value += 1;
 }
 
-function goThisYear() {
-  visibleYear.value = moment().year();
-}
-
 function openDay(day) {
   router.push({ path: '/view', query: { date: day.format('YYYYMMDD') } });
 }
@@ -252,6 +246,7 @@ onMounted(async () => {
 
 .calendar-page__search {
   width: min(18rem, 100%);
+  min-width: 0;
 }
 
 .year-heading {
@@ -407,6 +402,16 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
+  .calendar-page :deep(.app-top-bar__center) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .year-row {
+    width: 100%;
+    justify-content: center;
+  }
+
   .calendar-page__search {
     width: 100%;
   }

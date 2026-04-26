@@ -134,6 +134,7 @@ function goLogout() {
   align-items: center;
   gap: 1rem;
   width: 100%;
+  height: auto !important;
   min-height: 3rem;
 }
 
