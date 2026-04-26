@@ -14,7 +14,10 @@ dotnet build
 dotnet watch run
 ```
 
-Run database migrations before starting the API:
+## Database: DbUp vs `sql/schema.sql`
+
+**Applying schema changes (real databases)**  
+Use **DbUp** from the `Migrations` project. Add new versioned SQL under `Migrations/scripts/`, then run:
 
 ```sh
 make migrate
@@ -26,12 +29,23 @@ make migrate
 dotnet run --project Migrations -- "$DATABASE_URL"
 ```
 
-The API no longer initializes the schema or refreshes missing search indexes on every startup. For local one-off fallback behavior, set `LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP=true` or `LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP=true` before running the web app.
+**sqlc and type-checked queries**  
+`sql/schema.sql` is the **sqlc** schema: it drives generated F# in `queries/` and validation of `sql/query/*.sql`. When you add tables or columns, update **both** a DbUp migration and `sql/schema.sql` (so `sqlc generate` and `dotnet build` match the real database).
+
+**Optional local bootstrap**  
+Set `LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP=true` to run the full `schema.sql` against an empty database (e.g. quick local setup). This does not replace migrations for shared or production databases.
+
+**Search index (optional on startup)**  
+`LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP=true` refreshes missing search index rows; not enabled by default.
 
 ## Port
 
 in prod, default port is 8080 (aspnet 8), 80 (aspnet < 8).
 in dev, default port is 500
+
+## API client errors
+
+Failed requests that return a JSON body use a single shape: `{ "code": string, "message": string }`. The HTTP status code carries the outcome (e.g. `401` / `403`); `code` is a short machine-readable label such as `unauthorized` or `invalid_credentials`.
 
 ## Regenerating F# SQL Queries
 

@@ -1,29 +1,14 @@
 module HttpAuth
 
 open System
-open System.Net
 open System.Security.Claims
-
-let private errorResponse statusCode code message ctx =
-    HandlerResponse.jsonWithStatus
-        statusCode
-        {| code = code
-           message = message |}
-        ctx
+open Logbook
 
 let unauthorized ctx =
-    errorResponse
-        401
-        HttpStatusCode.Unauthorized
-        "Authentication is required to access this resource."
-        ctx
+    HandlerResponse.clientError 401 HttpError.authenticationRequired ctx
 
 let forbidden ctx =
-    errorResponse
-        403
-        HttpStatusCode.Forbidden
-        "Access to the resource is forbidden."
-        ctx
+    HandlerResponse.clientError 403 HttpError.accessDenied ctx
 
 let tryGetUserId (user: ClaimsPrincipal) =
     match user.FindFirst(AppIdentity.userIdClaim) with

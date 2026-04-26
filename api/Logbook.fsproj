@@ -11,6 +11,7 @@
     <Compile Include="Common/Auth.fs" />
     <Compile Include="Common/Token.fs" />
     <Compile Include="Common/Json.fs" />
+    <Compile Include="Common/LogbookError.fs" />
     <Compile Include="Common/HandlerResponse.fs" />
     <Compile Include="Common/HttpAuth.fs" />
     <Compile Include="queries/model_from_schema.fs" />

@@ -10,11 +10,7 @@ let login: HttpHandler =
             (fun (credentials: AuthService.Login) ->
                 match AuthService.loginOrRegister dbSession credentials with
                 | AuthService.LoginSucceeded token -> HandlerResponse.jsonHandler token
-                | AuthService.LoginFailed failure ->
-                    HandlerResponse.jsonWithStatus
-                        (int failure.Code)
-                        {| code = failure.Code
-                           message = failure.Message |})
+                | AuthService.LoginFailed err -> HandlerResponse.clientError 401 err)
             ctx
 
 let logout: HttpHandler =

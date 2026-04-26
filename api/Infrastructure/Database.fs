@@ -35,7 +35,7 @@ module Config =
 module InitDB =
     let init (dataSource: NpgsqlDataSource) =
         use conn = dataSource.OpenConnection()
-        // run the init script from file api/sql/schema.sql
+        // For local one-off only: same file sqlc uses; production DBs should use DbUp (see api/README).
         let initScript = System.IO.File.ReadAllText(__SOURCE_DIRECTORY__ + "/../sql/schema.sql")
         use cmd = new NpgsqlCommand(initScript, conn)
         cmd.ExecuteNonQuery() |> printfn "schema.sql executed %d"

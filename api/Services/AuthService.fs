@@ -1,7 +1,7 @@
 module AuthService
 
-open System.Net
 open Database
+open Logbook
 
 type Login = { Username: string; Password: string }
 
@@ -9,22 +9,15 @@ type AccessTokenResponse =
     { AccessToken: string
       ExpiresIn: int }
 
-type LoginFailure =
-    { Code: HttpStatusCode
-      Message: string }
-
 type LoginResult =
     | LoginSucceeded of AccessTokenResponse
-    | LoginFailed of LoginFailure
+    | LoginFailed of ApiError
 
 let private createNewUser conn email password =
     let passwordHash = Auth.generatePasswordHash password
     AuthUserRepository.create conn email passwordHash "" "" email false false
 
-let private loginFailed =
-    LoginFailed
-        { Code = HttpStatusCode.Unauthorized
-          Message = "Login failed. password or email is wrong" }
+let private loginFailed = LoginFailed HttpError.invalidCredentials
 
 let private roleForUser user =
     if user.IsSuperuser then
