@@ -102,7 +102,7 @@ function closeModalMd() {
 
 @media (max-width: 480px) {
   .nav {
-    margin: 0;
+    margin: 0 0 0.75rem;
   }
 }
 </style>

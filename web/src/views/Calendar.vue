@@ -400,14 +400,20 @@ onMounted(async () => {
   min-height: 1.75rem;
 }
 
+@media (max-width: 900px) {
+  .year-months {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 480px) {
   .calendar-page__search {
     width: 100%;
   }
 
   .year-months {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
   .month-block {
@@ -423,16 +429,16 @@ onMounted(async () => {
   }
 
   .day-num {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
   }
 
   .day {
-    min-height: 1.25rem;
+    min-height: 1.75rem;
     max-height: none;
   }
 
   .day-placeholder {
-    min-height: 1.25rem;
+    min-height: 1.75rem;
   }
 }
 </style>

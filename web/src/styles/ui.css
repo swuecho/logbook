@@ -64,6 +64,8 @@ a {
   font-family: var(--lb-font);
   color: var(--lb-text);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Full-height page shell */
@@ -378,5 +380,12 @@ a.linkish {
 
   .app-main-padded {
     padding: 1rem 0 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }

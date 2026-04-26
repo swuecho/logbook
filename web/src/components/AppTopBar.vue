@@ -164,6 +164,9 @@ function goLogout() {
   color: var(--lb-text);
   font-size: 1rem;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-top-bar__icon {
@@ -173,20 +176,39 @@ function goLogout() {
 
 @media (max-width: 768px) {
   .app-top-bar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-    gap: 0.65rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
   }
 
-  .app-top-bar__start,
-  .app-top-bar__center,
-  .app-top-bar__actions {
-    justify-content: center;
+  .app-top-bar__start {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: flex-start;
+  }
+
+  .app-top-bar__center {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
     flex-wrap: wrap;
   }
 
+  .app-top-bar__center:empty {
+    display: none;
+  }
+
   .app-top-bar__actions {
-    gap: 0.5rem;
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end;
+    gap: 0.2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .app-top-bar__actions::-webkit-scrollbar {
+    display: none;
   }
 }
 </style>
