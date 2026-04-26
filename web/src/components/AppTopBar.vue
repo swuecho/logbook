@@ -39,6 +39,15 @@
         <Icon :icon="adminIcon" class="app-top-bar__icon" />
       </router-link>
       <button
+        type="button"
+        class="linkish"
+        title="Settings"
+        aria-label="Settings"
+        @click="settingsVisible = true"
+      >
+        <Icon :icon="settingsIcon" class="app-top-bar__icon" />
+      </button>
+      <button
         v-if="isAuthenticated"
         type="button"
         class="linkish"
@@ -50,11 +59,32 @@
       </button>
       <slot name="actions-after" />
     </nav>
+
+    <el-dialog v-model="settingsVisible" title="Settings" class="app-settings-dialog" width="360px">
+      <section class="app-settings-section">
+        <div class="app-settings-section__title">Theme</div>
+        <div class="app-theme-options" role="radiogroup" aria-label="Theme">
+          <button
+            v-for="theme in themeOptions"
+            :key="theme.value"
+            type="button"
+            class="app-theme-option"
+            :class="{ 'is-active': currentTheme === theme.value }"
+            role="radio"
+            :aria-checked="currentTheme === theme.value"
+            @click="chooseTheme(theme.value)"
+          >
+            <span>{{ theme.label }}</span>
+            <span v-if="currentTheme === theme.value" class="app-theme-option__current">Current</span>
+          </button>
+        </div>
+      </section>
+    </el-dialog>
   </el-header>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Icon } from '@iconify/vue';
 import homeIcon from '@iconify/icons-mdi/home-outline';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
@@ -62,9 +92,11 @@ import calendarMonth from '@iconify/icons-mdi/calendar-month';
 import magnifyIcon from '@iconify/icons-mdi/magnify';
 import logoutIcon from '@iconify/icons-mdi/logout';
 import adminIcon from '@iconify/icons-mdi/shield-account-outline';
+import settingsIcon from '@iconify/icons-mdi/cog-outline';
 import router from '@/router';
 import { parseJwt } from '@/util';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
+import { currentTheme, setTheme, themeOptions } from '@/services/theme';
 
 defineProps({
   title: {
@@ -99,6 +131,8 @@ defineProps({
 
 defineEmits(['open-markdown']);
 
+const settingsVisible = ref(false);
+
 const isAuthenticated = computed(() => {
   const token = localStorage.getItem('JWT_TOKEN');
   const expiresAt = Number(localStorage.getItem('JWT_EXPIRES_AT'));
@@ -124,6 +158,10 @@ function goHome() {
 
 function goLogout() {
   router.push({ path: '/logout' });
+}
+
+function chooseTheme(theme) {
+  setTheme(theme);
 }
 </script>
 
@@ -173,6 +211,56 @@ function goLogout() {
 .app-top-bar__icon {
   width: 1.1rem;
   height: 1.1rem;
+}
+
+.app-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.app-settings-section__title {
+  color: var(--lb-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.app-theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.app-theme-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--lb-border);
+  border-radius: var(--lb-radius-sm);
+  background: var(--lb-bg-elevated);
+  color: var(--lb-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-theme-option:hover {
+  border-color: var(--lb-border-strong);
+  background: var(--lb-hover);
+}
+
+.app-theme-option.is-active {
+  border-color: var(--lb-accent);
+  background: var(--lb-bg-soft);
+}
+
+.app-theme-option__current {
+  color: var(--lb-text-subtle);
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {

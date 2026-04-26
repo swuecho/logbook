@@ -10,7 +10,9 @@ import './styles/ui.css'
 
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { initTabLock } from '@/services/tabLock';
+import { initTheme } from '@/services/theme';
 
+initTheme();
 initTabLock();
 
 function IsAuthenticatedValid() {
