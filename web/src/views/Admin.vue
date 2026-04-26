@@ -6,8 +6,8 @@
                                         <div class="admin-dashboard__meta">{{ users.length }} users</div>
                                 </template>
                         </AppTopBar>
-                <el-row :gutter="20" class="stats-row">
-                        <el-col :span="6">
+                <el-row :gutter="12" class="stats-row">
+                        <el-col :xs="12" :sm="12" :md="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon users-icon">
                                                 <Icon icon="mdi:account" width="2.25rem" height="2.25rem" />
@@ -18,7 +18,7 @@
                                         </div>
                                 </el-card>
                         </el-col>
-                        <el-col :span="6">
+                        <el-col :xs="12" :sm="12" :md="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon active-icon">
                                                 <Icon icon="mdi:clock-outline" width="2.25rem" height="2.25rem" />
@@ -29,7 +29,7 @@
                                         </div>
                                 </el-card>
                         </el-col>
-                        <el-col :span="6">
+                        <el-col :xs="12" :sm="12" :md="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon diary-icon">
                                                 <Icon icon="mdi:notebook" width="2.25rem" height="2.25rem" />
@@ -40,7 +40,7 @@
                                         </div>
                                 </el-card>
                         </el-col>
-                        <el-col :span="6">
+                        <el-col :xs="12" :sm="12" :md="6">
                                 <el-card shadow="never" class="stats-card">
                                         <div class="stats-icon avg-icon">
                                                 <Icon icon="mdi:chart-box-outline" width="2.25rem" height="2.25rem" />
@@ -53,7 +53,7 @@
                         </el-col>
                 </el-row>
 
-                <el-card shadow="never" class="box-card">
+                <el-card shadow="never" class="box-card admin-users-card">
                         <template #header>
                                 <div class="header-actions">
                                         <el-input v-model="searchQuery" placeholder="Search users..." clearable class="search-input"
@@ -63,14 +63,14 @@
                                                 </template>
                                         </el-input>
 
-                                        <el-select v-model="statusFilter" placeholder="Status" clearable
+                                        <el-select v-model="statusFilter" placeholder="Status" clearable class="filter-control"
                                                 @change="handleFilter">
                                                 <el-option label="Active" value="active" />
                                                 <el-option label="Recent" value="recent" />
                                                 <el-option label="Inactive" value="inactive" />
                                         </el-select>
 
-                                        <el-select v-model="sortBy" placeholder="Sort by" @change="handleSort">
+                                        <el-select v-model="sortBy" placeholder="Sort by" class="filter-control" @change="handleSort">
                                                 <el-option label="Newest" value="newest" />
                                                 <el-option label="Most Active" value="mostActive" />
                                                 <el-option label="Most Entries" value="mostEntries" />
@@ -78,7 +78,7 @@
                                 </div>
                         </template>
 
-                        <el-table :data="filteredUsers" style="width: 100%" border stripe v-loading="loading"
+                        <el-table :data="filteredUsers" class="admin-users-table" style="width: 100%" border stripe v-loading="loading"
                                 element-loading-text="Loading users...">
                                 <el-table-column prop="email" label="Email" min-width="220">
                                         <template #default="scope">
@@ -133,17 +133,63 @@
                                 </el-table-column>
                         </el-table>
 
-                        <div class="pagination-container">
+                        <div class="mobile-user-list" v-loading="loading" element-loading-text="Loading users...">
+                                <template v-if="filteredUsers.length">
+                                        <article v-for="user in filteredUsers" :key="user.id" class="mobile-user-card">
+                                                <div class="mobile-user-card__header">
+                                                        <div class="mobile-user-card__email">{{ user.email }}</div>
+                                                        <el-tag :type="getUserStatusType(user)">
+                                                                {{ getUserStatus(user) }}
+                                                        </el-tag>
+                                                </div>
+
+                                                <div class="mobile-user-card__details">
+                                                        <div>
+                                                                <span>Entries</span>
+                                                                <strong>{{ user.diaryCount }}</strong>
+                                                        </div>
+                                                        <div>
+                                                                <span>Joined</span>
+                                                                <strong>{{ formatDate(user.dateJoined) }}</strong>
+                                                        </div>
+                                                        <div>
+                                                                <span>Last login</span>
+                                                                <strong>{{ formatDate(user.lastLogin) }}</strong>
+                                                        </div>
+                                                </div>
+
+                                                <div class="mobile-user-card__actions">
+                                                        <el-button type="primary" link size="small" @click="viewUserDetails(user)">
+                                                                <Icon icon="mdi:eye" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
+                                                                View Details
+                                                        </el-button>
+                                                        <el-button size="small" type="danger" @click="handleDelete(user)"
+                                                                :disabled="!canDeleteUser(user)">
+                                                                <Icon icon="mdi:delete" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
+                                                                Delete
+                                                        </el-button>
+                                                </div>
+                                        </article>
+                                </template>
+                                <el-empty v-else-if="!loading" description="No users found" :image-size="72" />
+                        </div>
+
+                        <div class="pagination-container pagination-container--desktop">
                                 <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
                                         :current-page="currentPage" :page-sizes="[10, 20, 50, 100]"
                                         :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
                                         :total="totalUsers" />
                         </div>
+                        <div class="pagination-container pagination-container--mobile">
+                                <el-pagination @current-change="handleCurrentChange" :current-page="currentPage"
+                                        :page-size="pageSize" layout="prev, pager, next" :pager-count="5"
+                                        :total="totalUsers" small />
+                        </div>
                 </el-card>
 
-                <el-dialog v-model="dialogVisible" title="User Details" width="50%">
+                <el-dialog v-model="dialogVisible" title="User Details" width="50%" class="user-details-dialog">
                         <div v-if="selectedUser" class="user-details">
-                                <el-descriptions :column="2" border>
+                                <el-descriptions :column="detailsColumnCount" border>
                                         <el-descriptions-item label="Email">{{ selectedUser.email
                                                 }}</el-descriptions-item>
                                         <el-descriptions-item label="Status">
@@ -188,7 +234,8 @@ export default {
                         currentPage: 1,
                         pageSize: 10,
                         dialogVisible: false,
-                        selectedUser: null
+                        selectedUser: null,
+                        isNarrowScreen: false
                 }
         },
         computed: {
@@ -240,8 +287,14 @@ export default {
                 totalUsers() {
                         return this.filteredUsersRaw.length
                 },
+                detailsColumnCount() {
+                        return this.isNarrowScreen ? 1 : 2
+                },
         },
         methods: {
+                updateViewportState() {
+                        this.isNarrowScreen = window.matchMedia('(max-width: 768px)').matches
+                },
                 formatDate(date) {
                         if (!date) return 'Never'
                         return format(new Date(date), 'MMM d, yyyy HH:mm')
@@ -319,7 +372,12 @@ export default {
                 }
         },
         mounted() {
+                this.updateViewportState()
+                window.addEventListener('resize', this.updateViewportState)
                 this.fetchUsers()
+        },
+        beforeUnmount() {
+                window.removeEventListener('resize', this.updateViewportState)
         }
 }
 </script>
@@ -342,14 +400,19 @@ export default {
         margin-left: auto;
         margin-right: auto;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
 }
 
 .stats-card {
+        height: 100%;
+}
+
+.stats-card :deep(.el-card__body) {
         display: flex;
         align-items: center;
-        padding: 1rem;
+        width: 100%;
         height: 100%;
+        padding: 1rem;
 }
 
 .stats-icon {
@@ -388,6 +451,19 @@ export default {
 
 .search-input {
         width: 300px;
+        max-width: 100%;
+}
+
+.filter-control {
+        width: 150px;
+}
+
+.admin-users-card :deep(.el-card__body) {
+        padding: 0;
+}
+
+.admin-users-table {
+        display: block;
 }
 
 .user-email {
@@ -396,11 +472,71 @@ export default {
         align-items: center;
 }
 
+.mobile-user-list {
+        display: none;
+}
+
+.mobile-user-card {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid var(--lb-border);
+        background: #fff;
+}
+
+.mobile-user-card:last-child {
+        border-bottom: none;
+}
+
+.mobile-user-card__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+}
+
+.mobile-user-card__email {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+        line-height: 1.4;
+}
+
+.mobile-user-card__details {
+        display: grid;
+        gap: 0.55rem;
+        margin-bottom: 0.75rem;
+}
+
+.mobile-user-card__details div {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: var(--lb-text-muted);
+        font-size: 0.85rem;
+}
+
+.mobile-user-card__details strong {
+        color: var(--lb-text);
+        font-weight: 500;
+        text-align: right;
+}
+
+.mobile-user-card__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+}
+
 .pagination-container {
         margin-top: 1rem;
         display: flex;
         justify-content: flex-end;
         padding: 0 1rem 1rem;
+}
+
+.pagination-container--mobile {
+        display: none;
 }
 
 .user-details {
@@ -417,16 +553,22 @@ export default {
 
 @media (max-width: 768px) {
         .stats-row :deep(.el-col) {
-                max-width: 100%;
-                flex: 0 0 100%;
+                max-width: 50%;
+                flex: 0 0 50%;
         }
 
         .search-input {
                 width: 100%;
         }
 
+        .filter-control {
+                flex: 1 1 calc(50% - 0.325rem);
+                min-width: 0;
+        }
+
         .header-actions {
-                padding: 16px 16px 0 16px;
+                padding: 0.75rem;
+                gap: 0.5rem;
         }
 
         .user-email {
@@ -437,7 +579,65 @@ export default {
 
         .pagination-container {
                 justify-content: center;
-                padding: 0 16px 16px 16px;
+                padding: 0 0.75rem 0.75rem;
+        }
+
+        :deep(.user-details-dialog) {
+                width: calc(100vw - 1.5rem) !important;
+        }
+}
+
+@media (max-width: 680px) {
+        .admin-users-table {
+                display: none;
+        }
+
+        .mobile-user-list {
+                display: block;
+                min-height: 5rem;
+        }
+
+        .pagination-container--desktop {
+                display: none;
+        }
+
+        .pagination-container--mobile {
+                display: flex;
+        }
+}
+
+@media (max-width: 480px) {
+        .stats-row :deep(.el-col) {
+                max-width: 100%;
+                flex: 0 0 100%;
+        }
+
+        .stats-card :deep(.el-card__body) {
+                padding: 0.85rem;
+        }
+
+        .stats-icon {
+                margin-right: 0.75rem;
+                padding: 0.55rem;
+        }
+
+        .filter-control {
+                flex-basis: 100%;
+                width: 100%;
+        }
+
+        .mobile-user-card__header,
+        .mobile-user-card__details div {
+                align-items: flex-start;
+        }
+
+        .mobile-user-card__details div {
+                flex-direction: column;
+                gap: 0.15rem;
+        }
+
+        .mobile-user-card__details strong {
+                text-align: left;
         }
 }
 </style>
