@@ -38,6 +38,7 @@
     <Compile Include="Handlers/ExportHandlers.fs" />
     <Compile Include="Handlers/AdminHandlers.fs" />
     <Compile Include="Routing/ApiRoutes.fs" />
+    <Compile Include="Startup/RequestLogging.fs" />
     <Compile Include="Startup/AppStartup.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
