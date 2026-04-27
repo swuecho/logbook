@@ -63,17 +63,35 @@ let getOrCreateDiary (db: DbSession) userId noteId =
         with :? NoResultsException ->
             DiaryRepository.addOrUpdate conn noteId userId "")
 
+let private hasSearchIndex (diary: Diary) =
+    String.IsNullOrEmpty diary.Note
+    || not (String.IsNullOrEmpty diary.SearchText)
+    || diary.SearchTerms.Length > 0
+
 let saveDiary (db: DbSession) (summaryQueue: SummaryBackgroundService.SummaryUpdateQueue) userId (note: Diary) =
-    let saved =
+    let saved, changed =
         db.WithTransaction(fun conn ->
-            let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
-            let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+            let existing =
+                try
+                    Some(DiaryRepository.getByUserAndNoteId conn userId note.NoteId)
+                with :? NoResultsException ->
+                    None
 
-            { saved with
-                SearchText = searchText
-                SearchTerms = searchTerms })
+            match existing with
+            | Some diary when diary.Note = note.Note && hasSearchIndex diary ->
+                diary, false
+            | _ ->
+                let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+                let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
 
-    summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
+                { saved with
+                    SearchText = searchText
+                    SearchTerms = searchTerms },
+                true)
+
+    if changed then
+        summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
+
     saved
 
 let search (db: DbSession) userId query =

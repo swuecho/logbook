@@ -1,6 +1,7 @@
 module SummaryBackgroundService
 
 open System
+open System.Collections.Concurrent
 open System.Threading
 open System.Threading.Channels
 open System.Threading.Tasks
@@ -21,12 +22,30 @@ type SummaryUpdateRequest = { UserId: int; NoteId: string }
 // summary sweep below is the recovery mechanism for that case.
 type SummaryUpdateQueue() =
     let options = UnboundedChannelOptions(SingleReader = true, SingleWriter = false)
-    let channel = Channel.CreateUnbounded<SummaryUpdateRequest>(options)
+    let channel = Channel.CreateUnbounded<string>(options)
+    let pending = ConcurrentDictionary<string, SummaryUpdateRequest>()
+
+    let keyOf userId noteId = $"{userId}:{noteId}"
 
     member _.Enqueue(userId, noteId) =
-        channel.Writer.TryWrite({ UserId = userId; NoteId = noteId })
+        let key = keyOf userId noteId
+        let request = { UserId = userId; NoteId = noteId }
+
+        let added =
+            pending.TryAdd(key, request)
+
+        if not added then
+            pending[key] <- request
+            true
+        else
+            channel.Writer.TryWrite(key)
 
     member _.Reader = channel.Reader
+
+    member _.TryTake(key: string) =
+        match pending.TryRemove(key) with
+        | true, request -> Some request
+        | false, _ -> None
 
 type SummaryRefreshWorker(dataSource: NpgsqlDataSource, queue: SummaryUpdateQueue) =
     inherit BackgroundService()
@@ -48,8 +67,9 @@ type SummaryRefreshWorker(dataSource: NpgsqlDataSource, queue: SummaryUpdateQueu
         SummaryService.refreshAllSummaries conn
 
     // Main fast path: consume note IDs from the queue one at a time and rebuild
-    // their summaries. A single reader keeps CPU-heavy text analysis from
-    // running concurrently many times after a burst of saves.
+    // their summaries. Requests are keyed by user/note and held briefly so a
+    // typing burst produces one summary refresh for the final saved content.
+    // A single reader keeps CPU-heavy text analysis from running concurrently.
     //
     // Individual failures are logged and swallowed so one bad note cannot stop
     // future queued summary updates. The periodic sweep will retry stale notes.
@@ -57,12 +77,16 @@ type SummaryRefreshWorker(dataSource: NpgsqlDataSource, queue: SummaryUpdateQueu
         task {
             try
                 while not stoppingToken.IsCancellationRequested do
-                    let! request = queue.Reader.ReadAsync(stoppingToken).AsTask()
+                    let! key = queue.Reader.ReadAsync(stoppingToken).AsTask()
+                    do! Task.Delay(TimeSpan.FromSeconds(1.0), stoppingToken)
 
-                    try
-                        updateOne request
-                    with ex ->
-                        printfn "Failed to update diary summary for user %d note %s: %O" request.UserId request.NoteId ex
+                    match queue.TryTake key with
+                    | None -> ()
+                    | Some request ->
+                        try
+                            updateOne request
+                        with ex ->
+                            printfn "Failed to update diary summary for user %d note %s: %O" request.UserId request.NoteId ex
             with :? OperationCanceledException ->
                 ()
         }
