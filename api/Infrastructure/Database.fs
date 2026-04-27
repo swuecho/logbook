@@ -1,13 +1,27 @@
 namespace Database
 
+open System
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Npgsql
 
 type DbSession(dataSource: NpgsqlDataSource) =
+    let isDisposedConnectorState (ex: exn) =
+        match ex with
+        | :? ObjectDisposedException as disposed ->
+            disposed.ObjectName = "System.Threading.ManualResetEventSlim"
+        | _ -> false
+
     member _.WithConnection(action: NpgsqlConnection -> 'T) : 'T =
-        use conn = dataSource.OpenConnection()
-        action conn
+        let execute () =
+            use conn = dataSource.OpenConnection()
+            action conn
+
+        try
+            execute ()
+        with ex when isDisposedConnectorState ex ->
+            NpgsqlConnection.ClearAllPools()
+            execute ()
 
     member _.WithTransaction(action: NpgsqlConnection -> 'T) : 'T =
         use conn = dataSource.OpenConnection()
