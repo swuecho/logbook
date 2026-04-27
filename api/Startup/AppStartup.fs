@@ -71,6 +71,11 @@ let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceColle
 let addDatabase dataSource services =
     Database.Connection.addDatabase dataSource services
 
+let addSummaryBackgroundProcessing (services: IServiceCollection) =
+    services.AddSingleton<SummaryBackgroundService.SummaryUpdateQueue>() |> ignore
+    services.AddHostedService<SummaryBackgroundService.SummaryRefreshWorker>() |> ignore
+    services
+
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity <> null && context.User.Identity.IsAuthenticated

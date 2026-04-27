@@ -46,5 +46,8 @@ let listMissingSearchIndex (conn: NpgsqlConnection) =
 let listStaleSummaryIdsByUserId (conn: NpgsqlConnection) userId =
     Diary.GetStaleIdsOfUserId conn userId
 
+let listStaleSummaryIds (conn: NpgsqlConnection) =
+    Diary.ListStaleSummaryIds conn
+
 let isSummaryStale (conn: NpgsqlConnection) userId noteId =
     Diary.CheckIdStale conn { NoteId = noteId; UserId = userId }

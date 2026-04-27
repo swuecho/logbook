@@ -20,6 +20,10 @@ let refreshSummary (conn: NpgsqlConnection) userId =
     |> List.map (fun x -> x.NoteId)
     |> List.iter (fun staleDiaryId -> updateNoteSummary conn staleDiaryId userId)
 
+let refreshAllSummaries (conn: NpgsqlConnection) =
+    DiaryRepository.listStaleSummaryIds conn
+    |> List.iter (fun diary -> updateSummaryForNote conn diary)
+
 let noteSummary (conn: NpgsqlConnection) (note: Diary) =
     let noteId = note.NoteId
 
