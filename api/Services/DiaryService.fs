@@ -51,10 +51,8 @@ let private toSearchResult terms (row: Diary.SearchDiaryRow) =
       Rank = row.Rank
       LastUpdated = row.LastUpdated }
 
-let refreshAndListSummaries (db: DbSession) userId =
+let listSummaries (db: DbSession) userId =
     db.WithConnection(fun conn ->
-        SummaryService.refreshSummary conn userId
-
         SummaryRepository.getByUserId conn userId
         |> List.filter hasVisibleSummaryText)
 
@@ -69,6 +67,7 @@ let saveDiary (db: DbSession) userId (note: Diary) =
     db.WithTransaction(fun conn ->
         let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
         let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+        SummaryService.updateSummaryForNote conn saved
 
         { saved with
             SearchText = searchText

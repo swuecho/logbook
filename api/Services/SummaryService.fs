@@ -5,6 +5,9 @@ open Npgsql
 let summaryJson (note: Diary) =
     note.Note |> TipTap.getTextFromNote |> TextAnalysis.freqs |> Json.Convert.toJson
 
+let updateSummaryForNote (conn: NpgsqlConnection) (note: Diary) =
+    SummaryRepository.insertOrUpdate conn note.NoteId note.UserId (summaryJson note)
+
 let updateNoteSummary (conn: NpgsqlConnection) noteId userId =
     let summary =
         DiaryRepository.getByUserAndNoteId conn userId noteId

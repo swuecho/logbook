@@ -226,6 +226,19 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             use! savedDiary = readJson getResponse
             Assert.Equal(noteId, savedDiary.RootElement.GetProperty("noteId").GetString())
             Assert.Contains(noteText, savedDiary.RootElement.GetProperty("note").GetString())
+
+            let! listResponse =
+                sendWithToken client HttpMethod.Get ApiPaths.diary token None
+
+            Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode)
+
+            use! summaries = readJson listResponse
+
+            let savedSummary =
+                summaries.RootElement.EnumerateArray()
+                |> Seq.find (fun summary -> summary.GetProperty("noteId").GetString() = noteId)
+
+            Assert.True(savedSummary.GetProperty("note").GetRawText().Length > 2)
         }
 
     [<DatabaseFact>]
