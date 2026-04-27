@@ -252,6 +252,33 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+let listStaleSummaryIds = """-- name: ListStaleSummaryIds :many
+SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
+FROM diary d
+LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated
+"""
+
+
+
+
+let ListStaleSummaryIds (db: NpgsqlConnection)  =
+  let reader = fun (read:RowReader) -> {
+    Id = read.int "id"
+    UserId = read.int "user_id"
+    NoteId = read.string "note_id"
+    Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
+    LastUpdated = read.dateTime "last_updated"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listStaleSummaryIds
+  |> Sql.execute reader
+
+
+
 
 
 
@@ -502,7 +529,6 @@ let UpdateDiarySearch (db: NpgsqlConnection)  (arg: UpdateDiarySearchParams)  =
   |> Sql.query updateDiarySearch
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.stringOrNone arg.SearchTerms; "@separator", Sql.string arg.Separator ]
   |> Sql.executeNonQuery
-
 
 
 

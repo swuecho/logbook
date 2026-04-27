@@ -1,6 +1,7 @@
 module DiaryHandlers
 
 open Falco
+open Microsoft.Extensions.DependencyInjection
 
 let listDiaryIds: HttpHandler =
     fun ctx ->
@@ -27,10 +28,11 @@ let getById: HttpHandler =
 let save: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
+        let summaryQueue = ctx.RequestServices.GetRequiredService<SummaryBackgroundService.SummaryUpdateQueue>()
 
         Json.Request.mapJson
             (fun (note: Diary) ->
-                DiaryService.saveDiary requestContext.DbSession requestContext.UserId note
+                DiaryService.saveDiary requestContext.DbSession summaryQueue requestContext.UserId note
                 |> HandlerResponse.jsonHandler)
             ctx
 

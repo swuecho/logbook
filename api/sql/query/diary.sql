@@ -30,6 +30,12 @@ FROM diary d
 LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
 WHERE (s.id IS NULL OR d.last_updated > s.last_updated) AND d.user_id = $1;
 
+-- name: ListStaleSummaryIds :many
+SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
+FROM diary d
+LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated;
+
 
 -- name: AddNote :one
 INSERT INTO diary (note_id, user_id, note, last_updated) VALUES ($1, $2, $3, now())  

@@ -63,15 +63,18 @@ let getOrCreateDiary (db: DbSession) userId noteId =
         with :? NoResultsException ->
             DiaryRepository.addOrUpdate conn noteId userId "")
 
-let saveDiary (db: DbSession) userId (note: Diary) =
-    db.WithTransaction(fun conn ->
-        let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
-        let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
-        SummaryService.updateSummaryForNote conn saved
+let saveDiary (db: DbSession) (summaryQueue: SummaryBackgroundService.SummaryUpdateQueue) userId (note: Diary) =
+    let saved =
+        db.WithTransaction(fun conn ->
+            let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+            let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
 
-        { saved with
-            SearchText = searchText
-            SearchTerms = searchTerms })
+            { saved with
+                SearchText = searchText
+                SearchTerms = searchTerms })
+
+    summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
+    saved
 
 let search (db: DbSession) userId query =
     let terms = TextAnalysis.searchTerms query

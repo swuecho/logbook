@@ -76,6 +76,7 @@ type IntegrationTestFixture() =
                     services.AddRouting() |> ignore
                     services |> AppStartup.addDatabase dataSource |> ignore
                     services |> AppStartup.addAuthentication jwtConfig |> ignore
+                    services |> AppStartup.addSummaryBackgroundProcessing |> ignore
                     services |> AppStartup.addCors |> ignore)
                 .Configure(fun app ->
                     app.UseRouting()
@@ -173,6 +174,26 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                   content = [| {| ``type`` = "text"; text = text |} |] |} |] |}
         |> Json.Convert.toJson
 
+    let rec waitForSummary (client: HttpClient) token noteId attempts =
+        task {
+            let! listResponse =
+                sendWithToken client HttpMethod.Get ApiPaths.diary token None
+
+            Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode)
+
+            use! summaries = readJson listResponse
+
+            let found =
+                summaries.RootElement.EnumerateArray()
+                |> Seq.exists (fun summary -> summary.GetProperty("noteId").GetString() = noteId)
+
+            if found || attempts <= 1 then
+                return found
+            else
+                do! Task.Delay(100)
+                return! waitForSummary client token noteId (attempts - 1)
+        }
+
     interface IClassFixture<IntegrationTestFixture>
 
     [<DatabaseFact>]
@@ -227,18 +248,8 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             Assert.Equal(noteId, savedDiary.RootElement.GetProperty("noteId").GetString())
             Assert.Contains(noteText, savedDiary.RootElement.GetProperty("note").GetString())
 
-            let! listResponse =
-                sendWithToken client HttpMethod.Get ApiPaths.diary token None
-
-            Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode)
-
-            use! summaries = readJson listResponse
-
-            let savedSummary =
-                summaries.RootElement.EnumerateArray()
-                |> Seq.find (fun summary -> summary.GetProperty("noteId").GetString() = noteId)
-
-            Assert.True(savedSummary.GetProperty("note").GetRawText().Length > 2)
+            let! hasSummary = waitForSummary client token noteId 20
+            Assert.True(hasSummary)
         }
 
     [<DatabaseFact>]

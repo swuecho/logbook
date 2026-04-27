@@ -28,6 +28,7 @@
     <Compile Include="Services/TextAnalysis.fs" />
     <Compile Include="Services/SearchIndexService.fs" />
     <Compile Include="Services/SummaryService.fs" />
+    <Compile Include="Services/SummaryBackgroundService.fs" />
     <Compile Include="Infrastructure/JwtService.fs" />
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/DiaryService.fs" />
