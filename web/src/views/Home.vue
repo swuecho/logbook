@@ -24,7 +24,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useQuery } from '@tanstack/vue-query';
 import moment from 'moment';
 import DiaryEditor from "@/components/DiaryEditor";
 import TodoStrip from '@/components/TodoStrip.vue';
@@ -40,10 +41,17 @@ const diaryIds = ref(new Set());
 
 let intervalId = null;
 
+const { data: diaryIdsData } = useQuery({
+  queryKey: ['diaryIds'],
+  queryFn: getDiaryIds,
+});
+
+watch(diaryIdsData, (ids) => {
+  diaryIds.value = new Set(ids || []);
+}, { immediate: true });
+
 onMounted(async () => {
   date.value = now.value.format("YYYYMMDD")
-  const ids = await getDiaryIds();
-  diaryIds.value = new Set(ids);
   intervalId = setInterval(() => now.value = moment(), 1000);
 });
 
