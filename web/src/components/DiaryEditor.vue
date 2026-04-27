@@ -9,6 +9,7 @@
         output="json"
         :content="content"
         :extensions="extensions"
+        :tooltip="false"
         @onUpdate="debouncedOnUpdate"
         @onCreate="onCreate"
         :readonly="!isPrimaryTab"

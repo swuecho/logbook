@@ -4,6 +4,7 @@
                         output="json"
                         :content="content"
                         :extensions="extensions"
+                        :tooltip="false"
                         :readonly="true"
                         :enable-char-count="false"
                         @onCreate="$emit('init', $event)"

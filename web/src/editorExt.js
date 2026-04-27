@@ -48,9 +48,37 @@ const legacyNodeTypes = {
   horizontal_rule: 'horizontalRule',
 };
 
+const legacyMarkTypes = {
+  text_color: 'textStyle',
+  text_style: 'textStyle',
+};
+
+const legacyColorAttrs = ['color', 'textColor', 'text_color', 'value'];
+
 export function normalizeTiptapDoc(value) {
   if (!value || typeof value !== 'object') return emptyDoc();
   if (!value.type) return emptyDoc();
+
+  const normalizeMark = (mark) => {
+    if (!mark || typeof mark !== 'object') return mark;
+
+    const type = legacyMarkTypes[mark.type] || mark.type;
+    const normalized = {
+      ...mark,
+      type,
+    };
+
+    if (mark.type === 'text_color') {
+      const attrs = mark.attrs || {};
+      const color = legacyColorAttrs.map((key) => attrs[key]).find(Boolean);
+      normalized.attrs = {
+        ...attrs,
+        color,
+      };
+    }
+
+    return normalized;
+  };
 
   const normalizeNode = (node) => {
     if (!node || typeof node !== 'object') return node;
@@ -69,6 +97,10 @@ export function normalizeTiptapDoc(value) {
       };
     }
 
+    if (Array.isArray(node.marks)) {
+      normalized.marks = node.marks.map(normalizeMark);
+    }
+
     if (Array.isArray(node.content)) {
       normalized.content = node.content.map(normalizeNode);
     }
@@ -80,6 +112,11 @@ export function normalizeTiptapDoc(value) {
 }
 
 const hiddenToolbarButton = { button: null, bubble: false };
+const OrderedListWithoutListItem = OrderedList.extend({
+  addExtensions() {
+    return [];
+  },
+});
 
 function toolbarOptions(toolbar, extensionOptions = {}) {
   if (toolbar !== 'writing') return extensionOptions;
@@ -108,7 +145,7 @@ export function createExtensions({ toolbar = 'full' } = {}) {
     TaskList.configure({ bubble: true }),
     LineHeight.configure(toolbarOptions(toolbar)),
     BulletList,
-    OrderedList,
+    OrderedListWithoutListItem,
     Indent.configure(toolbarOptions(toolbar)),
     TextAlign.configure(toolbarOptions(toolbar)),
     Link,
