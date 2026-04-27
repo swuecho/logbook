@@ -55,8 +55,10 @@ let AddNote (db: NpgsqlConnection)  (arg: AddNoteParams)  =
 let checkIdStale = """-- name: CheckIdStale :one
 SELECT count(*)  > 0 as stale
 FROM diary d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id AND d.user_id = @user_id AND d.note_id = @note_id
-WHERE s.id IS NULL OR d.last_updated > s.last_updated
+LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
+WHERE d.user_id = @user_id
+  AND d.note_id = @note_id
+  AND (s.id IS NULL OR d.last_updated > s.last_updated)
 """
 
 
@@ -225,7 +227,7 @@ let DiaryByUserIDAndID (db: NpgsqlConnection)  (arg: DiaryByUserIDAndIDParams)  
 let getStaleIdsOfUserId = """-- name: GetStaleIdsOfUserId :many
 SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
 FROM diary d
-LEFT JOIN summary s ON d.id = s.id AND d.user_id = s.user_id 
+LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
 WHERE (s.id IS NULL OR d.last_updated > s.last_updated) AND d.user_id = @user_id
 """
 
@@ -500,7 +502,6 @@ let UpdateDiarySearch (db: NpgsqlConnection)  (arg: UpdateDiarySearchParams)  =
   |> Sql.query updateDiarySearch
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.stringOrNone arg.SearchTerms; "@separator", Sql.string arg.Separator ]
   |> Sql.executeNonQuery
-
 
 
 

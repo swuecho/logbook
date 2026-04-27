@@ -90,6 +90,15 @@ let ``buildSnippet centers long snippets on first matching term`` () =
     Assert.True(snippet.Length <= 186)
 
 [<Fact>]
+let ``summary stale queries use diary logical key`` () =
+    Assert.Contains("d.note_id = s.note_id", Diary.getStaleIdsOfUserId)
+    Assert.Contains("d.note_id = s.note_id", Diary.checkIdStale)
+    Assert.Contains("d.user_id = @user_id", Diary.checkIdStale)
+    Assert.Contains("d.note_id = @note_id", Diary.checkIdStale)
+    Assert.DoesNotContain("d.id = s.id", Diary.getStaleIdsOfUserId)
+    Assert.DoesNotContain("d.id = s.id", Diary.checkIdStale)
+
+[<Fact>]
 let ``tipTapDocJsonToMarkdown test`` () =
     let json =
         """
