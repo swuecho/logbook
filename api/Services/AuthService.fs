@@ -31,27 +31,22 @@ let private tokenResponse userId role jwtKey audience =
     { AccessToken = jwt.AccessToken
       ExpiresIn = jwt.ExpiresIn }
 
-let private loginExistingUser conn credentials jwtKey audience =
+let private loginExistingUser conn credentials (jwtConfig: JwtService.JwtConfig) =
     let user = AuthUserRepository.getByEmail conn credentials.Username
 
     if Auth.validatePassword credentials.Password user.Password then
         AuthUserRepository.updateLastLogin conn user.Id
-        LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtKey audience)
+        LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience)
     else
         loginFailed
 
-let private createAndLoginUser conn credentials jwtKey audience =
+let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig) =
     let authUser = createNewUser conn credentials.Username credentials.Password
-    LoginSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtKey audience)
+    LoginSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtConfig.Secret jwtConfig.Audience)
 
-let loginOrRegister (db: DbSession) (credentials: Login) =
+let loginOrRegister (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
     db.WithConnection(fun conn ->
-        let email = credentials.Username
-        let secret = JwtSecretRepository.getByName conn AppIdentity.jwtAudienceName
-        let jwtKey = secret.Secret
-        let audience = secret.Audience
-
-        if AuthUserRepository.existsByEmail conn email then
-            loginExistingUser conn credentials jwtKey audience
-        else
-            createAndLoginUser conn credentials jwtKey audience)
+        try
+            loginExistingUser conn credentials jwtConfig
+        with :? NoResultsException ->
+            createAndLoginUser conn credentials jwtConfig)

@@ -6,11 +6,15 @@ open JiebaNet
 
 let private resourceDir = __SOURCE_DIRECTORY__ + "/../Resources/jieba"
 let private searchableToken = Regex(@"[\p{L}\p{N}]", RegexOptions.Compiled)
+let private segmenterLock = obj ()
+
+let private segmenter =
+    lazy
+        (Segmenter.ConfigManager.ConfigFileBaseDir <- resourceDir
+         Segmenter.JiebaSegmenter())
 
 let private segment (text: string) =
-    Segmenter.ConfigManager.ConfigFileBaseDir <- resourceDir
-    let seg = Segmenter.JiebaSegmenter()
-    seg.Cut(text)
+    lock segmenterLock (fun () -> segmenter.Value.Cut(text) |> Seq.toArray)
 
 let searchTerms (text: string) =
     if String.IsNullOrWhiteSpace text then

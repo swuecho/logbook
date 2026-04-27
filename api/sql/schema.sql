@@ -40,6 +40,7 @@ ALTER TABLE diary ADD COLUMN IF NOT EXISTS search_terms text[] DEFAULT ARRAY[]::
 
 -- note_id and user_id are unique together
 CREATE UNIQUE INDEX IF NOT EXISTS diary_id_user_id_idx ON diary (note_id, user_id);
+CREATE INDEX IF NOT EXISTS diary_user_note_id_idx ON diary (user_id, note_id DESC);
 CREATE INDEX IF NOT EXISTS diary_search_terms_idx ON diary USING GIN (search_terms);
 
 CREATE TABLE IF NOT EXISTS summary (

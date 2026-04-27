@@ -48,6 +48,8 @@ let addCors (services: IServiceCollection) =
     services.AddCors(fun options -> options.AddPolicy(corsPolicyName, corsPolicy))
 
 let addAuthentication (jwtConfig: JwtService.JwtConfig) (services: IServiceCollection) =
+    services.AddSingleton<JwtService.JwtConfig>(jwtConfig) |> ignore
+
     services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(fun options ->
