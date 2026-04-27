@@ -54,6 +54,10 @@ const saveError = ref('');
 const isMobileToolbar = ref(false);
 let mobileToolbarMediaQuery = null;
 
+function areDocsEqual(left, right) {
+  return JSON.stringify(normalizeTiptapDoc(left)) === JSON.stringify(normalizeTiptapDoc(right));
+}
+
 const toolbarMode = computed(() => (isMobileToolbar.value ? 'writing' : 'full'));
 const editorKey = computed(() => `editor-${props.date}-${toolbarMode.value}`);
 const extensions = computed(() => createExtensions({ toolbar: toolbarMode.value }));
@@ -107,8 +111,10 @@ watch(noteData, (newData) => {
   if (newData) {
     if (newData.note) {
       try {
-        const noteObj = typeof newData.note === 'string' ? JSON.parse(newData.note) : newData.note;
-        content.value = normalizeTiptapDoc(noteObj);
+        const nextContent = normalizeTiptapDoc(
+          typeof newData.note === 'string' ? JSON.parse(newData.note) : newData.note
+        );
+        content.value = nextContent;
       } catch (parseError) {
         console.error('Failed to parse diary note:', parseError);
         content.value = emptyDoc();
@@ -119,7 +125,10 @@ watch(noteData, (newData) => {
 
     // Update the editor content when new data is loaded
     if (editorRef.value) {
-      editorRef.value.commands.setContent(content.value);
+      const editorContent = editorRef.value.getJSON();
+      if (!areDocsEqual(editorContent, content.value)) {
+        editorRef.value.commands.setContent(content.value);
+      }
     }
   }
 });
@@ -150,8 +159,12 @@ const editorStatusClass = computed(() => ({
 const { mutate: updateNote, isPending: isSaving } = useMutation({
   mutationFn: saveNote,
   networkMode: 'always',
-  onMutate: () => {
+  onMutate: (note) => {
     saveError.value = '';
+    queryClient.setQueryData(['diaryContent', note.noteId], (current) => ({
+      ...(current || {}),
+      ...note,
+    }));
   },
   onSuccess: () => {
     // queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date, ] });
