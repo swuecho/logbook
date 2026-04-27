@@ -1,4 +1,5 @@
 module TipTap
+open System
 open System.Text.Json
 open FSharp.Data
 
@@ -9,6 +10,17 @@ let private isTodoListType (nodeType: string) =
 
 let private isTodoItemType (nodeType: string) =
     nodeType = "todo_item" || nodeType = "taskItem"
+
+type TipTapDocument =
+    { ``type``: string
+      content: JsonElement array }
+
+let containsTodoNodeMarker (note: string) =
+    not (String.IsNullOrEmpty note)
+    && (note.Contains("todo_list", StringComparison.Ordinal)
+        || note.Contains("todo_item", StringComparison.Ordinal)
+        || note.Contains("taskList", StringComparison.Ordinal)
+        || note.Contains("taskItem", StringComparison.Ordinal))
 
 let private getTodoDoneAttr (element: JsonElement) =
     match element.TryGetProperty("attrs") with
@@ -62,13 +74,16 @@ let extractTodoList (note: string) =
             | _ -> ()
         }
 
-    try
-        let jsonDocument = JsonDocument.Parse(note)
-        let root = jsonDocument.RootElement
-        extractTodoItems root |> Seq.toList
-    with ex ->
-        printfn "%A" ex
+    if not (containsTodoNodeMarker note) then
         []
+    else
+        try
+            let jsonDocument = JsonDocument.Parse(note)
+            let root = jsonDocument.RootElement
+            extractTodoItems root |> Seq.toList
+        with ex ->
+            printfn "%A" ex
+            []
 
 // Function to construct a tiptap doc with todoLists and note_id
 let constructTipTapDoc
@@ -76,8 +91,8 @@ let constructTipTapDoc
         {| noteId: string
            todoList: JsonElement list |} list)
     =
-    {| ``type`` = "doc"
-       content =
+    { ``type`` = "doc"
+      content =
         [| for todoList in todoLists do
                yield
                    JsonSerializer.Deserialize<JsonElement>(
@@ -109,7 +124,7 @@ let constructTipTapDoc
                         """
                    )
 
-               yield! todoList.todoList |] |}
+               yield! todoList.todoList |] }
 
 (*
 

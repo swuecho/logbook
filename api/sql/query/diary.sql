@@ -7,6 +7,19 @@ SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM 
 -- name: ListDiaryByUserID :many
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE user_id = $1 order by note_id DESC;
 
+-- name: ListDiaryWithTodoByUserID :many
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
+FROM diary
+WHERE user_id = $1
+  AND note != ''
+  AND (
+    note LIKE '%todo_list%'
+    OR note LIKE '%todo_item%'
+    OR note LIKE '%taskList%'
+    OR note LIKE '%taskItem%'
+  )
+ORDER BY note_id DESC;
+
 -- name: ListDiaryIDByUserID :many
 SELECT note_id FROM diary WHERE user_id = $1 AND note != '' order by note_id DESC;
 

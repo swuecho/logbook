@@ -15,6 +15,7 @@ let builder = WebApplication.CreateBuilder()
 builder.Services |> AppStartup.addDatabase dataSource |> ignore
 builder.Services |> AppStartup.addAuthentication jwtConfig |> ignore
 builder.Services |> AppStartup.addSummaryBackgroundProcessing |> ignore
+builder.Services |> AppStartup.addTodoCache |> ignore
 builder.Services |> AppStartup.addCors |> ignore
 
 let wapp = builder.Build()

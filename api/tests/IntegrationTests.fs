@@ -77,6 +77,7 @@ type IntegrationTestFixture() =
                     services |> AppStartup.addDatabase dataSource |> ignore
                     services |> AppStartup.addAuthentication jwtConfig |> ignore
                     services |> AppStartup.addSummaryBackgroundProcessing |> ignore
+                    services |> AppStartup.addTodoCache |> ignore
                     services |> AppStartup.addCors |> ignore)
                 .Configure(fun app ->
                     app.UseRouting()

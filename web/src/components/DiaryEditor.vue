@@ -49,6 +49,7 @@ const props = defineProps({
 
 const content = ref(emptyDoc());
 const noteJsonRef = ref(null);
+const lastSubmittedNote = ref(null);
 const lastSavedAt = ref(null);
 const saveError = ref('');
 const isMobileToolbar = ref(false);
@@ -65,6 +66,11 @@ function hasMeaningfulContent(node) {
   if (node.type === 'image' || node.type === 'iframe') return true;
   if (Array.isArray(node.content)) return node.content.some(hasMeaningfulContent);
   return false;
+}
+
+function notePayloadFromDoc(doc) {
+  const normalized = normalizeTiptapDoc(doc);
+  return hasMeaningfulContent(normalized) ? JSON.stringify(normalized) : '';
 }
 
 const toolbarMode = computed(() => (isMobileToolbar.value ? 'writing' : 'full'));
@@ -93,6 +99,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   debouncedSave.flush();
+  invalidateAfterSave.flush();
   debouncedOnUpdate.cancel();
 
   if (!mobileToolbarMediaQuery) return;
@@ -127,12 +134,15 @@ watch(noteData, (newData) => {
           typeof newData.note === 'string' ? JSON.parse(newData.note) : newData.note
         );
         content.value = nextContent;
+        lastSubmittedNote.value = notePayloadFromDoc(nextContent);
       } catch (parseError) {
         console.error('Failed to parse diary note:', parseError);
         content.value = emptyDoc();
+        lastSubmittedNote.value = '';
       }
     } else {
       content.value = emptyDoc();
+      lastSubmittedNote.value = '';
     }
 
     // Update the editor content when new data is loaded
@@ -147,6 +157,12 @@ watch(noteData, (newData) => {
 
 
 const editorRef = ref(null);
+
+const invalidateAfterSave = debounce((noteId) => {
+  queryClient.invalidateQueries({ queryKey: ['diaryIds'] });
+  queryClient.invalidateQueries({ queryKey: ['todoContent'] });
+  queryClient.invalidateQueries({ queryKey: ['MdContent', noteId] });
+}, 2000, { maxWait: 5000 });
 
 const onCreate = ({ editor }) => {
   editorRef.value = editor;
@@ -185,9 +201,7 @@ const { mutate: updateNote, isPending: isSaving } = useMutation({
     if (note.noteId === props.date) {
       lastSavedAt.value = new Date();
     }
-    queryClient.invalidateQueries({ queryKey: ['diaryIds'] });
-    queryClient.invalidateQueries({ queryKey: ['todoContent'] });
-    queryClient.invalidateQueries({ queryKey: ['MdContent', note.noteId] });
+    invalidateAfterSave(note.noteId);
   },
   onError: (error) => {
     if (isUnauthorized(error)) {
@@ -202,7 +216,13 @@ const { mutate: updateNote, isPending: isSaving } = useMutation({
 
 const onUpdate = (noteId, output, editor) => {
   noteJsonRef.value = normalizeTiptapDoc(editor?.getJSON ? editor.getJSON() : output);
-  const note = hasMeaningfulContent(noteJsonRef.value) ? JSON.stringify(noteJsonRef.value) : '';
+  const note = notePayloadFromDoc(noteJsonRef.value);
+
+  if (note === lastSubmittedNote.value) {
+    return;
+  }
+
+  lastSubmittedNote.value = note;
   updateNote(
     {
       noteId,

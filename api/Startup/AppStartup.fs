@@ -76,6 +76,10 @@ let addSummaryBackgroundProcessing (services: IServiceCollection) =
     services.AddHostedService<SummaryBackgroundService.SummaryRefreshWorker>() |> ignore
     services
 
+let addTodoCache (services: IServiceCollection) =
+    services.AddSingleton<TodoCacheService.TodoDocumentCache>() |> ignore
+    services
+
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let isAuthenticated (context: HttpContext) =
         context.User.Identity <> null && context.User.Identity.IsAuthenticated

@@ -99,6 +99,53 @@ let ``summary stale queries use diary logical key`` () =
     Assert.DoesNotContain("d.id = s.id", Diary.checkIdStale)
 
 [<Fact>]
+let ``todo endpoint query only loads candidate todo notes`` () =
+    Assert.Contains("note LIKE '%todo_list%'", Diary.listDiaryWithTodoByUserID)
+    Assert.Contains("note LIKE '%todo_item%'", Diary.listDiaryWithTodoByUserID)
+    Assert.Contains("note LIKE '%taskList%'", Diary.listDiaryWithTodoByUserID)
+    Assert.Contains("note LIKE '%taskItem%'", Diary.listDiaryWithTodoByUserID)
+
+[<Fact>]
+let ``extractTodoList skips notes without todo node markers`` () =
+    let plainNote =
+        """
+        {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "No tasks here"
+                        }
+                    ]
+                }
+            ]
+        }
+        """
+
+    Assert.False(TipTap.containsTodoNodeMarker plainNote)
+    Assert.Empty(TipTap.extractTodoList plainNote)
+
+[<Fact>]
+let ``todo document cache reuses computed document until invalidated`` () =
+    let cache = TodoCacheService.TodoDocumentCache()
+    let mutable calls = 0
+
+    let createDocument () =
+        calls <- calls + 1
+        TipTap.constructTipTapDoc []
+
+    cache.GetOrCreate(1, createDocument) |> ignore
+    cache.GetOrCreate(1, createDocument) |> ignore
+    Assert.Equal(1, calls)
+
+    cache.Invalidate(1)
+    cache.GetOrCreate(1, createDocument) |> ignore
+    Assert.Equal(2, calls)
+
+[<Fact>]
 let ``tipTapDocJsonToMarkdown test`` () =
     let json =
         """
