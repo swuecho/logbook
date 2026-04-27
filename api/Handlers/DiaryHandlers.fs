@@ -13,7 +13,7 @@ let listSummaries: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
 
-        DiaryService.refreshAndListSummaries requestContext.DbSession requestContext.UserId
+        DiaryService.listSummaries requestContext.DbSession requestContext.UserId
         |> HandlerResponse.json ctx
 
 let getById: HttpHandler =
