@@ -58,6 +58,15 @@ function areDocsEqual(left, right) {
   return JSON.stringify(normalizeTiptapDoc(left)) === JSON.stringify(normalizeTiptapDoc(right));
 }
 
+function hasMeaningfulContent(node) {
+  if (!node) return false;
+  if (Array.isArray(node)) return node.some(hasMeaningfulContent);
+  if (node.type === 'text') return Boolean((node.text || '').trim());
+  if (node.type === 'image' || node.type === 'iframe') return true;
+  if (Array.isArray(node.content)) return node.content.some(hasMeaningfulContent);
+  return false;
+}
+
 const toolbarMode = computed(() => (isMobileToolbar.value ? 'writing' : 'full'));
 const editorKey = computed(() => `editor-${props.date}-${toolbarMode.value}`);
 const extensions = computed(() => createExtensions({ toolbar: toolbarMode.value }));
@@ -83,6 +92,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  debouncedSave.flush();
+  debouncedOnUpdate.cancel();
+
   if (!mobileToolbarMediaQuery) return;
 
   if (mobileToolbarMediaQuery.removeEventListener) {
@@ -166,13 +178,16 @@ const { mutate: updateNote, isPending: isSaving } = useMutation({
       ...note,
     }));
   },
-  onSuccess: () => {
+  onSuccess: (_data, note) => {
     // queryClient.invalidateQueries({ queryKey: ['diaryContent', props.date, ] });
     // if invalid the diaryContent, it will cause the editor to refresh content. 
     // will overwrite the current content delta.  (typed in after last put request)
-    lastSavedAt.value = new Date();
+    if (note.noteId === props.date) {
+      lastSavedAt.value = new Date();
+    }
+    queryClient.invalidateQueries({ queryKey: ['diaryIds'] });
     queryClient.invalidateQueries({ queryKey: ['todoContent'] });
-    queryClient.invalidateQueries({ queryKey: ['MdContent', props.date] });
+    queryClient.invalidateQueries({ queryKey: ['MdContent', note.noteId] });
   },
   onError: (error) => {
     if (isUnauthorized(error)) {
@@ -185,18 +200,31 @@ const { mutate: updateNote, isPending: isSaving } = useMutation({
 });
 
 
-const onUpdate = (output, editor) => {
+const onUpdate = (noteId, output, editor) => {
   noteJsonRef.value = normalizeTiptapDoc(editor?.getJSON ? editor.getJSON() : output);
+  const note = hasMeaningfulContent(noteJsonRef.value) ? JSON.stringify(noteJsonRef.value) : '';
   updateNote(
     {
-      noteId: props.date,
-      note: JSON.stringify(noteJsonRef.value),
+      noteId,
+      note,
     });
 };
 
-const debouncedOnUpdate = debounce(function (output, options) {
-  onUpdate(output, options);
-}, 500)
+const debouncedSave = debounce(function (noteId, output, options) {
+  onUpdate(noteId, output, options);
+}, 500);
+
+const debouncedOnUpdate = (output, options) => {
+  debouncedSave(props.date, output, options);
+};
+
+debouncedOnUpdate.cancel = () => debouncedSave.cancel();
+
+watch(() => props.date, (newDate, oldDate) => {
+  if (oldDate && newDate !== oldDate) {
+    debouncedSave.flush();
+  }
+}, { flush: 'sync' });
 
 
 

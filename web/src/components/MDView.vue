@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { Icon } from '@iconify/vue';
 import { exportMarkdown } from '@/services/markdown';
@@ -42,18 +42,21 @@ const copyToClipboard = async () => {
   }
 };
 
-const { isLoading, isError, data, error, refetch } = useQuery(
+const markdownQueryKey = computed(() => ['MdContent', props.noteId]);
+const isQueryEnabled = computed(() => Boolean(props.noteId));
+
+const { isLoading, isError, data, error } = useQuery(
   {
-    queryKey: ['MdContent', props.noteId],
+    queryKey: markdownQueryKey,
     queryFn: () => exportMarkdown(props.noteId),
-    enabled: false
+    enabled: isQueryEnabled
   });
 
 watch(isLoading, (isLoading) => {
   loading.value = isLoading;
 });
 watch(data, (data) => {
-  if (content) {
+  if (data !== undefined && data !== null) {
     content.value = data;
   }
 });
@@ -64,11 +67,9 @@ watch(isError, (hasError) => {
   }
 });
 
-watch(() => props.noteId, (noteId) => {
-  if (noteId) {
-    refetch();
-  }
-}, { immediate: true });
+watch(() => props.noteId, () => {
+  content.value = '';
+});
 </script>
 
 <style scoped>
