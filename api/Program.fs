@@ -3,15 +3,7 @@ open Microsoft.AspNetCore.Builder
 
 let dataSource = Database.Connection.createDataSource Database.Config.connStr
 
-if AppStartup.isEnvFlagEnabled "LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP" then
-    AppStartup.initializeDatabase dataSource
-
 let jwtConfig = AppStartup.initializeJwtConfig dataSource
-
-if AppStartup.isEnvFlagEnabled "LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP" then
-    AppStartup.initializeSearchIndex dataSource
-
-AppStartup.initializeTodoIndex dataSource
 
 let builder = WebApplication.CreateBuilder()
 builder.Services |> AppStartup.addDatabase dataSource |> ignore

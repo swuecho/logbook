@@ -32,17 +32,6 @@ let initializeJwtConfig (dataSource: NpgsqlDataSource) : JwtService.JwtConfig =
     { Secret = jwtSecret.Secret
       Audience = jwtSecret.Audience }
 
-let initializeDatabase (dataSource: NpgsqlDataSource) =
-    Database.InitDB.init dataSource |> ignore
-
-let initializeSearchIndex (dataSource: NpgsqlDataSource) =
-    use pgConn = dataSource.OpenConnection()
-    SearchIndexService.refreshSearchIndex pgConn
-
-let initializeTodoIndex (dataSource: NpgsqlDataSource) =
-    use pgConn = dataSource.OpenConnection()
-    DiaryService.precomputeTodoRows pgConn
-
 let corsPolicy (policyBuilder: CorsPolicyBuilder) =
     // Note: This is a very lax setting, but a good fit for local development.
     policyBuilder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin() |> ignore
