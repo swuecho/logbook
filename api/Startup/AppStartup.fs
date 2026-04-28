@@ -64,8 +64,15 @@ let addDatabase dataSource services =
     Database.Connection.addDatabase dataSource services
 
 let addSummaryBackgroundProcessing (services: IServiceCollection) =
-    services.AddSingleton<SummaryBackgroundService.SummaryUpdateQueue>() |> ignore
-    services.AddHostedService<SummaryBackgroundService.SummaryRefreshWorker>() |> ignore
+    services.AddSingleton<SummaryQueue.SummaryUpdateQueue>() |> ignore
+    services
+
+let addIndexBackgroundProcessing (services: IServiceCollection) =
+    services.AddSingleton<IndexQueue.IndexUpdateQueue>() |> ignore
+    services
+
+let addBackgroundJobsWorker (services: IServiceCollection) =
+    services.AddHostedService<BackgroundJobsService.Worker>() |> ignore
     services
 
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =

@@ -114,6 +114,8 @@ let DeleteAuthUser (db: NpgsqlConnection)  (email: string)  =
 
 
 
+
+
 let getAllAuthUsers = """-- name: GetAllAuthUsers :many
 SELECT id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined FROM auth_user ORDER BY id
 """
@@ -211,6 +213,7 @@ let GetAuthUserByID (db: NpgsqlConnection)  (id: int32)  =
   |> Sql.query getAuthUserByID
   |> Sql.parameters  [ "@id", Sql.int id ]
   |> Sql.executeRow reader
+
 
 
 
@@ -337,6 +340,7 @@ let GetUsersWithDiaryCount (db: NpgsqlConnection)  =
 
 
 
+
 let listAuthUsers = """-- name: ListAuthUsers :many
 SELECT id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined FROM auth_user ORDER BY id LIMIT @limit OFFSET @offset
 """
@@ -367,6 +371,9 @@ let ListAuthUsers (db: NpgsqlConnection)  (arg: ListAuthUsersParams) =
   |> Sql.query listAuthUsers
   |> Sql.parameters  [ "@limit", Sql.int arg.Limit; "@offset", Sql.int arg.Offset ]
   |> Sql.execute reader
+
+
+
 
 
 

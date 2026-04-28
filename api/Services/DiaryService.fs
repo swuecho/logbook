@@ -69,16 +69,14 @@ let private hasSearchIndex (diary: Diary) =
     || diary.SearchTerms.Length > 0
 
 let private updateTodoForNote conn (diary: Diary) =
-    let todoList = TipTap.extractTodoList diary.Note
-
-    if List.isEmpty todoList then
-        TodoRepository.delete conn diary.NoteId diary.UserId
-    else
-        TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId (TipTap.serializeTodoList todoList)
+    match TipTap.extractTodoListJson diary.Note with
+    | None -> TodoRepository.delete conn diary.NoteId diary.UserId
+    | Some todosJson -> TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId todosJson
 
 let saveDiary
     (db: DbSession)
-    (summaryQueue: SummaryBackgroundService.SummaryUpdateQueue)
+    (summaryQueue: SummaryQueue.SummaryUpdateQueue)
+    (indexQueue: IndexQueue.IndexUpdateQueue)
     userId
     (note: Diary)
     =
@@ -90,28 +88,18 @@ let saveDiary
                 with :? NoResultsException ->
                     None
 
-            let affectsTodo =
-                TipTap.containsTodoNodeMarker note.Note
-                || (existing |> Option.exists (fun diary -> TipTap.containsTodoNodeMarker diary.Note))
-
             match existing with
             | Some diary when diary.Note = note.Note && hasSearchIndex diary ->
                 diary, false
             | _ ->
                 let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
-                let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
-                let saved =
-                    { saved with
-                        SearchText = searchText
-                        SearchTerms = searchTerms }
-
-                if affectsTodo then
-                    updateTodoForNote conn saved
-
+                // Search indexing + todo extraction can be CPU-heavy; run them async in background.
+                // The periodic sweep will repair if the queue misses an item (e.g. process restart).
                 saved, true)
 
     if changed then
         summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
+        indexQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
 
     saved
 

@@ -46,4 +46,10 @@ type Summary = {
      Content: string
 }
 
+type Todo = {
+     NoteId: string
+     UserId: int32
+     Todos: string
+}
+
 

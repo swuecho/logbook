@@ -22,6 +22,9 @@ serve:
 	$(DOTNET) build
 	$(DOTNET) watch run
 
+dev:
+	. ./env.sh && $(DOTNET) restore && $(DOTNET) watch run
+
 migrate:
 	$(DOTNET) run --project Migrations -- "$(DATABASE_URL)"
 

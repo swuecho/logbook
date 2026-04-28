@@ -19,3 +19,6 @@ let delete (conn: NpgsqlConnection) noteId userId =
         { NoteId = noteId
           UserId = userId }
     |> ignore
+
+let deleteStaleTodos (conn: NpgsqlConnection) =
+    Todo.DeleteStaleTodos conn |> ignore

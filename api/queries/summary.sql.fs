@@ -28,6 +28,8 @@ open System.Data
 
 
 
+
+
 let getSummaryByUserIDAndID = """-- name: GetSummaryByUserIDAndID :one
 SELECT id, note_id, user_id, created_at, last_updated, content FROM summary WHERE user_id = @user_id and note_id=@note_id
 """
@@ -96,6 +98,8 @@ let GetSummaryByUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
+
+
 let insertSummary = """-- name: InsertSummary :exec
 insert INTO summary (note_id, user_id, content, last_updated) 
 VALUES (@note_id, @user_id, @content, now()) 
@@ -143,6 +147,9 @@ let LastUpdated (db: NpgsqlConnection)  (arg: LastUpdatedParams)  =
   |> Sql.query lastUpdated
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId ]
   |> Sql.executeRow reader
+
+
+
 
 
 

@@ -64,7 +64,12 @@ WHERE s.id IS NULL OR d.last_updated > s.last_updated;
 
 -- name: AddNote :one
 INSERT INTO diary (note_id, user_id, note, last_updated) VALUES ($1, $2, $3, now())  
-ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+ON CONFLICT (note_id, user_id) DO UPDATE
+SET note = EXCLUDED.note,
+    last_updated = EXCLUDED.last_updated,
+    -- Invalidate search index so background recovery can rebuild after restarts.
+    search_text = '',
+    search_terms = ARRAY[]::text[]
 RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated;
 
 -- name: UpdateDiarySearch :exec

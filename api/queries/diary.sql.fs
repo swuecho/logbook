@@ -14,7 +14,12 @@ open System.Data
 
 let addNote = """-- name: AddNote :one
 INSERT INTO diary (note_id, user_id, note, last_updated) VALUES (@note_id, @user_id, @note, now())  
-ON CONFLICT (note_id, user_id) DO UPDATE SET note = EXCLUDED.note, last_updated =  EXCLUDED.last_updated
+ON CONFLICT (note_id, user_id) DO UPDATE
+SET note = EXCLUDED.note,
+    last_updated = EXCLUDED.last_updated,
+    -- Invalidate search index so background recovery can rebuild after restarts.
+    search_text = '',
+    search_terms = ARRAY[]::text[]
 RETURNING id, user_id, note_id, note, search_text, search_terms, last_updated
 """
 
@@ -150,6 +155,8 @@ let DeleteDiary (db: NpgsqlConnection)  (id: int32)  =
 
 
 
+
+
 let diaryByID = """-- name: DiaryByID :one
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE id = @id
 """
@@ -252,31 +259,6 @@ let GetStaleIdsOfUserId (db: NpgsqlConnection)  (userId: int32) =
 
 
 
-let listStaleSummaryIds = """-- name: ListStaleSummaryIds :many
-SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
-FROM diary d
-LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
-WHERE s.id IS NULL OR d.last_updated > s.last_updated
-"""
-
-
-
-
-let ListStaleSummaryIds (db: NpgsqlConnection)  =
-  let reader = fun (read:RowReader) -> {
-    Id = read.int "id"
-    UserId = read.int "user_id"
-    NoteId = read.string "note_id"
-    Note = read.string "note"
-    SearchText = read.string "search_text"
-    SearchTerms = read.stringArray "search_terms"
-    LastUpdated = read.dateTime "last_updated"}
-  
-  db 
-  |> Sql.existingConnection
-  |> Sql.query listStaleSummaryIds
-  |> Sql.execute reader
-
 
 
 
@@ -315,38 +297,6 @@ let ListDiaries (db: NpgsqlConnection)  =
   |> Sql.execute reader
 
 
-let listDiaryWithTodo = """-- name: ListDiaryWithTodo :many
-SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
-FROM diary
-WHERE note != ''
-  AND (
-    note LIKE '%todo_list%'
-    OR note LIKE '%todo_item%'
-    OR note LIKE '%taskList%'
-    OR note LIKE '%taskItem%'
-  )
-ORDER BY user_id, note_id DESC
-"""
-
-
-
-
-let ListDiaryWithTodo (db: NpgsqlConnection) =
-  let reader = fun (read:RowReader) -> {
-    Id = read.int "id"
-    UserId = read.int "user_id"
-    NoteId = read.string "note_id"
-    Note = read.string "note"
-    SearchText = read.string "search_text"
-    SearchTerms = read.stringArray "search_terms"
-    LastUpdated = read.dateTime "last_updated"}
-  
-  db 
-  |> Sql.existingConnection
-  |> Sql.query listDiaryWithTodo
-  |> Sql.execute reader
-
-
 
 
 
@@ -375,6 +325,73 @@ let ListDiaryByUserID (db: NpgsqlConnection)  (userId: int32) =
   |> Sql.query listDiaryByUserID
   |> Sql.parameters  [ "@user_id", Sql.int userId ]
   |> Sql.execute reader
+
+
+
+
+
+
+
+
+let listDiaryIDByUserID = """-- name: ListDiaryIDByUserID :many
+SELECT note_id FROM diary WHERE user_id = @user_id AND note != '' order by note_id DESC
+"""
+
+
+
+
+let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
+  let reader = fun (read:RowReader) -> read.string "note_id"
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listDiaryIDByUserID
+  |> Sql.parameters  [ "@user_id", Sql.int userId ]
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+let listDiaryWithTodo = """-- name: ListDiaryWithTodo :many
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
+FROM diary
+WHERE note != ''
+  AND (
+    note LIKE '%todo_list%'
+    OR note LIKE '%todo_item%'
+    OR note LIKE '%taskList%'
+    OR note LIKE '%taskItem%'
+  )
+ORDER BY user_id, note_id DESC
+"""
+
+
+
+
+let ListDiaryWithTodo (db: NpgsqlConnection)  =
+  let reader = fun (read:RowReader) -> {
+    Id = read.int "id"
+    UserId = read.int "user_id"
+    NoteId = read.string "note_id"
+    Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
+    LastUpdated = read.dateTime "last_updated"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listDiaryWithTodo
+  |> Sql.execute reader
+
+
+
+
+
+
 
 
 let listDiaryWithTodoByUserID = """-- name: ListDiaryWithTodoByUserID :many
@@ -417,29 +434,6 @@ let ListDiaryWithTodoByUserID (db: NpgsqlConnection)  (userId: int32) =
 
 
 
-let listDiaryIDByUserID = """-- name: ListDiaryIDByUserID :many
-SELECT note_id FROM diary WHERE user_id = @user_id AND note != '' order by note_id DESC
-"""
-
-
-
-
-let ListDiaryIDByUserID (db: NpgsqlConnection)  (userId: int32) =
-  let reader = fun (read:RowReader) -> read.string "note_id"
-  
-  db 
-  |> Sql.existingConnection
-  |> Sql.query listDiaryIDByUserID
-  |> Sql.parameters  [ "@user_id", Sql.int userId ]
-  |> Sql.execute reader
-
-
-
-
-
-
-
-
 let listMissingSearchIndex = """-- name: ListMissingSearchIndex :many
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
 FROM diary
@@ -462,6 +456,38 @@ let ListMissingSearchIndex (db: NpgsqlConnection)  =
   db 
   |> Sql.existingConnection
   |> Sql.query listMissingSearchIndex
+  |> Sql.execute reader
+
+
+
+
+
+
+
+
+let listStaleSummaryIds = """-- name: ListStaleSummaryIds :many
+SELECT d.id, d.user_id, d.note_id, d.note, d.search_text, d.search_terms, d.last_updated
+FROM diary d
+LEFT JOIN summary s ON d.note_id = s.note_id AND d.user_id = s.user_id
+WHERE s.id IS NULL OR d.last_updated > s.last_updated
+"""
+
+
+
+
+let ListStaleSummaryIds (db: NpgsqlConnection)  =
+  let reader = fun (read:RowReader) -> {
+    Id = read.int "id"
+    UserId = read.int "user_id"
+    NoteId = read.string "note_id"
+    Note = read.string "note"
+    SearchText = read.string "search_text"
+    SearchTerms = read.stringArray "search_terms"
+    LastUpdated = read.dateTime "last_updated"}
+  
+  db 
+  |> Sql.existingConnection
+  |> Sql.query listStaleSummaryIds
   |> Sql.execute reader
 
 
@@ -595,6 +621,10 @@ let UpdateDiarySearch (db: NpgsqlConnection)  (arg: UpdateDiarySearchParams)  =
   |> Sql.query updateDiarySearch
   |> Sql.parameters  [ "@note_id", Sql.string arg.NoteId; "@user_id", Sql.int arg.UserId; "@search_text", Sql.string arg.SearchText; "@search_terms", Sql.stringOrNone arg.SearchTerms; "@separator", Sql.string arg.Separator ]
   |> Sql.executeNonQuery
+
+
+
+
 
 
 
