@@ -64,6 +64,19 @@ let getTextFromNote (note: string) =
             // Not JSON (or invalid JSON); index the raw content.
             note
 
+/// Returns true if the note has no meaningful user content.
+/// This treats "empty doc skeleton" TipTap JSON (e.g. doc with an empty paragraph)
+/// as empty, so it shouldn't count as a real note.
+let isEffectivelyEmpty (note: string) =
+    if String.IsNullOrWhiteSpace note then
+        true
+    else
+        // If it includes todo/task nodes, keep it as non-empty even if plain text is empty.
+        if containsTodoNodeMarker note then
+            false
+        else
+            String.IsNullOrWhiteSpace(getTextFromNote note)
+
 // find all todo_list/taskList nodes in note and return them as json
 let extractTodoList (note: string) =
 

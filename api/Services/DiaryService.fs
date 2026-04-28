@@ -80,6 +80,12 @@ let saveDiary
     userId
     (note: Diary)
     =
+    let normalizedNote =
+        if TipTap.isEffectivelyEmpty note.Note then
+            ""
+        else
+            note.Note
+
     let saved, changed =
         db.WithTransaction(fun conn ->
             let existing =
@@ -89,10 +95,10 @@ let saveDiary
                     None
 
             match existing with
-            | Some diary when diary.Note = note.Note && hasSearchIndex diary ->
+            | Some diary when diary.Note = normalizedNote && hasSearchIndex diary ->
                 diary, false
             | _ ->
-                let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
+                let saved = DiaryRepository.addOrUpdate conn note.NoteId userId normalizedNote
                 // Search indexing + todo extraction can be CPU-heavy; run them async in background.
                 // The periodic sweep will repair if the queue misses an item (e.g. process restart).
                 saved, true)

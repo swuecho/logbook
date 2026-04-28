@@ -72,6 +72,20 @@ let ``searchIndexOfNote extracts text from tiptap json`` () =
     Assert.Contains("vue", terms)
 
 [<Fact>]
+let ``empty tiptap doc skeleton does not count as note content`` () =
+    let emptyDoc =
+        """{"type":"doc","content":[{"type":"paragraph","attrs":{"lineHeight":null,"indent":0,"textAlign":"left"}}]}"""
+
+    Assert.True(TipTap.isEffectivelyEmpty emptyDoc)
+
+[<Fact>]
+let ``tiptap doc with text counts as note content`` () =
+    let doc =
+        """{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello"}]}]}"""
+
+    Assert.False(TipTap.isEffectivelyEmpty doc)
+
+[<Fact>]
 let ``compactText normalizes whitespace for snippets`` () =
     let text = " first\r\n\r\nsecond\t third "
 
