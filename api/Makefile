@@ -26,4 +26,5 @@ migrate:
 	$(DOTNET) run --project Migrations -- "$(DATABASE_URL)"
 
 flypg:
+	# psql   postgres://localhost:15432
 	fly proxy 15432:5432 -a swuecho-chat-db 
