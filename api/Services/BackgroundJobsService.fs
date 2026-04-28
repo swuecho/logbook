@@ -56,6 +56,7 @@ type Worker
         use conn = dataSource.OpenConnection()
         SearchIndexService.refreshSearchIndex conn
         DiaryService.precomputeTodoRows conn
+        TodoRepository.deleteStaleTodos conn
 
     let runSummaryQueueLoop (stoppingToken: CancellationToken) =
         task {
