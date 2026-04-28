@@ -91,6 +91,12 @@ def main() -> None:
     parser.add_argument('--password', default=os.getenv('LOGBOOK_PASSWORD', 'password'))
     parser.add_argument('--count', type=int, default=100)
     parser.add_argument('--timeout-seconds', type=float, default=15.0)
+    parser.add_argument(
+        '--pace-ms',
+        type=float,
+        default=0.0,
+        help='If set, sleep this many milliseconds between inserts to avoid flooding background queues.',
+    )
     parser.add_argument('--check-todo-endpoint', action='store_true')
     parser.add_argument(
         '--wait-todo-seconds',
@@ -146,6 +152,9 @@ def main() -> None:
         if resp.status_code != 200:
             raise RuntimeError(f'Failed on {note_id}: {resp.status_code} {resp.text}')
 
+        if args.pace_ms and args.pace_ms > 0:
+            time.sleep(args.pace_ms / 1000.0)
+
     lat_sorted = sorted(latencies_ms)
     p50 = percentile(lat_sorted, 50)
     p95 = percentile(lat_sorted, 95)
@@ -160,6 +169,7 @@ def main() -> None:
         todo_url = f'{args.base_url}/api/todo'
         deadline = time.time() + max(0.0, args.wait_todo_seconds)
         last_missing: list[str] = note_ids
+        sleep_s = 0.25
 
         while True:
             todo_resp = session.get(todo_url, timeout=args.timeout_seconds)
@@ -177,7 +187,8 @@ def main() -> None:
                     f'/api/todo response missing {len(missing)} inserted noteIds (showing 3): {missing[:3]}'
                 )
 
-            time.sleep(0.25)
+            time.sleep(sleep_s)
+            sleep_s = min(2.0, sleep_s * 1.5)
 
 
 if __name__ == '__main__':

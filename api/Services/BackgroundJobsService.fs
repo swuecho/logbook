@@ -42,9 +42,12 @@ type Worker
         SearchIndexService.updateSearchIndex conn diary.NoteId diary.UserId diary.Note |> ignore
 
         // Todo extraction
-        match TipTap.extractTodoListJson diary.Note with
-        | None -> TodoRepository.delete conn diary.NoteId diary.UserId
-        | Some todosJson -> TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId todosJson
+        if not (TipTap.containsTodoNodeMarker diary.Note) then
+            TodoRepository.delete conn diary.NoteId diary.UserId
+        else
+            match TipTap.extractTodoListJson diary.Note with
+            | None -> TodoRepository.delete conn diary.NoteId diary.UserId
+            | Some todosJson -> TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId todosJson
 
     let refreshIndexAndTodo () =
         use conn = dataSource.OpenConnection()

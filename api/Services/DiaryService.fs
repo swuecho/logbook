@@ -88,10 +88,6 @@ let saveDiary
                 with :? NoResultsException ->
                     None
 
-            let affectsTodo =
-                TipTap.containsTodoNodeMarker note.Note
-                || (existing |> Option.exists (fun diary -> TipTap.containsTodoNodeMarker diary.Note))
-
             match existing with
             | Some diary when diary.Note = note.Note && hasSearchIndex diary ->
                 diary, false
