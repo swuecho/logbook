@@ -20,6 +20,9 @@ let getByUserAndNoteId (conn: NpgsqlConnection) userId noteId =
 let listByUserId (conn: NpgsqlConnection) userId =
     Diary.ListDiaryByUserID conn userId
 
+let listWithTodo (conn: NpgsqlConnection) =
+    Diary.ListDiaryWithTodo conn
+
 let listWithTodoByUserId (conn: NpgsqlConnection) userId =
     Diary.ListDiaryWithTodoByUserID conn userId
 

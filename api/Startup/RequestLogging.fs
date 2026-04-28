@@ -28,11 +28,11 @@ let useMiddleware (app: IApplicationBuilder) =
                 logger.LogInformation(
                     "HTTP {RequestMethod} {RequestPath} {StatusCode} {ElapsedMs} {UserId}",
                     context.Request.Method,
-                    (string context.Request.Path),
+                    string context.Request.Path,
                     context.Response.StatusCode,
                     sw.ElapsedMilliseconds,
                     userIdStr
                 )
         }
 
-    app.Use(middleware)
+    app.Use middleware

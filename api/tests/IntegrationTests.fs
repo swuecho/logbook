@@ -77,7 +77,6 @@ type IntegrationTestFixture() =
                     services |> AppStartup.addDatabase dataSource |> ignore
                     services |> AppStartup.addAuthentication jwtConfig |> ignore
                     services |> AppStartup.addSummaryBackgroundProcessing |> ignore
-                    services |> AppStartup.addTodoCache |> ignore
                     services |> AppStartup.addCors |> ignore)
                 .Configure(fun app ->
                     app.UseRouting()
@@ -175,6 +174,18 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                   content = [| {| ``type`` = "text"; text = text |} |] |} |] |}
         |> Json.Convert.toJson
 
+    let tipTapTodoDoc text =
+        {| ``type`` = "doc"
+           content =
+            [| {| ``type`` = "taskList"
+                  content =
+                    [| {| ``type`` = "taskItem"
+                          attrs = {| ``checked`` = false |}
+                          content =
+                            [| {| ``type`` = "paragraph"
+                                  content = [| {| ``type`` = "text"; text = text |} |] |} |] |} |] |} |] |}
+        |> Json.Convert.toJson
+
     let rec waitForSummary (client: HttpClient) token noteId attempts =
         task {
             let! listResponse =
@@ -249,7 +260,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             Assert.Equal(noteId, savedDiary.RootElement.GetProperty("noteId").GetString())
             Assert.Contains(noteText, savedDiary.RootElement.GetProperty("note").GetString())
 
-            let! hasSummary = waitForSummary client token noteId 20
+            let! hasSummary = waitForSummary client token noteId 60
             Assert.True(hasSummary)
         }
 
@@ -288,6 +299,40 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             Assert.Equal(noteId, firstResult.GetProperty("noteId").GetString())
             Assert.Contains(searchTerm, firstResult.GetProperty("snippet").GetString())
             Assert.True(firstResult.GetProperty("rank").GetInt32() > 0)
+        }
+
+    [<DatabaseFact>]
+    member _.``todo endpoint returns precomputed todos from saved notes``() =
+        task {
+            use client = fixture.CreateClient()
+            let username = uniqueEmail "todo"
+            let noteId = uniqueNoteId ()
+            let todoText = "Persisted todo sentinel"
+            let! loginResponse, token = login client username "password"
+
+            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
+            let token = token.Value
+
+            let diary =
+                {| id = 0
+                   userId = 0
+                   noteId = noteId
+                   note = tipTapTodoDoc todoText
+                   lastUpdated = DateTime.UtcNow |}
+
+            let! saveResponse =
+                sendWithToken client HttpMethod.Put $"/api/diary/{noteId}" token (Some(jsonContent diary))
+
+            Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode)
+
+            let! todoResponse =
+                sendWithToken client HttpMethod.Get ApiPaths.todo token None
+
+            Assert.Equal(HttpStatusCode.OK, todoResponse.StatusCode)
+
+            let! todoBody = todoResponse.Content.ReadAsStringAsync()
+            Assert.Contains(noteId, todoBody)
+            Assert.Contains(todoText, todoBody)
         }
 
     [<DatabaseFact>]

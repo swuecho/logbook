@@ -24,3 +24,6 @@ serve:
 
 migrate:
 	$(DOTNET) run --project Migrations -- "$(DATABASE_URL)"
+
+flypg:
+	fly proxy 15432:5432 -a swuecho-chat-db 
