@@ -25,6 +25,9 @@ type Worker
     let debounceSummary = TimeSpan.FromMilliseconds(500.0)
     let debounceIndex = TimeSpan.FromMilliseconds(200.0)
 
+    // Fixed throttling to cap background throughput / CPU usage.
+    let throttlePerItem = TimeSpan.FromMilliseconds(25.0)
+
     let updateSummary (request: SummaryQueue.SummaryUpdateRequest) =
         use conn = dataSource.OpenConnection()
         SummaryService.updateNoteSummary conn request.NoteId request.UserId
@@ -66,6 +69,7 @@ type Worker
                     | Some request ->
                         try
                             updateSummary request
+                            do! Task.Delay(throttlePerItem, stoppingToken)
                         with ex ->
                             logger.LogWarning(
                                 ex,
@@ -89,6 +93,7 @@ type Worker
                     | Some request ->
                         try
                             updateIndexAndTodo request
+                            do! Task.Delay(throttlePerItem, stoppingToken)
                         with ex ->
                             logger.LogWarning(
                                 ex,
