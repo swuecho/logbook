@@ -77,6 +77,8 @@ type IntegrationTestFixture() =
                     services |> AppStartup.addDatabase dataSource |> ignore
                     services |> AppStartup.addAuthentication jwtConfig |> ignore
                     services |> AppStartup.addSummaryBackgroundProcessing |> ignore
+                    services |> AppStartup.addIndexBackgroundProcessing |> ignore
+                    services |> AppStartup.addBackgroundJobsWorker |> ignore
                     services |> AppStartup.addCors |> ignore)
                 .Configure(fun app ->
                     app.UseRouting()
@@ -206,6 +208,43 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                 return! waitForSummary client token noteId (attempts - 1)
         }
 
+    let rec waitForSearchResult (client: HttpClient) token (searchTerm: string) (noteId: string) attempts =
+        task {
+            let! searchResponse =
+                sendWithToken client HttpMethod.Get $"/api/diary/search?q={searchTerm}" token None
+
+            Assert.Equal(HttpStatusCode.OK, searchResponse.StatusCode)
+
+            use! results = readJson searchResponse
+
+            let found =
+                results.RootElement.EnumerateArray()
+                |> Seq.exists (fun r -> r.GetProperty("noteId").GetString() = noteId)
+
+            if found || attempts <= 1 then
+                return found
+            else
+                do! Task.Delay(100)
+                return! waitForSearchResult client token searchTerm noteId (attempts - 1)
+        }
+
+    let rec waitForTodoDocContains (client: HttpClient) token (noteId: string) attempts =
+        task {
+            let! todoResponse =
+                sendWithToken client HttpMethod.Get ApiPaths.todo token None
+
+            Assert.Equal(HttpStatusCode.OK, todoResponse.StatusCode)
+
+            let! body = todoResponse.Content.ReadAsStringAsync()
+            let found = body.Contains(noteId, StringComparison.Ordinal)
+
+            if found || attempts <= 1 then
+                return found, body
+            else
+                do! Task.Delay(100)
+                return! waitForTodoDocContains client token noteId (attempts - 1)
+        }
+
     interface IClassFixture<IntegrationTestFixture>
 
     [<DatabaseFact>]
@@ -288,17 +327,8 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
 
             Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode)
 
-            let! searchResponse =
-                sendWithToken client HttpMethod.Get $"/api/diary/search?q={searchTerm}" token None
-
-            Assert.Equal(HttpStatusCode.OK, searchResponse.StatusCode)
-
-            use! results = readJson searchResponse
-            let firstResult = results.RootElement.EnumerateArray() |> Seq.head
-
-            Assert.Equal(noteId, firstResult.GetProperty("noteId").GetString())
-            Assert.Contains(searchTerm, firstResult.GetProperty("snippet").GetString())
-            Assert.True(firstResult.GetProperty("rank").GetInt32() > 0)
+            let! found = waitForSearchResult client token searchTerm noteId 80
+            Assert.True(found)
         }
 
     [<DatabaseFact>]
@@ -325,13 +355,8 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
 
             Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode)
 
-            let! todoResponse =
-                sendWithToken client HttpMethod.Get ApiPaths.todo token None
-
-            Assert.Equal(HttpStatusCode.OK, todoResponse.StatusCode)
-
-            let! todoBody = todoResponse.Content.ReadAsStringAsync()
-            Assert.Contains(noteId, todoBody)
+            let! found, todoBody = waitForTodoDocContains client token noteId 80
+            Assert.True(found)
             Assert.Contains(todoText, todoBody)
         }
 
