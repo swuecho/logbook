@@ -40,6 +40,10 @@ let initializeSearchIndex (dataSource: NpgsqlDataSource) =
     use pgConn = dataSource.OpenConnection()
     SearchIndexService.refreshSearchIndex pgConn
 
+let initializeTodoIndex (dataSource: NpgsqlDataSource) =
+    use pgConn = dataSource.OpenConnection()
+    DiaryService.precomputeTodoRows pgConn
+
 let corsPolicy (policyBuilder: CorsPolicyBuilder) =
     // Note: This is a very lax setting, but a good fit for local development.
     policyBuilder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin() |> ignore
@@ -74,10 +78,6 @@ let addDatabase dataSource services =
 let addSummaryBackgroundProcessing (services: IServiceCollection) =
     services.AddSingleton<SummaryBackgroundService.SummaryUpdateQueue>() |> ignore
     services.AddHostedService<SummaryBackgroundService.SummaryRefreshWorker>() |> ignore
-    services
-
-let addTodoCache (services: IServiceCollection) =
-    services.AddSingleton<TodoCacheService.TodoDocumentCache>() |> ignore
     services
 
 let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =

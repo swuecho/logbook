@@ -85,6 +85,17 @@ let extractTodoList (note: string) =
             printfn "%A" ex
             []
 
+let serializeTodoList (todoList: JsonElement list) =
+    JsonSerializer.Serialize(todoList |> List.toArray)
+
+let deserializeTodoList (todos: string) =
+    try
+        JsonSerializer.Deserialize<JsonElement array>(todos)
+        |> Array.toList
+    with ex ->
+        printfn "%A" ex
+        []
+
 // Function to construct a tiptap doc with todoLists and note_id
 let constructTipTapDoc
     (todoLists:

@@ -29,11 +29,10 @@ let save: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
         let summaryQueue = ctx.RequestServices.GetRequiredService<SummaryBackgroundService.SummaryUpdateQueue>()
-        let todoCache = ctx.RequestServices.GetRequiredService<TodoCacheService.TodoDocumentCache>()
 
         Json.Request.mapJson
             (fun (note: Diary) ->
-                DiaryService.saveDiary requestContext.DbSession summaryQueue todoCache requestContext.UserId note
+                DiaryService.saveDiary requestContext.DbSession summaryQueue requestContext.UserId note
                 |> HandlerResponse.jsonHandler)
             ctx
 
@@ -49,7 +48,6 @@ let search: HttpHandler =
 let todoLists: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
-        let todoCache = ctx.RequestServices.GetRequiredService<TodoCacheService.TodoDocumentCache>()
 
-        DiaryService.todoDocument requestContext.DbSession todoCache requestContext.UserId
+        DiaryService.todoDocument requestContext.DbSession requestContext.UserId
         |> HandlerResponse.json ctx

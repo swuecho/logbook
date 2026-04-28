@@ -11,11 +11,12 @@ let jwtConfig = AppStartup.initializeJwtConfig dataSource
 if AppStartup.isEnvFlagEnabled "LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP" then
     AppStartup.initializeSearchIndex dataSource
 
+AppStartup.initializeTodoIndex dataSource
+
 let builder = WebApplication.CreateBuilder()
 builder.Services |> AppStartup.addDatabase dataSource |> ignore
 builder.Services |> AppStartup.addAuthentication jwtConfig |> ignore
 builder.Services |> AppStartup.addSummaryBackgroundProcessing |> ignore
-builder.Services |> AppStartup.addTodoCache |> ignore
 builder.Services |> AppStartup.addCors |> ignore
 
 let wapp = builder.Build()

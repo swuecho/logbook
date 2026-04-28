@@ -1,6 +1,18 @@
 -- name: ListDiaries :many
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary ORDER BY last_updated DESC;
 
+-- name: ListDiaryWithTodo :many
+SELECT id, user_id, note_id, note, search_text, search_terms, last_updated
+FROM diary
+WHERE note != ''
+  AND (
+    note LIKE '%todo_list%'
+    OR note LIKE '%todo_item%'
+    OR note LIKE '%taskList%'
+    OR note LIKE '%taskItem%'
+  )
+ORDER BY user_id, note_id DESC;
+
 -- name: DiaryByID :one
 SELECT id, user_id, note_id, note, search_text, search_terms, last_updated FROM diary WHERE id = $1;
 

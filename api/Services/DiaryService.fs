@@ -68,14 +68,21 @@ let private hasSearchIndex (diary: Diary) =
     || not (String.IsNullOrEmpty diary.SearchText)
     || diary.SearchTerms.Length > 0
 
+let private updateTodoForNote conn (diary: Diary) =
+    let todoList = TipTap.extractTodoList diary.Note
+
+    if List.isEmpty todoList then
+        TodoRepository.delete conn diary.NoteId diary.UserId
+    else
+        TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId (TipTap.serializeTodoList todoList)
+
 let saveDiary
     (db: DbSession)
     (summaryQueue: SummaryBackgroundService.SummaryUpdateQueue)
-    (todoCache: TodoCacheService.TodoDocumentCache)
     userId
     (note: Diary)
     =
-    let saved, changed, affectsTodo =
+    let saved, changed =
         db.WithTransaction(fun conn ->
             let existing =
                 try
@@ -89,22 +96,22 @@ let saveDiary
 
             match existing with
             | Some diary when diary.Note = note.Note && hasSearchIndex diary ->
-                diary, false, affectsTodo
+                diary, false
             | _ ->
                 let saved = DiaryRepository.addOrUpdate conn note.NoteId userId note.Note
                 let searchText, searchTerms = SearchIndexService.updateSearchIndex conn saved.NoteId saved.UserId saved.Note
+                let saved =
+                    { saved with
+                        SearchText = searchText
+                        SearchTerms = searchTerms }
 
-                { saved with
-                    SearchText = searchText
-                    SearchTerms = searchTerms },
-                true,
-                affectsTodo)
+                if affectsTodo then
+                    updateTodoForNote conn saved
+
+                saved, true)
 
     if changed then
         summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
-
-    if changed && affectsTodo then
-        todoCache.Invalidate(saved.UserId)
 
     saved
 
@@ -118,26 +125,27 @@ let search (db: DbSession) userId query =
             DiaryRepository.search conn userId terms
             |> List.map (toSearchResult terms))
 
-let extractTodoLists allDiary =
-    allDiary
-    |> List.choose (fun diary ->
-        let todoList = TipTap.extractTodoList diary.Note
+let precomputeTodoRows (conn: Npgsql.NpgsqlConnection) =
+    DiaryRepository.listWithTodo conn
+    |> List.iter (updateTodoForNote conn)
+
+let private todoRowsToDocument rows =
+    rows
+    |> List.choose (fun (row: Todo.GetTodoByUserIdRow) ->
+        let todoList = TipTap.deserializeTodoList row.Todos
 
         if List.isEmpty todoList then
             None
         else
             Some
-                {| noteId = diary.NoteId
+                {| noteId = row.NoteId
                    todoList = todoList |})
+    |> TipTap.constructTipTapDoc
 
-let private buildTodoDocument (db: DbSession) userId =
+let todoDocument (db: DbSession) userId =
     db.WithConnection(fun conn ->
-        DiaryRepository.listWithTodoByUserId conn userId
-        |> extractTodoLists
-        |> TipTap.constructTipTapDoc)
-
-let todoDocument (db: DbSession) (todoCache: TodoCacheService.TodoDocumentCache) userId =
-    todoCache.GetOrCreate(userId, fun () -> buildTodoDocument db userId)
+        TodoRepository.getByUserId conn userId
+        |> todoRowsToDocument)
 
 let listDiaryIds (db: DbSession) userId =
     db.WithConnection(fun conn -> DiaryRepository.listIdsByUserId conn userId)
