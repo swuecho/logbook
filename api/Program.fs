@@ -1,4 +1,4 @@
-open Falco
+﻿open Falco
 open Microsoft.AspNetCore.Builder
 
 let dataSource = Database.Connection.createDataSource Database.Config.connStr

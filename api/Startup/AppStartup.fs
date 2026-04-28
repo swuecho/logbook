@@ -2,7 +2,6 @@ module AppStartup
 
 open System
 open System.Threading.Tasks
-open Falco
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Cors.Infrastructure
@@ -103,7 +102,7 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
         else
             next.Invoke context
 
-    app.Use(middleware)
+    app.Use middleware
 
 let serveVueFiles (app: IApplicationBuilder) =
     app.UseDefaultFiles() |> ignore
