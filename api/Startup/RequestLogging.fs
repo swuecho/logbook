@@ -9,11 +9,12 @@ open Microsoft.Extensions.Logging
 
 /// After JWT authentication, logs each request with structured fields: Method, Path, StatusCode, ElapsedMs, UserId.
 let useMiddleware (app: IApplicationBuilder) =
+    let logFactory = app.ApplicationServices.GetRequiredService<ILoggerFactory>()
+    let logger = logFactory.CreateLogger("Logbook.Request")
+
     let middleware (context: HttpContext) (next: RequestDelegate) : Task =
         task {
             let sw = Stopwatch.StartNew()
-            let logFactory = context.RequestServices.GetRequiredService<ILoggerFactory>()
-            let logger = logFactory.CreateLogger("Logbook.Request")
 
             try
                 do! next.Invoke context

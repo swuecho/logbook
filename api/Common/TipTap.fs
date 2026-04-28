@@ -1,7 +1,7 @@
 module TipTap
 open System
 open System.Text.Json
-open FSharp.Data
+open System.Text
 
 let LINEBREAK = "\n"
 
@@ -33,28 +33,36 @@ let private getTodoDoneAttr (element: JsonElement) =
             | false, _ -> false
     | false, _ -> false
 
-let rec getContent (jv: JsonValue) =
-    let extractProperty (x, y) =
-        match (x, y) with
-        | ("content", y) -> getContent y
-        | ("text", y) -> string y
-        | (_, y) -> " "
+let private appendToken (sb: StringBuilder) (token: string) =
+    if not (String.IsNullOrWhiteSpace token) then
+        if sb.Length > 0 then sb.Append(' ') |> ignore
+        sb.Append(token) |> ignore
 
-    match jv with
-    // JsonValue.Array(elements) -> Array.map getContent elements
-    | JsonValue.Array(arr) -> arr |> Array.map getContent |> Util.join " "
-    | JsonValue.Record(record) -> record |> Array.map extractProperty |> Util.join " "
-    | JsonValue.String(str) -> str
-    | JsonValue.Number(n) -> n |> string
-    | JsonValue.Float(f) -> f |> string
-    | JsonValue.Boolean(b) -> b |> string
-    | JsonValue.Null -> ""
+let rec private collectText (sb: StringBuilder) (element: JsonElement) =
+    match element.ValueKind with
+    | JsonValueKind.Object ->
+        for prop in element.EnumerateObject() do
+            if prop.NameEquals("text") && prop.Value.ValueKind = JsonValueKind.String then
+                appendToken sb (prop.Value.GetString())
+            else
+                collectText sb prop.Value
+    | JsonValueKind.Array ->
+        for item in element.EnumerateArray() do
+            collectText sb item
+    | _ -> ()
 
 let getTextFromNote (note: string) =
-    let content = sprintf "%s" note
-    match JsonValue.TryParse content with
-    | Some(json) -> getContent json
-    | None -> content
+    if String.IsNullOrEmpty note then
+        ""
+    else
+        try
+            use jsonDocument = JsonDocument.Parse(note)
+            let sb = StringBuilder()
+            collectText sb jsonDocument.RootElement
+            sb.ToString()
+        with _ ->
+            // Not JSON (or invalid JSON); index the raw content.
+            note
 
 // find all todo_list/taskList nodes in note and return them as json
 let extractTodoList (note: string) =
@@ -78,22 +86,54 @@ let extractTodoList (note: string) =
         []
     else
         try
+            // Do not dispose the JsonDocument here: the returned JsonElements are backed by it.
             let jsonDocument = JsonDocument.Parse(note)
             let root = jsonDocument.RootElement
             extractTodoItems root |> Seq.toList
-        with ex ->
-            printfn "%A" ex
+        with _ ->
             []
 
 let serializeTodoList (todoList: JsonElement list) =
     JsonSerializer.Serialize(todoList |> List.toArray)
 
+let extractTodoListJson (note: string) =
+    if not (containsTodoNodeMarker note) then
+        None
+    else
+        try
+            use jsonDocument = JsonDocument.Parse(note)
+            let root = jsonDocument.RootElement
+
+            let rec extractRawTodoLists (element: JsonElement) =
+                seq {
+                    match element.ValueKind with
+                    | JsonValueKind.Object ->
+                        match element.TryGetProperty("type") with
+                        | true, typeProperty when isTodoListType (typeProperty.GetString()) -> yield element.GetRawText()
+                        | _ ->
+                            for property in element.EnumerateObject() do
+                                yield! extractRawTodoLists property.Value
+                    | JsonValueKind.Array ->
+                        for item in element.EnumerateArray() do
+                            yield! extractRawTodoLists item
+                    | _ -> ()
+                }
+
+            let raw = extractRawTodoLists root |> Seq.toArray
+
+            if raw.Length = 0 then
+                None
+            else
+                // raw items are already JSON, so just wrap in an array.
+                Some("[" + String.concat "," raw + "]")
+        with _ ->
+            None
+
 let deserializeTodoList (todos: string) =
     try
         JsonSerializer.Deserialize<JsonElement array>(todos)
         |> Array.toList
-    with ex ->
-        printfn "%A" ex
+    with _ ->
         []
 
 // Function to construct a tiptap doc with todoLists and note_id
@@ -203,7 +243,6 @@ let rec tipTapDocToMarkdown (element: JsonElement) =
             |> String.concat ""
         prefix + content
     | _ -> 
-        printfn "Unknown type: %s" (element.GetProperty("type").GetString())
         LINEBREAK 
 
 // Function to convert a TipTap doc JSON to Markdown
@@ -212,6 +251,5 @@ let tipTapDocJsonToMarkdown (json: string) =
         let jsonDocument = JsonDocument.Parse(json)
         let root = jsonDocument.RootElement
         tipTapDocToMarkdown root
-    with ex ->
-        printfn "%A" ex
+    with _ ->
         ""
