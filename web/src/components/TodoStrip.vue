@@ -34,7 +34,7 @@
     </div>
     <div v-if="remainingCount > 0" class="todo-strip__more">{{ remainingCount }} more...</div>
     <transition name="todo-strip-expand">
-      <div v-show="expanded" class="todo-strip__expanded">
+      <div v-if="expanded" class="todo-strip__expanded">
         <todo-editor
           v-if="todoContent"
           :content="todoContent"
@@ -374,10 +374,16 @@ function stopSlideShow() {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.todo-strip-expand-enter,
+.todo-strip-expand-enter-from,
 .todo-strip-expand-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+.todo-strip-expand-enter-to,
+.todo-strip-expand-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .todo-strip-slide-enter-active,
