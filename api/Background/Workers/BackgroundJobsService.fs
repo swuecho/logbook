@@ -96,7 +96,7 @@ type Worker
 
     let runIndexSweepLoop (stoppingToken: CancellationToken) =
         task {
-            use timer = new PeriodicTimer(refreshInterval)
+            use timer = new PeriodicTimer(refreshInterval * 2.0)
 
             try
                 while! timer.WaitForNextTickAsync(stoppingToken).AsTask() do
