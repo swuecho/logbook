@@ -35,6 +35,12 @@ SELECT * FROM auth_user WHERE email = $1;
 -- name: CheckUserExists :one
 SELECT EXISTS(SELECT 1 FROM auth_user WHERE email = $1);
 
+-- name: CheckActiveUserExistsByID :one
+SELECT EXISTS(SELECT 1 FROM auth_user WHERE id = $1 AND is_active = true);
+
+-- name: DeactivateAuthUserByID :exec
+UPDATE auth_user SET is_active = false WHERE id = $1 AND is_active = true;
+
 -- name: UpdateUserPassword :exec
 UPDATE auth_user SET "password" = $2 WHERE email = $1;
 

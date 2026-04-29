@@ -412,7 +412,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
         }
 
     [<DatabaseFact>]
-    member _.``admin can delete users and deleted user tokens stop authenticating``() =
+    member _.``admin can deactivate users while preserving data and deactivated tokens stop authenticating``() =
         task {
             use client = fixture.CreateClient()
             let adminEmail = uniqueEmail "admin-delete"
@@ -444,7 +444,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                 {| id = 0
                    userId = 0
                    noteId = "20240102"
-                   note = tipTapDoc "Will be deleted"
+                   note = tipTapDoc "Will be preserved"
                    lastUpdated = DateTime.UtcNow |}
 
             let! saveResponse =
@@ -469,8 +469,15 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                     cmd.Parameters.AddWithValue("user_id", targetUserId) |> ignore
                     cmd.ExecuteScalar() :?> bool)
 
-            Assert.False(userStillExists)
-            Assert.False(diaryStillExists)
+            let userIsActive =
+                fixture.WithConnection(fun conn ->
+                    use cmd = new NpgsqlCommand("SELECT is_active FROM auth_user WHERE id = @user_id;", conn)
+                    cmd.Parameters.AddWithValue("user_id", targetUserId) |> ignore
+                    cmd.ExecuteScalar() :?> bool)
+
+            Assert.True(userStillExists)
+            Assert.False(userIsActive)
+            Assert.True(diaryStillExists)
 
             let! deletedUserResponse =
                 sendWithToken client HttpMethod.Get ApiPaths.diaryIds targetToken None

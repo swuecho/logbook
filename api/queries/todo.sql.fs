@@ -166,5 +166,3 @@ let InsertOrUpdateTodo (db: NpgsqlConnection)  (arg: InsertOrUpdateTodoParams)  
 
 
 
-
-

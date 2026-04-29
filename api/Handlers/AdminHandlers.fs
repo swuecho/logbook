@@ -28,7 +28,7 @@ let deleteUser: HttpHandler =
             match AdminService.deleteUser dbSession requestingUserId targetUserId with
             | AdminService.UserDeleted ->
                 {| userId = targetUserId
-                   deleted = true |}
+                   deactivated = true |}
                 |> HandlerResponse.json ctx
             | AdminService.UserNotFound -> HandlerResponse.clientError 404 HttpError.userNotFound ctx
             | AdminService.CannotDeleteSelf -> HandlerResponse.clientError 400 HttpError.cannotDeleteSelf ctx)

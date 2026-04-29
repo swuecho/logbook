@@ -127,7 +127,7 @@
                                                         @click="handleDelete(scope.row)"
                                                         :disabled="!canDeleteUser(scope.row)">
                                                         <Icon icon="mdi:delete" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
-                                                        Delete
+                                                        Deactivate
                                                 </el-button>
                                         </template>
                                 </el-table-column>
@@ -166,7 +166,7 @@
                                                         <el-button size="small" type="danger" @click="handleDelete(user)"
                                                                 :disabled="!canDeleteUser(user)">
                                                                 <Icon icon="mdi:delete" width="1rem" height="1rem" style="margin-right: 4px; vertical-align: middle;" />
-                                                                Delete
+                                                                Deactivate
                                                         </el-button>
                                                 </div>
                                         </article>
@@ -343,14 +343,14 @@ export default {
                 },
                 async handleDelete(user) {
                         try {
-                                await ElMessageBox.confirm(`Delete ${user.email}? This also removes their diary entries.`, 'Warning', {
-                                        confirmButtonText: 'Delete',
+                                await ElMessageBox.confirm(`Deactivate ${user.email}? Their diary entries will be kept.`, 'Warning', {
+                                        confirmButtonText: 'Deactivate',
                                         cancelButtonText: 'Cancel',
                                         type: 'warning'
                                 })
 
                                 await deleteUser(user.id)
-                                ElMessage.success('User deleted successfully')
+                                ElMessage.success('User deactivated successfully')
                                 this.fetchUsers()
                         } catch (error) {
                                 if (error !== 'cancel') {

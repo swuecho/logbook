@@ -39,6 +39,52 @@ let CheckUserExists (db: NpgsqlConnection)  (email: string)  =
 
 
 
+let checkActiveUserExistsByID = """-- name: CheckActiveUserExistsByID :one
+SELECT EXISTS(SELECT 1 FROM auth_user WHERE id = @id AND is_active = true)
+"""
+
+
+
+let CheckActiveUserExistsByID (db: NpgsqlConnection)  (id: int32)  =
+  
+  let reader = fun (read:RowReader) -> read.bool "exists"
+
+  db
+  |> Sql.existingConnection
+  |> Sql.query checkActiveUserExistsByID
+  |> Sql.parameters  [ "@id", Sql.int id ]
+  |> Sql.executeRow reader
+
+
+
+
+
+
+
+
+
+let deactivateAuthUserByID = """-- name: DeactivateAuthUserByID :exec
+UPDATE auth_user SET is_active = false WHERE id = @id AND is_active = true
+"""
+
+
+
+
+
+
+let DeactivateAuthUserByID (db: NpgsqlConnection)  (id: int32)  = 
+  db 
+  |> Sql.existingConnection
+  |> Sql.query deactivateAuthUserByID
+  |> Sql.parameters  [ "@id", Sql.int id ]
+  |> Sql.executeNonQuery
+
+
+
+
+
+
+
 let createAuthUser = """-- name: CreateAuthUser :one
 INSERT INTO auth_user (email, "password", first_name, last_name, username, is_staff, is_superuser)
 VALUES (@email, @password, @first_name, @last_name, @username, @is_staff, @is_superuser)
@@ -511,10 +557,6 @@ let UpdateUserPassword (db: NpgsqlConnection)  (arg: UpdateUserPasswordParams)  
   |> Sql.query updateUserPassword
   |> Sql.parameters  [ "@email", Sql.string arg.Email; "@password", Sql.string arg.Password ]
   |> Sql.executeNonQuery
-
-
-
-
 
 
 

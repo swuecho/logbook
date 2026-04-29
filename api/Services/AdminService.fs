@@ -15,7 +15,7 @@ let deleteUser (db: DbSession) requestingUserId targetUserId =
         CannotDeleteSelf
     else
         db.WithTransaction(fun conn ->
-            if AuthUserRepository.deleteByIdWithData conn targetUserId then
+            if AuthUserRepository.deactivateById conn targetUserId then
                 UserDeleted
             else
                 UserNotFound)

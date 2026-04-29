@@ -171,5 +171,3 @@ let LastUpdated (db: NpgsqlConnection)  (arg: LastUpdatedParams)  =
 
 
 
-
-
