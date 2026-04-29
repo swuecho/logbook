@@ -8,7 +8,7 @@ type SummaryUpdateRequest = { UserId: int; NoteId: string }
 /// A lightweight in-memory queue for summary work.
 ///
 /// The queue is intentionally in-process: if the app stops after enqueue but
-/// before processing, that item is lost. A periodic “stale summary” sweep in
+/// before processing, that item is lost. A periodic "stale summary" sweep in
 /// the hosted background worker is the recovery mechanism.
 type SummaryUpdateQueue() =
     let options = UnboundedChannelOptions(SingleReader = true, SingleWriter = false)

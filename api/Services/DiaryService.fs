@@ -3,12 +3,21 @@ module DiaryService
 open System
 open System.Text.RegularExpressions
 open Database
+open ApplicationContracts
 
 type DiarySearchResult =
     { NoteId: string
       Snippet: string
       Rank: int
       LastUpdated: DateTime }
+
+type QueueBackedBackgroundJobPublisher(summaryQueue: SummaryQueue.SummaryUpdateQueue, indexQueue: IndexQueue.IndexUpdateQueue) =
+    interface IBackgroundJobPublisher with
+        member _.EnqueueSummaryUpdate(noteRef: NoteRef) =
+            summaryQueue.Enqueue(noteRef.UserId, noteRef.NoteId) |> ignore
+
+        member _.EnqueueIndexUpdate(noteRef: NoteRef) =
+            indexQueue.Enqueue(noteRef.UserId, noteRef.NoteId) |> ignore
 
 let private maxSnippetLength = 180
 let private snippetContextRadius = 60
@@ -75,8 +84,7 @@ let private updateTodoForNote conn (diary: Diary) =
 
 let saveDiary
     (db: DbSession)
-    (summaryQueue: SummaryQueue.SummaryUpdateQueue)
-    (indexQueue: IndexQueue.IndexUpdateQueue)
+    (publisher: IBackgroundJobPublisher)
     userId
     (note: Diary)
     =
@@ -104,8 +112,9 @@ let saveDiary
                 saved, true)
 
     if changed then
-        summaryQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
-        indexQueue.Enqueue(saved.UserId, saved.NoteId) |> ignore
+        let noteRef = { UserId = saved.UserId; NoteId = saved.NoteId }
+        publisher.EnqueueSummaryUpdate noteRef
+        publisher.EnqueueIndexUpdate noteRef
 
     saved
 

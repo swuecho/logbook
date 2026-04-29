@@ -5,7 +5,7 @@ open System.Threading
 open System.Threading.Tasks
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
-open Npgsql
+open ApplicationContracts
 
 /// Single hosted service that runs:
 /// - summary queue + periodic stale sweep
@@ -14,7 +14,7 @@ open Npgsql
 /// Keeps the request path light while avoiding multiple hosted services.
 type Worker
     (
-        dataSource: NpgsqlDataSource,
+        maintenanceService: IBackgroundMaintenanceService,
         summaryQueue: SummaryQueue.SummaryUpdateQueue,
         indexQueue: IndexQueue.IndexUpdateQueue,
         logger: ILogger<Worker>
@@ -28,35 +28,7 @@ type Worker
     // Fixed throttling to cap background throughput / CPU usage.
     let throttlePerItem = TimeSpan.FromMilliseconds(25.0)
 
-    let updateSummary (request: SummaryQueue.SummaryUpdateRequest) =
-        use conn = dataSource.OpenConnection()
-        SummaryService.updateNoteSummary conn request.NoteId request.UserId
-
-    let refreshSummaries () =
-        use conn = dataSource.OpenConnection()
-        SummaryService.refreshAllSummaries conn
-
-    let updateIndexAndTodo (request: IndexQueue.IndexUpdateRequest) =
-        use conn = dataSource.OpenConnection()
-
-        let diary = DiaryRepository.getByUserAndNoteId conn request.UserId request.NoteId
-
-        // Search index
-        SearchIndexService.updateSearchIndex conn diary.NoteId diary.UserId diary.Note |> ignore
-
-        // Todo extraction
-        if not (TipTap.containsTodoNodeMarker diary.Note) then
-            TodoRepository.delete conn diary.NoteId diary.UserId
-        else
-            match TipTap.extractTodoListJson diary.Note with
-            | None -> TodoRepository.delete conn diary.NoteId diary.UserId
-            | Some todosJson -> TodoRepository.insertOrUpdate conn diary.NoteId diary.UserId todosJson
-
-    let refreshIndexAndTodo () =
-        use conn = dataSource.OpenConnection()
-        SearchIndexService.refreshSearchIndex conn
-        DiaryService.precomputeTodoRows conn
-        TodoRepository.deleteStaleTodos conn
+    let toNoteRef userId noteId = { UserId = userId; NoteId = noteId }
 
     let runSummaryQueueLoop (stoppingToken: CancellationToken) =
         task {
@@ -69,7 +41,7 @@ type Worker
                     | None -> ()
                     | Some request ->
                         try
-                            updateSummary request
+                            maintenanceService.UpdateSummary(toNoteRef request.UserId request.NoteId)
                             do! Task.Delay(throttlePerItem, stoppingToken)
                         with ex ->
                             logger.LogWarning(
@@ -93,7 +65,7 @@ type Worker
                     | None -> ()
                     | Some request ->
                         try
-                            updateIndexAndTodo request
+                            maintenanceService.UpdateIndexAndTodo(toNoteRef request.UserId request.NoteId)
                             do! Task.Delay(throttlePerItem, stoppingToken)
                         with ex ->
                             logger.LogWarning(
@@ -114,7 +86,7 @@ type Worker
                 while! timer.WaitForNextTickAsync(stoppingToken).AsTask() do
                     try
                         logger.LogInformation("Summary sweep starting")
-                        refreshSummaries ()
+                        maintenanceService.RefreshSummaries()
                         logger.LogInformation("Summary sweep finished")
                     with ex ->
                         logger.LogWarning(ex, "Failed to refresh stale summaries")
@@ -124,13 +96,13 @@ type Worker
 
     let runIndexSweepLoop (stoppingToken: CancellationToken) =
         task {
-            use timer = new PeriodicTimer(refreshInterval)
+            use timer = new PeriodicTimer(refreshInterval * 2.0)
 
             try
                 while! timer.WaitForNextTickAsync(stoppingToken).AsTask() do
                     try
                         logger.LogInformation("Index/todo sweep starting")
-                        refreshIndexAndTodo ()
+                        maintenanceService.RefreshIndexAndTodo()
                         logger.LogInformation("Index/todo sweep finished")
                     with ex ->
                         logger.LogWarning(ex, "Failed to refresh missing search index / todo rows")

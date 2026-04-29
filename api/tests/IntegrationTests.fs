@@ -78,6 +78,7 @@ type IntegrationTestFixture() =
                     services |> AppStartup.addAuthentication jwtConfig |> ignore
                     services |> AppStartup.addSummaryBackgroundProcessing |> ignore
                     services |> AppStartup.addIndexBackgroundProcessing |> ignore
+                    services |> AppStartup.addApplicationServices |> ignore
                     services |> AppStartup.addBackgroundJobsWorker |> ignore
                     services |> AppStartup.addCors |> ignore)
                 .Configure(fun app ->
