@@ -28,11 +28,11 @@ let getById: HttpHandler =
 let save: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
-        let useCase = ctx.RequestServices.GetRequiredService<ApplicationContracts.IDiaryWriteUseCase>()
+        let publisher = ctx.RequestServices.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
 
         Json.Request.mapJson
             (fun (note: Diary) ->
-                useCase.SaveDiary(requestContext.UserId, note)
+                DiaryService.saveDiary requestContext.DbSession publisher requestContext.UserId note
                 |> HandlerResponse.jsonHandler)
             ctx
 

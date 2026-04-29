@@ -118,9 +118,6 @@ let saveDiary
 
     saved
 
-type DiaryWriteService(db: DbSession, publisher: IBackgroundJobPublisher) =
-    member _.SaveDiary(userId: int, note: Diary) = saveDiary db publisher userId note
-
 let search (db: DbSession) userId query =
     let terms = TextAnalysis.searchTerms query
 

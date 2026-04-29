@@ -81,14 +81,6 @@ let addApplicationServices (services: IServiceCollection) =
     )
     |> ignore
 
-    services.AddSingleton<ApplicationContracts.IDiaryWriteUseCase>(
-        Func<IServiceProvider, ApplicationContracts.IDiaryWriteUseCase>(fun sp ->
-            let dbSession = sp.GetRequiredService<Database.DbSession>()
-            let publisher = sp.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
-            DiaryService.DiaryWriteService(dbSession, publisher) :> ApplicationContracts.IDiaryWriteUseCase)
-    )
-    |> ignore
-
     services.AddSingleton<ApplicationContracts.IBackgroundMaintenanceService>(
         Func<IServiceProvider, ApplicationContracts.IBackgroundMaintenanceService>(fun sp ->
             let dbSession = sp.GetRequiredService<Database.DbSession>()
