@@ -71,6 +71,34 @@ let addIndexBackgroundProcessing (services: IServiceCollection) =
     services.AddSingleton<IndexQueue.IndexUpdateQueue>() |> ignore
     services
 
+let addApplicationServices (services: IServiceCollection) =
+    services.AddSingleton<ApplicationContracts.IBackgroundJobPublisher>(
+        Func<IServiceProvider, ApplicationContracts.IBackgroundJobPublisher>(fun sp ->
+            let summaryQueue = sp.GetRequiredService<SummaryQueue.SummaryUpdateQueue>()
+            let indexQueue = sp.GetRequiredService<IndexQueue.IndexUpdateQueue>()
+            DiaryUseCases.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
+            :> ApplicationContracts.IBackgroundJobPublisher)
+    )
+    |> ignore
+
+    services.AddSingleton<ApplicationContracts.IDiaryWriteUseCase>(
+        Func<IServiceProvider, ApplicationContracts.IDiaryWriteUseCase>(fun sp ->
+            let dbSession = sp.GetRequiredService<Database.DbSession>()
+            let publisher = sp.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
+            DiaryUseCases.DiaryWriteUseCase(dbSession, publisher) :> ApplicationContracts.IDiaryWriteUseCase)
+    )
+    |> ignore
+
+    services.AddSingleton<ApplicationContracts.IBackgroundMaintenanceService>(
+        Func<IServiceProvider, ApplicationContracts.IBackgroundMaintenanceService>(fun sp ->
+            let dbSession = sp.GetRequiredService<Database.DbSession>()
+            BackgroundMaintenanceService.BackgroundMaintenanceService(dbSession)
+            :> ApplicationContracts.IBackgroundMaintenanceService)
+    )
+    |> ignore
+
+    services
+
 let addBackgroundJobsWorker (services: IServiceCollection) =
     services.AddHostedService<BackgroundJobsService.Worker>() |> ignore
     services

@@ -27,6 +27,7 @@
     <Compile Include="Repositories/JwtSecretRepository.fs" />
     <Compile Include="Infrastructure/Database.fs" />
     <Compile Include="Common/HandlerContext.fs" />
+    <Compile Include="Services/ApplicationContracts.fs" />
     <Compile Include="Services/TextAnalysis.fs" />
     <Compile Include="Services/SearchIndexService.fs" />
     <Compile Include="Services/SummaryService.fs" />
@@ -35,6 +36,8 @@
     <Compile Include="Infrastructure/JwtService.fs" />
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/DiaryService.fs" />
+    <Compile Include="Services/BackgroundMaintenanceService.fs" />
+    <Compile Include="Services/DiaryUseCases.fs" />
     <Compile Include="Services/BackgroundJobsService.fs" />
     <Compile Include="Services/ExportService.fs" />
     <Compile Include="Services/AdminService.fs" />
