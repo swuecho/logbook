@@ -15,9 +15,13 @@ import AppTopBar from '@/components/AppTopBar.vue';
 import DiaryEditor from "@/components/DiaryEditor";
 
 const route = useRoute();
-const date = ref(route.query.date);
+const todayId = () => moment().format('YYYYMMDD');
+const normalizedDate = (value) => {
+  const parsed = moment(String(value || ''), 'YYYYMMDD', true);
+  return parsed.isValid() ? parsed.format('YYYYMMDD') : todayId();
+};
+const date = ref(normalizedDate(route.query.date));
 const title = computed(() => {
-  if (!date.value) return 'Diary';
   const parsed = moment(String(date.value), 'YYYYMMDD', true);
   return parsed.isValid() ? parsed.format('MMM D, YYYY') : 'Diary';
 });
@@ -25,7 +29,7 @@ const title = computed(() => {
 watch(
   () => route.query.date,
   (newDate) => {
-    date.value = newDate;
+    date.value = normalizedDate(newDate);
   },
   { immediate: true }
 );

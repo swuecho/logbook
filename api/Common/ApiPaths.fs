@@ -11,6 +11,7 @@ let diarySearch = "/api/diary/search"
 let diaryById = "/api/diary/{id}"
 
 let usersWithDiaryCount = "/api/users/with-diary"
+let userById = "/api/users/{id}"
 let todo = "/api/todo"
 
 let exportJson = "/api/export_json"
@@ -19,4 +20,3 @@ let exportAll = "/api/export_all"
 
 let publicApiPaths =
     [ login ]
-

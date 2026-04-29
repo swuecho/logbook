@@ -2,8 +2,16 @@ module AuthUserRepository
 
 open Npgsql
 
+let private addIntParameter (cmd: NpgsqlCommand) (name: string) (value: int) =
+    cmd.Parameters.AddWithValue(name, value) |> ignore
+
 let existsByEmail (conn: NpgsqlConnection) email =
     AuthUser.CheckUserExists conn email
+
+let existsById (conn: NpgsqlConnection) userId =
+    use cmd = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM auth_user WHERE id = @user_id AND is_active = true);", conn)
+    addIntParameter cmd "user_id" userId
+    cmd.ExecuteScalar() :?> bool
 
 let getByEmail (conn: NpgsqlConnection) email =
     AuthUser.GetUserByEmail conn email
@@ -25,3 +33,19 @@ let updateLastLogin (conn: NpgsqlConnection) userId =
 
 let getUsersWithDiaryCount (conn: NpgsqlConnection) =
     AuthUser.GetUsersWithDiaryCount conn
+
+let deleteByIdWithData (conn: NpgsqlConnection) userId =
+    use cmd =
+        new NpgsqlCommand(
+            """
+            DELETE FROM todo WHERE user_id = @user_id;
+            DELETE FROM summary WHERE user_id = @user_id;
+            DELETE FROM diary WHERE user_id = @user_id;
+            DELETE FROM auth_user WHERE id = @user_id;
+            """,
+            conn
+        )
+
+    addIntParameter cmd "user_id" userId
+
+    cmd.ExecuteNonQuery() > 0

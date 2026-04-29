@@ -1,7 +1,28 @@
 module DiaryHandlers
 
+open System
+open System.Globalization
 open Falco
+open Logbook
 open Microsoft.Extensions.DependencyInjection
+
+let private isValidNoteId (noteId: string) =
+    let mutable parsed = DateTime.MinValue
+
+    not (String.IsNullOrWhiteSpace noteId)
+    && DateTime.TryParseExact(
+        noteId,
+        "yyyyMMdd",
+        CultureInfo.InvariantCulture,
+        DateTimeStyles.None,
+        &parsed
+    )
+
+let private withValidNoteId noteId handler =
+    if isValidNoteId noteId then
+        handler noteId
+    else
+        HandlerResponse.clientError 400 HttpError.invalidNoteId
 
 let listDiaryIds: HttpHandler =
     fun ctx ->
@@ -22,18 +43,28 @@ let getById: HttpHandler =
         let requestContext = HandlerContext.authenticated ctx
         let noteId = HandlerContext.routeValue "id" "" ctx
 
-        DiaryService.getOrCreateDiary requestContext.DbSession requestContext.UserId noteId
-        |> HandlerResponse.json ctx
+        withValidNoteId
+            noteId
+            (fun noteId ->
+                fun ctx ->
+                    DiaryService.getOrCreateDiary requestContext.DbSession requestContext.UserId noteId
+                    |> HandlerResponse.json ctx)
+            ctx
 
 let save: HttpHandler =
     fun ctx ->
         let requestContext = HandlerContext.authenticated ctx
         let publisher = ctx.RequestServices.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
+        let noteId = HandlerContext.routeValue "id" "" ctx
 
-        Json.Request.mapJson
-            (fun (note: Diary) ->
-                DiaryService.saveDiary requestContext.DbSession publisher requestContext.UserId note
-                |> HandlerResponse.jsonHandler)
+        withValidNoteId
+            noteId
+            (fun noteId ->
+                Json.Request.mapJson (fun (note: Diary) ->
+                    let noteForRoute = { note with NoteId = noteId }
+
+                    DiaryService.saveDiary requestContext.DbSession publisher requestContext.UserId noteForRoute
+                    |> HandlerResponse.jsonHandler))
             ctx
 
 let search: HttpHandler =

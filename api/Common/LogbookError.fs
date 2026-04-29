@@ -17,3 +17,19 @@ module HttpError =
     let invalidCredentials: ApiError =
         { Code = "invalid_credentials"
           Message = "Login failed. password or email is wrong" }
+
+    let invalidNoteId: ApiError =
+        { Code = "invalid_note_id"
+          Message = "Diary note id must be an 8-digit date in YYYYMMDD format." }
+
+    let invalidUserId: ApiError =
+        { Code = "invalid_user_id"
+          Message = "User id must be a valid integer." }
+
+    let userNotFound: ApiError =
+        { Code = "user_not_found"
+          Message = "User was not found." }
+
+    let cannotDeleteSelf: ApiError =
+        { Code = "cannot_delete_self"
+          Message = "You cannot delete your own user account." }

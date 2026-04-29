@@ -339,11 +339,11 @@ export default {
                         this.dialogVisible = true
                 },
                 canDeleteUser(user) {
-                        return true
+                        return Boolean(user && user.id)
                 },
                 async handleDelete(user) {
                         try {
-                                await ElMessageBox.confirm('Are you sure you want to delete this user?', 'Warning', {
+                                await ElMessageBox.confirm(`Delete ${user.email}? This also removes their diary entries.`, 'Warning', {
                                         confirmButtonText: 'Delete',
                                         cancelButtonText: 'Cancel',
                                         type: 'warning'

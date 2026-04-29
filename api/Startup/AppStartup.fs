@@ -102,6 +102,13 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let hasRequiredClaims (context: HttpContext) =
         HttpAuth.tryGetUserId context.User |> Option.isSome
 
+    let userExists (context: HttpContext) =
+        match HttpAuth.tryGetUserId context.User with
+        | None -> false
+        | Some userId ->
+            let dbSession = Database.Connection.dbSession context
+            dbSession.WithConnection(fun conn -> AuthUserRepository.existsById conn userId)
+
     let isApiRequest (context: HttpContext) =
         context.Request.Path.StartsWithSegments(PathString(ApiPaths.apiPrefix))
 
@@ -111,7 +118,7 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
 
     let middleware (context: HttpContext) (next: RequestDelegate) : Task =
         if isApiRequest context && not (isPublicApiRequest context) then
-            if isAuthenticated context && hasRequiredClaims context then
+            if isAuthenticated context && hasRequiredClaims context && userExists context then
                 next.Invoke context
             else
                 HttpAuth.unauthorized context

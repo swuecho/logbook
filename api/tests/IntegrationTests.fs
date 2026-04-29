@@ -96,6 +96,13 @@ type IntegrationTestFixture() =
         | Some server -> server.CreateClient()
         | None -> invalidOp "Integration test server has not been initialized."
 
+    member _.WithConnection(action: NpgsqlConnection -> 'T) =
+        match dataSource with
+        | Some dataSource ->
+            use conn = dataSource.OpenConnection()
+            action conn
+        | None -> invalidOp "Integration test database has not been initialized."
+
     interface IAsyncLifetime with
         member _.InitializeAsync() =
             task {
@@ -134,7 +141,8 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
         sprintf "%s-%s@example.test" prefix (Guid.NewGuid().ToString("N"))
 
     let uniqueNoteId () =
-        "n" + Guid.NewGuid().ToString("N").Substring(0, 7)
+        let offsetDays = Random.Shared.Next(0, 3650)
+        DateTime(2020, 1, 1).AddDays(offsetDays).ToString("yyyyMMdd")
 
     let readJson (response: HttpResponseMessage) =
         task {
@@ -373,4 +381,99 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                 sendWithToken client HttpMethod.Get ApiPaths.diaryIds "not-a-valid-jwt" None
 
             Assert.Equal(HttpStatusCode.Unauthorized, invalidTokenResponse.StatusCode)
+        }
+
+    [<DatabaseFact>]
+    member _.``diary routes reject invalid note ids``() =
+        task {
+            use client = fixture.CreateClient()
+            let username = uniqueEmail "invalid-note-id"
+            let! loginResponse, token = login client username "password"
+
+            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
+            let token = token.Value
+
+            let! getResponse =
+                sendWithToken client HttpMethod.Get "/api/diary/undefined" token None
+
+            Assert.Equal(HttpStatusCode.BadRequest, getResponse.StatusCode)
+
+            let diary =
+                {| id = 0
+                   userId = 0
+                   noteId = "20240101"
+                   note = tipTapDoc "Invalid route id should not save"
+                   lastUpdated = DateTime.UtcNow |}
+
+            let! saveResponse =
+                sendWithToken client HttpMethod.Put "/api/diary/not-a-date" token (Some(jsonContent diary))
+
+            Assert.Equal(HttpStatusCode.BadRequest, saveResponse.StatusCode)
+        }
+
+    [<DatabaseFact>]
+    member _.``admin can delete users and deleted user tokens stop authenticating``() =
+        task {
+            use client = fixture.CreateClient()
+            let adminEmail = uniqueEmail "admin-delete"
+            let targetEmail = uniqueEmail "delete-target"
+
+            let! adminLogin, _ = login client adminEmail "password"
+            Assert.Equal(HttpStatusCode.OK, adminLogin.StatusCode)
+
+            fixture.WithConnection(fun conn ->
+                use cmd = new NpgsqlCommand("UPDATE auth_user SET is_superuser = true WHERE email = @email;", conn)
+                cmd.Parameters.AddWithValue("email", adminEmail) |> ignore
+                cmd.ExecuteNonQuery() |> ignore)
+
+            let! adminLoginAfterPromote, adminToken = login client adminEmail "password"
+            Assert.Equal(HttpStatusCode.OK, adminLoginAfterPromote.StatusCode)
+            let adminToken = adminToken.Value
+
+            let! targetLogin, targetToken = login client targetEmail "password"
+            Assert.Equal(HttpStatusCode.OK, targetLogin.StatusCode)
+            let targetToken = targetToken.Value
+
+            let targetUserId =
+                fixture.WithConnection(fun conn ->
+                    use cmd = new NpgsqlCommand("SELECT id FROM auth_user WHERE email = @email;", conn)
+                    cmd.Parameters.AddWithValue("email", targetEmail) |> ignore
+                    cmd.ExecuteScalar() :?> int)
+
+            let diary =
+                {| id = 0
+                   userId = 0
+                   noteId = "20240102"
+                   note = tipTapDoc "Will be deleted"
+                   lastUpdated = DateTime.UtcNow |}
+
+            let! saveResponse =
+                sendWithToken client HttpMethod.Put "/api/diary/20240102" targetToken (Some(jsonContent diary))
+
+            Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode)
+
+            let! deleteResponse =
+                sendWithToken client HttpMethod.Delete $"/api/users/{targetUserId}" adminToken None
+
+            Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode)
+
+            let userStillExists =
+                fixture.WithConnection(fun conn ->
+                    use cmd = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM auth_user WHERE id = @user_id);", conn)
+                    cmd.Parameters.AddWithValue("user_id", targetUserId) |> ignore
+                    cmd.ExecuteScalar() :?> bool)
+
+            let diaryStillExists =
+                fixture.WithConnection(fun conn ->
+                    use cmd = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM diary WHERE user_id = @user_id);", conn)
+                    cmd.Parameters.AddWithValue("user_id", targetUserId) |> ignore
+                    cmd.ExecuteScalar() :?> bool)
+
+            Assert.False(userStillExists)
+            Assert.False(diaryStillExists)
+
+            let! deletedUserResponse =
+                sendWithToken client HttpMethod.Get ApiPaths.diaryIds targetToken None
+
+            Assert.Equal(HttpStatusCode.Unauthorized, deletedUserResponse.StatusCode)
         }

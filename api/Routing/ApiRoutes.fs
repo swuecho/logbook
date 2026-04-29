@@ -8,6 +8,7 @@ let endpoints =
         post ApiPaths.logout AuthHandlers.logout
         get ApiPaths.diaryIds DiaryHandlers.listDiaryIds
         get ApiPaths.usersWithDiaryCount AdminHandlers.usersWithDiaryCount
+        delete ApiPaths.userById AdminHandlers.deleteUser
         get ApiPaths.diary DiaryHandlers.listSummaries
         get ApiPaths.diarySearch DiaryHandlers.search
         get ApiPaths.diaryById DiaryHandlers.getById
