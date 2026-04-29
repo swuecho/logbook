@@ -76,7 +76,7 @@ let addApplicationServices (services: IServiceCollection) =
         Func<IServiceProvider, ApplicationContracts.IBackgroundJobPublisher>(fun sp ->
             let summaryQueue = sp.GetRequiredService<SummaryQueue.SummaryUpdateQueue>()
             let indexQueue = sp.GetRequiredService<IndexQueue.IndexUpdateQueue>()
-            DiaryUseCases.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
+            DiaryService.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
             :> ApplicationContracts.IBackgroundJobPublisher)
     )
     |> ignore
@@ -85,7 +85,7 @@ let addApplicationServices (services: IServiceCollection) =
         Func<IServiceProvider, ApplicationContracts.IDiaryWriteUseCase>(fun sp ->
             let dbSession = sp.GetRequiredService<Database.DbSession>()
             let publisher = sp.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
-            DiaryUseCases.DiaryWriteUseCase(dbSession, publisher) :> ApplicationContracts.IDiaryWriteUseCase)
+            DiaryService.DiaryWriteService(dbSession, publisher) :> ApplicationContracts.IDiaryWriteUseCase)
     )
     |> ignore
 

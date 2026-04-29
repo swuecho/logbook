@@ -570,7 +570,7 @@ https://stackoverflow.com/questions/40898292/how-to-install-a-specific-version-o
 let ``queue backed publisher enqueues summary and index updates`` () =
     let summaryQueue = SummaryQueue.SummaryUpdateQueue()
     let indexQueue = IndexQueue.IndexUpdateQueue()
-    let publisher = DiaryUseCases.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
+    let publisher = DiaryService.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
     let noteRef: ApplicationContracts.NoteRef = { UserId = 7; NoteId = "note-a" }
 
     (publisher :> ApplicationContracts.IBackgroundJobPublisher).EnqueueSummaryUpdate(noteRef)

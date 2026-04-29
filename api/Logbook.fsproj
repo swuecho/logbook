@@ -37,7 +37,6 @@
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/DiaryService.fs" />
     <Compile Include="Services/BackgroundMaintenanceService.fs" />
-    <Compile Include="Services/DiaryUseCases.fs" />
     <Compile Include="Services/BackgroundJobsService.fs" />
     <Compile Include="Services/ExportService.fs" />
     <Compile Include="Services/AdminService.fs" />

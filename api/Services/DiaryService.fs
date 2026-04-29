@@ -11,6 +11,14 @@ type DiarySearchResult =
       Rank: int
       LastUpdated: DateTime }
 
+type QueueBackedBackgroundJobPublisher(summaryQueue: SummaryQueue.SummaryUpdateQueue, indexQueue: IndexQueue.IndexUpdateQueue) =
+    interface IBackgroundJobPublisher with
+        member _.EnqueueSummaryUpdate(noteRef: NoteRef) =
+            summaryQueue.Enqueue(noteRef.UserId, noteRef.NoteId) |> ignore
+
+        member _.EnqueueIndexUpdate(noteRef: NoteRef) =
+            indexQueue.Enqueue(noteRef.UserId, noteRef.NoteId) |> ignore
+
 let private maxSnippetLength = 180
 let private snippetContextRadius = 60
 let private minSummaryLength = 2
@@ -109,6 +117,9 @@ let saveDiary
         publisher.EnqueueIndexUpdate noteRef
 
     saved
+
+type DiaryWriteService(db: DbSession, publisher: IBackgroundJobPublisher) =
+    member _.SaveDiary(userId: int, note: Diary) = saveDiary db publisher userId note
 
 let search (db: DbSession) userId query =
     let terms = TextAnalysis.searchTerms query
