@@ -2,6 +2,16 @@ module BackgroundMaintenanceService
 
 open Database
 open ApplicationContracts
+open Npgsql
+
+let private updateSearchIndex (conn: NpgsqlConnection) noteId userId note =
+    let searchText, terms = TextAnalysis.searchIndexOfNote note
+    DiaryRepository.updateSearchIndex conn noteId userId searchText terms
+    searchText, terms
+
+let private refreshSearchIndex (conn: NpgsqlConnection) =
+    DiaryRepository.listMissingSearchIndex conn
+    |> List.iter (fun diary -> updateSearchIndex conn diary.NoteId diary.UserId diary.Note |> ignore)
 
 type BackgroundMaintenanceService(db: DbSession) =
     interface IBackgroundMaintenanceService with
@@ -14,7 +24,7 @@ type BackgroundMaintenanceService(db: DbSession) =
         member _.UpdateIndexAndTodo(noteRef: NoteRef) =
             db.WithConnection(fun conn ->
                 let diary = DiaryRepository.getByUserAndNoteId conn noteRef.UserId noteRef.NoteId
-                SearchIndexService.updateSearchIndex conn diary.NoteId diary.UserId diary.Note |> ignore
+                updateSearchIndex conn diary.NoteId diary.UserId diary.Note |> ignore
 
                 if not (TipTap.containsTodoNodeMarker diary.Note) then
                     TodoRepository.delete conn diary.NoteId diary.UserId
@@ -25,6 +35,7 @@ type BackgroundMaintenanceService(db: DbSession) =
 
         member _.RefreshIndexAndTodo() =
             db.WithConnection(fun conn ->
-                SearchIndexService.refreshSearchIndex conn
+                refreshSearchIndex conn
                 DiaryService.precomputeTodoRows conn
                 TodoRepository.deleteStaleTodos conn)
+
