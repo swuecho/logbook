@@ -18,6 +18,10 @@ dotnet watch run
 
 After JWT authentication, each HTTP request is logged at **Information** to the `Logbook.Request` category with structured fields: `RequestMethod`, `RequestPath`, `StatusCode`, `ElapsedMs`, `UserId` (numeric id or `anonymous` when the route has no user yet). Tuning: set the default or override log level in host configuration (e.g. `Logging:LogLevel:Logbook` or `Logging:LogLevel:Default`).
 
+## Dependency injection
+
+Backend DI wiring is documented in [`docs/dotnet-di-in-fsharp.md`](../docs/dotnet-di-in-fsharp.md), including service registrations, lifetimes, and runtime resolution patterns used by handlers and hosted services.
+
 ## Database: DbUp vs `sql/schema.sql`
 
 **Applying schema changes (real databases)**  

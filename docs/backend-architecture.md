@@ -117,6 +117,8 @@ Startup code should make infrastructure order clear:
 
 If startup grows, split it by concern rather than adding more logic directly to `Program.fs`.
 
+For a detailed explanation of DI registrations, lifetimes, runtime resolution, and the background worker graph, see [`.NET DI in This F# Backend`](./dotnet-di-in-fsharp.md).
+
 ## Identity Constants
 
 Shared identity names live in `AppIdentity`:
@@ -152,4 +154,3 @@ post ApiPaths.login AuthHandlers.login
 let private publicApiPaths =
     ApiPaths.publicApiPaths |> List.map PathString
 ```
-
