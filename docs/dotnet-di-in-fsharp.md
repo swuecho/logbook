@@ -124,6 +124,17 @@ Yes, with current implementation.
 
 This design keeps request latency low while preserving eventual consistency.
 
+## Why DI for `IBackgroundJobPublisher` Helps
+
+Using `IBackgroundJobPublisher` as a DI contract gives practical benefits in this codebase:
+
+- Decouples `DiaryService.saveDiary` from queue internals (`Channel`, debounce, and worker scheduling).
+- Makes implementation swappable (in-memory queue now, external broker later) by changing registration, not service code.
+- Improves testing: tests can inject a fake publisher and assert enqueue behavior without running hosted workers.
+- Keeps side effects explicit at the service boundary (`save` triggers async follow-up work) instead of hidden static calls.
+- Allows background pipeline changes (batching, retries, dead-letter strategy) with minimal impact on handlers/services.
+- Preserves fast request latency by enqueueing quickly and letting worker loops process heavy summary/index updates.
+
 ## Practical Rules for New Code
 
 - Register new app-level services in `AppStartup`.
