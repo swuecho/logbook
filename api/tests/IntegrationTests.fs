@@ -166,6 +166,34 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
                 return response, Some token
         }
 
+    let register (client: HttpClient) username password =
+        task {
+            let credentials =
+                {| username = username
+                   password = password |}
+
+            let! response = client.PostAsync(ApiPaths.register, jsonContent credentials)
+
+            if response.StatusCode <> HttpStatusCode.Created then
+                return response, None
+            else
+                use! json = readJson response
+                let token = json.RootElement.GetProperty("accessToken").GetString()
+                return response, Some token
+        }
+
+    /// Register a new user; if already registered, log in instead.
+    let ensureUserToken (client: HttpClient) username password =
+        task {
+            let! regResponse, regToken = register client username password
+
+            match regToken with
+            | Some token -> return token
+            | None ->
+                let! _, loginToken = login client username password
+                return loginToken.Value
+        }
+
     let sendWithToken (client: HttpClient) (method: HttpMethod) (path: string) token content =
         task {
             use request = new HttpRequestMessage(method, path)
@@ -257,22 +285,35 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
     interface IClassFixture<IntegrationTestFixture>
 
     [<DatabaseFact>]
-    member _.``login registers new users and rejects wrong passwords``() =
+    member _.``register creates a new user, login requires existing user, and reject wrong passwords``() =
         task {
             use client = fixture.CreateClient()
-            let username = uniqueEmail "auth"
+            let email = uniqueEmail "auth"
 
-            let! firstLogin, firstToken = login client username "correct-password"
-            Assert.Equal(HttpStatusCode.OK, firstLogin.StatusCode)
-            Assert.True(firstToken.IsSome)
+            // Login before registering → unauthorized (user does not exist)
+            let! preLogin, preToken = login client email "any-password"
+            Assert.Equal(HttpStatusCode.Unauthorized, preLogin.StatusCode)
+            Assert.True(preToken.IsNone)
 
-            let! secondLogin, secondToken = login client username "correct-password"
-            Assert.Equal(HttpStatusCode.OK, secondLogin.StatusCode)
-            Assert.True(secondToken.IsSome)
+            // Register a new user → 201 with token
+            let! regResponse, regToken = register client email "correct-password"
+            Assert.Equal(HttpStatusCode.Created, regResponse.StatusCode)
+            Assert.True(regToken.IsSome)
 
-            let! wrongPassword, wrongPasswordToken = login client username "wrong-password"
-            Assert.Equal(HttpStatusCode.Unauthorized, wrongPassword.StatusCode)
-            Assert.True(wrongPasswordToken.IsNone)
+            // Register again with same email → 409 conflict
+            let! dupReg, dupToken = register client email "another-password"
+            Assert.Equal(409, int dupReg.StatusCode)
+            Assert.True(dupToken.IsNone)
+
+            // Login with correct password → 200 with token
+            let! goodLogin, goodToken = login client email "correct-password"
+            Assert.Equal(HttpStatusCode.OK, goodLogin.StatusCode)
+            Assert.True(goodToken.IsSome)
+
+            // Login with wrong password → 401 unauthorized
+            let! badLogin, badToken = login client email "wrong-password"
+            Assert.Equal(HttpStatusCode.Unauthorized, badLogin.StatusCode)
+            Assert.True(badToken.IsNone)
         }
 
     [<DatabaseFact>]
@@ -282,10 +323,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             let username = uniqueEmail "diary"
             let noteId = uniqueNoteId ()
             let noteText = "Integration diary save sentinel"
-            let! loginResponse, token = login client username "password"
-
-            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
-            let token = token.Value
+            let! token = ensureUserToken client username "password"
 
             let diary =
                 {| id = 0
@@ -319,10 +357,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             let username = uniqueEmail "search"
             let noteId = uniqueNoteId ()
             let searchTerm = "integrationneedle"
-            let! loginResponse, token = login client username "password"
-
-            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
-            let token = token.Value
+            let! token = ensureUserToken client username "password"
 
             let diary =
                 {| id = 0
@@ -347,10 +382,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             let username = uniqueEmail "todo"
             let noteId = uniqueNoteId ()
             let todoText = "Persisted todo sentinel"
-            let! loginResponse, token = login client username "password"
-
-            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
-            let token = token.Value
+            let! token = ensureUserToken client username "password"
 
             let diary =
                 {| id = 0
@@ -388,10 +420,7 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
         task {
             use client = fixture.CreateClient()
             let username = uniqueEmail "invalid-note-id"
-            let! loginResponse, token = login client username "password"
-
-            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode)
-            let token = token.Value
+            let! token = ensureUserToken client username "password"
 
             let! getResponse =
                 sendWithToken client HttpMethod.Get "/api/diary/undefined" token None
@@ -418,21 +447,16 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             let adminEmail = uniqueEmail "admin-delete"
             let targetEmail = uniqueEmail "delete-target"
 
-            let! adminLogin, _ = login client adminEmail "password"
-            Assert.Equal(HttpStatusCode.OK, adminLogin.StatusCode)
+            let! _ = ensureUserToken client adminEmail "password"
 
             fixture.WithConnection(fun conn ->
                 use cmd = new NpgsqlCommand("UPDATE auth_user SET is_superuser = true WHERE email = @email;", conn)
                 cmd.Parameters.AddWithValue("email", adminEmail) |> ignore
                 cmd.ExecuteNonQuery() |> ignore)
 
-            let! adminLoginAfterPromote, adminToken = login client adminEmail "password"
-            Assert.Equal(HttpStatusCode.OK, adminLoginAfterPromote.StatusCode)
-            let adminToken = adminToken.Value
+            let! adminToken = ensureUserToken client adminEmail "password"
 
-            let! targetLogin, targetToken = login client targetEmail "password"
-            Assert.Equal(HttpStatusCode.OK, targetLogin.StatusCode)
-            let targetToken = targetToken.Value
+            let! targetToken = ensureUserToken client targetEmail "password"
 
             let targetUserId =
                 fixture.WithConnection(fun conn ->

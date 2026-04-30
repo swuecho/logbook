@@ -13,11 +13,16 @@ type LoginResult =
     | LoginSucceeded of AccessTokenResponse
     | LoginFailed of ApiError
 
+type RegisterResult =
+    | RegisterSucceeded of AccessTokenResponse
+    | RegisterFailed of ApiError
+
 let private createNewUser conn email password =
     let passwordHash = Auth.generatePasswordHash password
     AuthUserRepository.create conn email passwordHash "" "" email false false
 
 let private loginFailed = LoginFailed HttpError.invalidCredentials
+let private registerFailed = RegisterFailed HttpError.emailAlreadyRegistered
 
 let private roleForUser user =
     if user.IsSuperuser then
@@ -31,22 +36,21 @@ let private tokenResponse userId role jwtKey audience =
     { AccessToken = jwt.AccessToken
       ExpiresIn = jwt.ExpiresIn }
 
-let private tryLoginExistingUser conn credentials (jwtConfig: JwtService.JwtConfig) =
-    match AuthUserRepository.tryGetByEmail conn credentials.Username with
-    | None -> None
-    | Some user ->
-        if Auth.validatePassword credentials.Password user.Password then
-            AuthUserRepository.updateLastLogin conn user.Id
-            Some(LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience))
-        else
-            Some loginFailed
-
-let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig) =
-    let authUser = createNewUser conn credentials.Username credentials.Password
-    LoginSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtConfig.Secret jwtConfig.Audience)
-
-let loginOrRegister (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
+let login (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
     db.WithConnection(fun conn ->
-        match tryLoginExistingUser conn credentials jwtConfig with
-        | Some result -> result
-        | None -> createAndLoginUser conn credentials jwtConfig)
+        match AuthUserRepository.tryGetByEmail conn credentials.Username with
+        | None -> loginFailed
+        | Some user ->
+            if Auth.validatePassword credentials.Password user.Password then
+                AuthUserRepository.updateLastLogin conn user.Id
+                LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience)
+            else
+                loginFailed)
+
+let register (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
+    db.WithConnection(fun conn ->
+        match AuthUserRepository.tryGetByEmail conn credentials.Username with
+        | Some _ -> registerFailed
+        | None ->
+            let authUser = createNewUser conn credentials.Username credentials.Password
+            RegisterSucceeded(tokenResponse authUser.Id AppIdentity.userRole jwtConfig.Secret jwtConfig.Audience))

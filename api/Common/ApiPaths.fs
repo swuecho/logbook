@@ -3,6 +3,7 @@ module ApiPaths
 let apiPrefix = "/api"
 
 let login = "/api/login"
+let register = "/api/register"
 let logout = "/api/logout"
 
 let diaryIds = "/api/diary_ids"
@@ -19,4 +20,4 @@ let exportMarkdown = "/api/export_md"
 let exportAll = "/api/export_all"
 
 let publicApiPaths =
-    [ login ]
+    [ login; register ]
