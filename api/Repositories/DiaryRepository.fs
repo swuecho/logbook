@@ -17,6 +17,12 @@ let addOrUpdate (conn: NpgsqlConnection) noteId userId note =
 let getByUserAndNoteId (conn: NpgsqlConnection) userId noteId =
     Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId }
 
+let tryGetByUserAndNoteId (conn: NpgsqlConnection) userId noteId =
+    try
+        Some(Diary.DiaryByUserIDAndID conn { NoteId = noteId; UserId = userId })
+    with :? NoResultsException ->
+        None
+
 let listByUserId (conn: NpgsqlConnection) userId =
     Diary.ListDiaryByUserID conn userId
 

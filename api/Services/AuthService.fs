@@ -31,14 +31,15 @@ let private tokenResponse userId role jwtKey audience =
     { AccessToken = jwt.AccessToken
       ExpiresIn = jwt.ExpiresIn }
 
-let private loginExistingUser conn credentials (jwtConfig: JwtService.JwtConfig) =
-    let user = AuthUserRepository.getByEmail conn credentials.Username
-
-    if Auth.validatePassword credentials.Password user.Password then
-        AuthUserRepository.updateLastLogin conn user.Id
-        LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience)
-    else
-        loginFailed
+let private tryLoginExistingUser conn credentials (jwtConfig: JwtService.JwtConfig) =
+    match AuthUserRepository.tryGetByEmail conn credentials.Username with
+    | None -> None
+    | Some user ->
+        if Auth.validatePassword credentials.Password user.Password then
+            AuthUserRepository.updateLastLogin conn user.Id
+            Some(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience)
+        else
+            None
 
 let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig) =
     let authUser = createNewUser conn credentials.Username credentials.Password
@@ -46,7 +47,6 @@ let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig
 
 let loginOrRegister (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
     db.WithConnection(fun conn ->
-        try
-            loginExistingUser conn credentials jwtConfig
-        with :? NoResultsException ->
-            createAndLoginUser conn credentials jwtConfig)
+        match tryLoginExistingUser conn credentials jwtConfig with
+        | Some tokenResponse -> LoginSucceeded tokenResponse
+        | None -> createAndLoginUser conn credentials jwtConfig)

@@ -16,6 +16,7 @@ let deleteUser (db: DbSession) requestingUserId targetUserId =
     else
         db.WithTransaction(fun conn ->
             if AuthUserRepository.deactivateById conn targetUserId then
+                UserRevocationCache.markDeactivated targetUserId
                 UserDeleted
             else
                 UserNotFound)
