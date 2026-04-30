@@ -12,7 +12,7 @@ let userId (ctx: HttpContext) =
     HttpAuth.getUserId ctx.User
 
 let dbSession (ctx: HttpContext) =
-    Database.Connection.dbSession ctx
+    Connection.dbSession ctx
 
 let authenticated (ctx: HttpContext) =
     { UserId = userId ctx

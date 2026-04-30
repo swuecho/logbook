@@ -22,7 +22,7 @@ let deleteUser: HttpHandler =
         let requestingUserId = HandlerContext.userId ctx
         let rawUserId = HandlerContext.routeValue "id" "" ctx
 
-        match Int32.TryParse(rawUserId) with
+        match Int32.TryParse rawUserId with
         | false, _ -> HandlerResponse.clientError 400 HttpError.invalidUserId ctx
         | true, targetUserId ->
             match AdminService.deleteUser dbSession requestingUserId targetUserId with

@@ -17,4 +17,4 @@ let initialize (dataSource: NpgsqlDataSource) =
     use reader = cmd.ExecuteReader()
 
     while reader.Read() do
-        deactivatedUsers.TryAdd(reader.GetInt32(0), ()) |> ignore
+        deactivatedUsers.TryAdd(reader.GetInt32 0, ()) |> ignore

@@ -6,8 +6,8 @@ open System.IdentityModel.Tokens.Jwt
 open Microsoft.IdentityModel.Tokens
 
 let generateToken (userId: int) (role: string) (secret: string) (audience: string) (issuer: string) =
-    let expires = Nullable(DateTime.UtcNow.AddHours(168.0))
-    let notBefore = Nullable(DateTime.UtcNow)
+    let expires = Nullable(DateTime.UtcNow.AddHours 168.0)
+    let notBefore = Nullable DateTime.UtcNow
 
     let securityKey =
         secret |> System.Text.Encoding.UTF8.GetBytes |> SymmetricSecurityKey

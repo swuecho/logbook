@@ -36,7 +36,7 @@ let private getTodoDoneAttr (element: JsonElement) =
 let private appendToken (sb: StringBuilder) (token: string) =
     if not (String.IsNullOrWhiteSpace token) then
         if sb.Length > 0 then sb.Append(' ') |> ignore
-        sb.Append(token) |> ignore
+        sb.Append token |> ignore
 
 let rec private collectText (sb: StringBuilder) (element: JsonElement) =
     match element.ValueKind with
