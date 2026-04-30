@@ -17,6 +17,10 @@ let jsonWithStatus statusCode value =
 let clientError (httpStatus: int) (err: ApiError) : HttpHandler =
     fun ctx -> (Response.withStatusCode httpStatus >> Json.Response.ofJson err) ctx
 
+/// 500 JSON error body `{ code, message }` for unexpected server errors.
+let serverError (err: ApiError) : HttpHandler =
+    clientError 500 err
+
 let plainText value =
     Response.ofPlainText value
 

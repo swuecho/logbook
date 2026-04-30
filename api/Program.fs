@@ -21,6 +21,7 @@ let isDevelopment = wapp.Environment.EnvironmentName = "Development"
 wapp.UseRouting()
     .UseIf(isDevelopment, DeveloperExceptionPageExtensions.UseDeveloperExceptionPage)
     .UseCors(AppStartup.corsPolicyName)
+    .Use(GlobalErrorHandler.useMiddleware)
     .UseAuthentication()
     .Use(RequestLogging.useMiddleware)
     .Use(AppStartup.requireAuthenticatedApiRoutes)
