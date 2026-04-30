@@ -1,10 +1,17 @@
-﻿open Falco
+﻿open System
+open Falco
 open Microsoft.AspNetCore.Builder
 
-let dataSource = Database.Connection.createDataSource Database.Config.connStr
-UserRevocationCache.initialize dataSource
+let private startupTimeout = TimeSpan.FromSeconds(10.0)
 
-let jwtConfig = AppStartup.initializeJwtConfig dataSource
+let dataSource = Database.Connection.createDataSource Database.Config.connStr
+
+Util.runWithTimeout startupTimeout "loading user revocation cache" (fun () ->
+    UserRevocationCache.initialize dataSource)
+
+let jwtConfig =
+    Util.runWithTimeout startupTimeout "initializing JWT config" (fun () ->
+        AppStartup.initializeJwtConfig dataSource)
 
 let builder = WebApplication.CreateBuilder()
 builder.Services |> AppStartup.addDatabase dataSource |> ignore
