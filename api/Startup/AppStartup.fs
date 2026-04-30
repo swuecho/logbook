@@ -105,9 +105,7 @@ let requireAuthenticatedApiRoutes (app: IApplicationBuilder) =
     let userExists (context: HttpContext) =
         match HttpAuth.tryGetUserId context.User with
         | None -> false
-        | Some userId ->
-            let dbSession = Database.Connection.dbSession context
-            dbSession.WithConnection(fun conn -> AuthUserRepository.existsById conn userId)
+        | Some userId -> not (UserRevocationCache.isDeactivated userId)
 
     let isApiRequest (context: HttpContext) =
         context.Request.Path.StartsWithSegments(PathString(ApiPaths.apiPrefix))

@@ -7,12 +7,11 @@ type JwtConfig =
 
 let getOrCreateJwtSecret pgConn jwtAudienceName =
     let getExistingSecret () =
-        try
-            let secret = JwtSecretRepository.getByName pgConn jwtAudienceName
+        match JwtSecretRepository.tryGetByName pgConn jwtAudienceName with
+        | Some secret ->
             printfn "Existing JWT Secret found for %s" jwtAudienceName
             Some secret
-        with :? NoResultsException ->
-            None
+        | None -> None
 
     let getJwtKey () =
         Util.requiredEnvVar "JWT_SECRET"

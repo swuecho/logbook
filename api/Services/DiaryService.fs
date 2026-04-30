@@ -67,10 +67,9 @@ let listSummaries (db: DbSession) userId =
 
 let getOrCreateDiary (db: DbSession) userId noteId =
     db.WithConnection(fun conn ->
-        try
-            DiaryRepository.getByUserAndNoteId conn userId noteId
-        with :? NoResultsException ->
-            DiaryRepository.addOrUpdate conn noteId userId "")
+        match DiaryRepository.tryGetByUserAndNoteId conn userId noteId with
+        | Some diary -> diary
+        | None -> DiaryRepository.addOrUpdate conn noteId userId "")
 
 let private hasSearchIndex (diary: Diary) =
     String.IsNullOrEmpty diary.Note
@@ -96,11 +95,7 @@ let saveDiary
 
     let saved, changed =
         db.WithTransaction(fun conn ->
-            let existing =
-                try
-                    Some(DiaryRepository.getByUserAndNoteId conn userId note.NoteId)
-                with :? NoResultsException ->
-                    None
+            let existing = DiaryRepository.tryGetByUserAndNoteId conn userId note.NoteId
 
             match existing with
             | Some diary when diary.Note = normalizedNote && hasSearchIndex diary ->

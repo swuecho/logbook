@@ -33,3 +33,7 @@ module HttpError =
     let cannotDeleteSelf: ApiError =
         { Code = "cannot_delete_self"
           Message = "You cannot delete your own user account." }
+
+    let emailAlreadyRegistered: ApiError =
+        { Code = "email_already_registered"
+          Message = "An account with that email already exists. Please log in instead." }

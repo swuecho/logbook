@@ -1,30 +1,24 @@
 module SummaryService
 
+open Database
 open Npgsql
 
 let summaryJson (note: Diary) =
     note.Note |> TipTap.getTextFromNote |> TextAnalysis.freqs |> Json.Convert.toJson
 
-let updateSummaryForNote (conn: NpgsqlConnection) (note: Diary) =
+// ── Private helpers that share an open NpgsqlConnection ──────────────
+
+let private updateSummaryForNote (conn: NpgsqlConnection) (note: Diary) =
     SummaryRepository.insertOrUpdate conn note.NoteId note.UserId (summaryJson note)
 
-let updateNoteSummary (conn: NpgsqlConnection) noteId userId =
+let private updateNoteSummaryOnConn (conn: NpgsqlConnection) noteId userId =
     let summary =
         DiaryRepository.getByUserAndNoteId conn userId noteId
         |> summaryJson
 
     SummaryRepository.insertOrUpdate conn noteId userId summary
 
-let refreshSummary (conn: NpgsqlConnection) userId =
-    DiaryRepository.listStaleSummaryIdsByUserId conn userId
-    |> List.map (fun x -> x.NoteId)
-    |> List.iter (fun staleDiaryId -> updateNoteSummary conn staleDiaryId userId)
-
-let refreshAllSummaries (conn: NpgsqlConnection) =
-    DiaryRepository.listStaleSummaryIds conn
-    |> List.iter (fun diary -> updateSummaryForNote conn diary)
-
-let noteSummary (conn: NpgsqlConnection) (note: Diary) =
+let private noteSummaryOnConn (conn: NpgsqlConnection) (note: Diary) =
     let noteId = note.NoteId
 
     let existingSummaryUpdatedAt =
@@ -44,11 +38,31 @@ let noteSummary (conn: NpgsqlConnection) (note: Diary) =
             let summary = SummaryRepository.getByUserAndNoteId conn note.UserId noteId
             summary.Content
 
-let freqsOfNote (conn: NpgsqlConnection) (note: Diary) =
-    { Id = note.Id
-      NoteId = note.NoteId
-      Note = note |> noteSummary conn
-      UserId = note.UserId
-      SearchText = note.SearchText
-      SearchTerms = note.SearchTerms
-      LastUpdated = note.LastUpdated }
+// ── Public API (DbSession) ───────────────────────────────────────────
+
+let updateNoteSummary (db: DbSession) noteId userId =
+    db.WithConnection(fun conn -> updateNoteSummaryOnConn conn noteId userId)
+
+let refreshAllSummaries (db: DbSession) =
+    db.WithConnection(fun conn ->
+        DiaryRepository.listStaleSummaryIds conn
+        |> List.iter (fun diary -> updateSummaryForNote conn diary))
+
+let refreshSummary (db: DbSession) userId =
+    db.WithConnection(fun conn ->
+        DiaryRepository.listStaleSummaryIdsByUserId conn userId
+        |> List.map (fun x -> x.NoteId)
+        |> List.iter (fun staleDiaryId -> updateNoteSummaryOnConn conn staleDiaryId userId))
+
+let noteSummary (db: DbSession) (note: Diary) =
+    db.WithConnection(fun conn -> noteSummaryOnConn conn note)
+
+let freqsOfNote (db: DbSession) (note: Diary) =
+    db.WithConnection(fun conn ->
+        { Id = note.Id
+          NoteId = note.NoteId
+          Note = note |> noteSummaryOnConn conn
+          UserId = note.UserId
+          SearchText = note.SearchText
+          SearchTerms = note.SearchTerms
+          LastUpdated = note.LastUpdated })

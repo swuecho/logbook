@@ -26,6 +26,7 @@
     <Compile Include="Repositories/TodoRepository.fs" />
     <Compile Include="Repositories/JwtSecretRepository.fs" />
     <Compile Include="Infrastructure/Database.fs" />
+    <Compile Include="Infrastructure/UserRevocationCache.fs" />
     <Compile Include="Common/HandlerContext.fs" />
     <Compile Include="Services/ApplicationContracts.fs" />
     <Compile Include="Services/TextAnalysis.fs" />

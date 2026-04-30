@@ -2,6 +2,7 @@
 open Microsoft.AspNetCore.Builder
 
 let dataSource = Database.Connection.createDataSource Database.Config.connStr
+UserRevocationCache.initialize dataSource
 
 let jwtConfig = AppStartup.initializeJwtConfig dataSource
 

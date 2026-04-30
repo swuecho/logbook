@@ -11,6 +11,12 @@ let existsById (conn: NpgsqlConnection) userId =
 let getByEmail (conn: NpgsqlConnection) email =
     AuthUser.GetUserByEmail conn email
 
+let tryGetByEmail (conn: NpgsqlConnection) email =
+    try
+        Some(AuthUser.GetUserByEmail conn email)
+    with :? NoResultsException ->
+        None
+
 let create (conn: NpgsqlConnection) email password firstName lastName username isStaff isSuperuser =
     let user: AuthUser.CreateAuthUserParams =
         { Email = email
