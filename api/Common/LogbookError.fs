@@ -37,3 +37,7 @@ module HttpError =
     let emailAlreadyRegistered: ApiError =
         { Code = "email_already_registered"
           Message = "An account with that email already exists. Please log in instead." }
+
+    let internalError: ApiError =
+        { Code = "internal_error"
+          Message = "An unexpected error occurred." }

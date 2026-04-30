@@ -84,6 +84,7 @@ type IntegrationTestFixture() =
                 .Configure(fun app ->
                     app.UseRouting()
                         .UseCors(AppStartup.corsPolicyName)
+                        .Use(GlobalErrorHandler.useMiddleware)
                         .UseAuthentication()
                         .Use(AppStartup.requireAuthenticatedApiRoutes)
                         .UseFalco(ApiRoutes.endpoints)
