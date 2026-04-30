@@ -72,21 +72,10 @@ let addIndexBackgroundProcessing (services: IServiceCollection) =
     services
 
 let addApplicationServices (services: IServiceCollection) =
-    services.AddSingleton<ApplicationContracts.IBackgroundJobPublisher>(
-        Func<IServiceProvider, ApplicationContracts.IBackgroundJobPublisher>(fun sp ->
-            let summaryQueue = sp.GetRequiredService<SummaryQueue.SummaryUpdateQueue>()
-            let indexQueue = sp.GetRequiredService<IndexQueue.IndexUpdateQueue>()
-            DiaryService.QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
-            :> ApplicationContracts.IBackgroundJobPublisher)
-    )
+    services.AddSingleton<ApplicationContracts.IBackgroundJobPublisher, DiaryService.QueueBackedBackgroundJobPublisher>()
     |> ignore
 
-    services.AddSingleton<ApplicationContracts.IBackgroundMaintenanceService>(
-        Func<IServiceProvider, ApplicationContracts.IBackgroundMaintenanceService>(fun sp ->
-            let dbSession = sp.GetRequiredService<Database.DbSession>()
-            BackgroundMaintenanceService.BackgroundMaintenanceService(dbSession)
-            :> ApplicationContracts.IBackgroundMaintenanceService)
-    )
+    services.AddSingleton<ApplicationContracts.IBackgroundMaintenanceService, BackgroundMaintenanceService.BackgroundMaintenanceService>()
     |> ignore
 
     services

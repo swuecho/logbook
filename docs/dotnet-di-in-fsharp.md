@@ -71,15 +71,61 @@ Falco handlers resolve dependencies from `HttpContext.RequestServices`:
 
 This is a service-locator style. It works, though constructor injection is usually preferred when framework shape allows it.
 
-## Why `Func<IServiceProvider, ...>` Is Used
+## Simple Registration vs. Factory Lambdas
 
-`AppStartup.addApplicationServices` uses factory registrations:
+Most registrations can use the simple generic overload:
 
-- `AddSingleton<IBackgroundJobPublisher>(Func<IServiceProvider, ...>)`
-- `AddSingleton<IBackgroundMaintenanceService>(Func<IServiceProvider, ...>)`
+```fsharp
+// Simple — DI resolves constructor parameters automatically
+services.AddSingleton<IService, Implementation>()
+services.AddSingleton<Implementation>()          // when interface isn't needed
+services.AddHostedService<Worker>()              // for background services
+```
 
-The factory gets `IServiceProvider`, then pulls prerequisites with `GetRequiredService`.
-Use this when construction needs custom wiring rather than a direct concrete type registration.
+### When simple registration works
+
+ASP.NET Core DI can resolve `Implementation`'s constructor parameters IF those parameter types are also registered. For example:
+
+```fsharp
+// NpgsqlDataSource is already registered as a singleton
+services.AddSingleton<NpgsqlDataSource>(dataSource)
+
+// DbSession's constructor takes NpgsqlDataSource — DI resolves it automatically
+services.AddSingleton<DbSession>()
+```
+
+This works because the constructor is:
+```fsharp
+type DbSession(dataSource: NpgsqlDataSource) = ...
+```
+
+### When factory lambdas are actually needed
+
+Use `Func<IServiceProvider, ...>` only when:
+- You need to construct the object with non-DI parameters (e.g. passing a configuration value alongside DI-resolved deps)
+- You need conditional registration logic
+- You're registering an instance created outside DI (e.g. `NpgsqlDataSource` from a connection string)
+
+### Real before/after from this project
+
+**Before** — factory lambda for no reason (both constructor params were already in DI):
+
+```fsharp
+services.AddSingleton<IBackgroundJobPublisher>(
+    Func<IServiceProvider, IBackgroundJobPublisher>(fun sp ->
+        let summaryQueue = sp.GetRequiredService<SummaryUpdateQueue>()
+        let indexQueue = sp.GetRequiredService<IndexUpdateQueue>()
+        QueueBackedBackgroundJobPublisher(summaryQueue, indexQueue)
+        :> IBackgroundJobPublisher)) |> ignore
+```
+
+**After** — one line, same result:
+
+```fsharp
+services.AddSingleton<IBackgroundJobPublisher, QueueBackedBackgroundJobPublisher>() |> ignore
+```
+
+This works because `QueueBackedBackgroundJobPublisher`'s constructor takes `SummaryUpdateQueue` and `IndexUpdateQueue`, both registered as singletons. DI does the rest.
 
 ## Lifetime Notes
 
@@ -135,10 +181,23 @@ Using `IBackgroundJobPublisher` as a DI contract gives practical benefits in thi
 - Allows background pipeline changes (batching, retries, dead-letter strategy) with minimal impact on handlers/services.
 - Preserves fast request latency by enqueueing quickly and letting worker loops process heavy summary/index updates.
 
+## Registration Patterns Cheat Sheet
+
+| Scenario | Registration |
+|----------|-------------|
+| Interface + impl, constructor deps in DI | `AddSingleton<ISvc, Impl>()` |
+| Concrete class, constructor deps in DI | `AddSingleton<Impl>()` |
+| Instance created outside DI | `AddSingleton(instance)` |
+| Needs non-DI constructor args | `AddSingleton<ISvc>(fun sp -> Impl(sp.GetRequiredService<X>(), "value"))` |
+| Background/hosted service | `AddHostedService<Worker>()` |
+| Per-request lifetime | `AddScoped<ISvc, Impl>()` |
+| New instance every resolve | `AddTransient<ISvc, Impl>()` |
+
 ## Practical Rules for New Code
 
 - Register new app-level services in `AppStartup`.
 - Prefer explicit interfaces for cross-layer collaborators.
+- Use the simplest registration overload that works — only reach for factory lambdas when constructor parameters can't be resolved by DI.
 - Keep queues/dispatchers singleton when they coordinate shared background state.
 - Use `DbSession.WithTransaction` for multi-write consistency.
 - Avoid resolving services from deep utility functions; keep resolution near request or startup boundaries.
