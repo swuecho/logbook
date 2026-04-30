@@ -37,9 +37,9 @@ let private tryLoginExistingUser conn credentials (jwtConfig: JwtService.JwtConf
     | Some user ->
         if Auth.validatePassword credentials.Password user.Password then
             AuthUserRepository.updateLastLogin conn user.Id
-            Some(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience)
+            Some(LoginSucceeded(tokenResponse user.Id (roleForUser user) jwtConfig.Secret jwtConfig.Audience))
         else
-            None
+            Some loginFailed
 
 let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig) =
     let authUser = createNewUser conn credentials.Username credentials.Password
@@ -48,5 +48,5 @@ let private createAndLoginUser conn credentials (jwtConfig: JwtService.JwtConfig
 let loginOrRegister (db: DbSession) (jwtConfig: JwtService.JwtConfig) (credentials: Login) =
     db.WithConnection(fun conn ->
         match tryLoginExistingUser conn credentials jwtConfig with
-        | Some tokenResponse -> LoginSucceeded tokenResponse
+        | Some result -> result
         | None -> createAndLoginUser conn credentials jwtConfig)

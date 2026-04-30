@@ -16,10 +16,10 @@ let private refreshSearchIndex (conn: NpgsqlConnection) =
 type BackgroundMaintenanceService(db: DbSession) =
     interface IBackgroundMaintenanceService with
         member _.UpdateSummary(noteRef: NoteRef) =
-            db.WithConnection(fun conn -> SummaryService.updateNoteSummary conn noteRef.NoteId noteRef.UserId)
+            SummaryService.updateNoteSummary db noteRef.NoteId noteRef.UserId
 
         member _.RefreshSummaries() =
-            db.WithConnection SummaryService.refreshAllSummaries
+            SummaryService.refreshAllSummaries db
 
         member _.UpdateIndexAndTodo(noteRef: NoteRef) =
             db.WithConnection(fun conn ->
