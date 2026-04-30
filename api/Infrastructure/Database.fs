@@ -61,7 +61,7 @@ module Connection =
 
     let addDatabase (dataSource: NpgsqlDataSource) (services: IServiceCollection) =
         services.AddSingleton<NpgsqlDataSource>(dataSource) |> ignore
-        services.AddSingleton<DbSession>(fun _ -> DbSession(dataSource)) |> ignore
+        services.AddSingleton<DbSession>() |> ignore
         services
 
     let dbSession (httpContext: HttpContext) =
