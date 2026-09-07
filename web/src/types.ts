@@ -2,6 +2,7 @@ export interface DiaryEntry {
   account?: string;
   noteId: string;
   note: string;
+  previousNote?: string;
   dirty?: boolean;
   updatedAt?: number;
   syncedAt?: number;

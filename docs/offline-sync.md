@@ -1,46 +1,140 @@
-# Offline Sync Summary
+# Offline diary storage and sync
 
-This frontend uses an offline-first model where IndexedDB is the source of truth and the server is eventually consistent.
+The editor reads and saves in IndexedDB. Network requests run separately, so a
+slow or unavailable server does not block cached entries or writing. This release
+implements roadmap phases 1–3. Calendar dates come from local entries; search,
+word-cloud summaries, aggregated todos, and Markdown export still require the
+server (phase 4). External image and iframe content is not downloaded for offline
+use, although the document references are preserved.
 
-## Flow
-- Every edit writes to IndexedDB immediately.
-- Notes are marked `dirty` with `updatedAt` timestamps on save.
-- When online, dirty notes are synced to the API and then marked `dirty=false` with `syncedAt`.
-- Sync runs on startup (if online) and whenever the browser fires the `online` event.
-- If a note is dirty, `fetchNote` does not overwrite it with server data to avoid clobbering unsynced edits.
+## User behavior
 
-## Key Files
-- `web/src/services/note.ts`: IndexedDB storage, dirty tracking, and sync logic.
-- `web/src/types.ts`: `DiaryEntry` shape including `dirty`, `updatedAt`, and `syncedAt`.
+1. Sign in online once. The app downloads the currently opened entry, then history
+   in resumable batches. Open **Details** in the sync bar to check that both the app
+   and history are downloaded before going offline.
+2. Write normally. **Saved on this device** means IndexedDB committed the edit.
+   **Synced** means the server acknowledged it. Local storage failure has a separate
+   error, retry, and download action; route navigation waits for local writes.
+3. Reopening a production build offline works after the service worker has
+   installed. Expired server credentials do not lock the local diary. Sign in to
+   the same account when available to resume uploading.
+4. When two devices edit the same date, the editor keeps the local version and
+   displays the server version for review. Both versions are retained in the
+   device backup after choosing either one.
+5. **Export device backup** includes pending entries and conflict recovery copies.
+   **Keep offline storage** requests persistent browser storage, which the browser
+   may decline. Clearing site data removes local writing. Logout clears the login
+   immediately, even offline, but retains each account's separate local partition.
 
-## Sync Logic (Mermaid)
-```mermaid
-flowchart TD
-  A[User edits note] --> B[saveNote]
-  B --> C[Write to IndexedDB]
-  C --> D[Mark dirty + updatedAt]
-  D --> E{navigator.onLine?}
+Sync runs on startup, reconnect, focus, an explicit retry, and periodically while
+the app is open. It uses 12-second request timeouts and bounded exponential
+backoff. There is no promise of background upload after the browser closes.
 
-  E -- No --> F[Return local note\n(dirty stays true)]
-  E -- Yes --> G[Try syncNote]
+## Local data and concurrency
 
-  G --> H{Sync success?}
-  H -- Yes --> I[Mark dirty=false\nsyncedAt=now]
-  H -- No --> J[Log error\nLeave dirty=true]
+Database `logbook-db`, version 2:
 
-  K[App start or online event] --> L[syncDirtyNotes]
-  L --> M[Load notes from IndexedDB]
-  M --> N[Filter dirty notes]
-  N --> O[Sort by updatedAt]
-  O --> P[For each note -> syncNote]
-  P --> H
+- `entries`: primary key `[account, noteId]`, with an account index. The account
+  includes origin, token issuer/audience, and user ID; a date is `YYYYMMDD` in the
+  user's calendar, never converted into a UTC timestamp.
+- `syncMeta`: per-account download cursor and initial-history completion state.
+- `notes`: the original v1 store, preserved unchanged for explicit export/recovery.
+
+The original cache was keyed only by date and cannot reliably establish ownership.
+It is deliberately not uploaded under the next account to sign in. **Export old
+cache** makes its original documents available without changing them. Do not clear
+this store until any unsynced writing has been recovered. If an older tab blocks
+the database upgrade, the sync details ask the user to close it.
+
+Each edit commits content and dirty state in one transaction. A persisted pending
+mutation contains its UUID, base server revision, document, and local edit counter.
+Retries resend that same mutation even if typing continues. Acknowledgement clears
+only the uploaded edit counter, preserving newer writing. Downloads observed during
+an upload are retained and reconciled afterward. An edit based on content the editor
+hasn't yet displayed is treated as a conflict, rather than adopting an unseen
+server revision. Cross-tab sync uses Web Locks where available; mutation receipts
+make duplicate uploads safe when locks are unavailable.
+
+## Server protocol
+
+All endpoints require the existing bearer authentication and validate dates.
+Revisions and cursors are decimal strings to avoid JavaScript integer rounding.
+
+| Endpoint | Request | Response |
+| --- | --- | --- |
+| `GET /api/sync/diary/{date}` | — | `{ noteId, note, revision }`; absent date has revision `"0"`, with no write |
+| `PUT /api/sync/diary/{date}` | `{ note, baseRevision, mutationId }` | Saved entry; `409 { current: entry }` if the base changed |
+| `GET /api/sync/changes?cursor=0` | Last committed local cursor | `{ entries, cursor, hasMore }`, at most 100 latest entries per page |
+
+A per-user counter is held until the write transaction commits. This prevents a
+reader from advancing past an uncommitted smaller revision. Each entry's latest
+content and revision are captured by a diary trigger, including changes from the
+legacy save endpoint. Empty content remains a versioned entry, so clearing a day
+propagates. Hard deletion of individual diary rows is not a supported sync operation;
+any future delete endpoint must add versioned deletion markers.
+
+The save transaction atomically checks the base revision, writes the diary, and
+records the mutation receipt. Receipts store a content hash, the normalization
+result, and revision, rather than another full copy of every document. Replaying a
+committed request returns its original acknowledgement without reverting later
+writes. Reusing its UUID for a different request is rejected. Receipts should not
+be pruned until a protocol for expiring old pending client mutations exists.
+
+A page and its cursor commit in one local transaction. The feed contains current
+entry states, not an audit log; this is sufficient to converge diary replicas.
+
+## Deployment and upgrades
+
+1. Back up the server database. Let old clients finish syncing before upgrading
+   where possible, and preserve/export any old cached drafts.
+2. Run `make migrate` from `api/` using the deployment's `DATABASE_URL`. Migration
+   `0004_diary_sync.sql` adds the sync tables, trigger, and backfills existing diaries.
+   Apply it before starting the updated backend. The backfill updates existing rows
+   to fire the trigger, so schedule it appropriately for database size.
+3. Build the frontend with Node 20+ and `yarn install --frozen-lockfile`, then
+   `yarn build` from `web/`. Ship the resulting `api/wwwroot` with the API. The build
+   generates `sw.js` from only the current compilation's assets, including lazy
+   routes. Serve the site over HTTPS (localhost works for development).
+4. Avoid long-lived intermediary caching of `sw.js` and `index.html`. The worker
+   caches only the app assets, never authenticated API responses. New workers wait
+   until older tabs close rather than forcing a reload during writing.
+5. Reopen clients online. Confirm **App ready to reopen offline** and **History
+   downloaded** in Details. Export the legacy cache if the old version left drafts.
+
+The legacy PUT endpoint remains compatible for existing clients and still has
+unconditional replacement semantics; revision conflict protection is provided by
+the new sync endpoint. Upgrade all clients to receive it. Do not roll back the
+frontend to v1 while v2 has pending entries: the old client cannot read the new
+account-scoped store. A service worker update also requires closing old tabs.
+
+Offline session access is a local convenience, not new server authorization.
+Revoked or expired tokens are still rejected by the API. Local caches are not
+application-encrypted, and logging out does not erase them.
+
+## Validation
+
+From the repository root:
+
+```sh
+dotnet test api/tests/unit.fsproj
 ```
 
-## Notes
-- Failed syncs keep notes dirty for later retry.
-- Conflict resolution is not implemented; newest local edits win until synced.
-- There is no retry backoff yet; repeated failures will retry on next online event or app start.
+From `web/`:
 
-## Future Improvements
-- Add retry backoff with jitter to avoid hammering the server during outages.
-- Introduce conflict detection (e.g., server-side versioning) and surface merge options to the user.
+```sh
+yarn test
+yarn build
+yarn playwright install chromium
+yarn test:e2e
+```
+
+For an existing test browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable
+path. The browser tests start an isolated static server on port 9197 and mock the
+API; backend integration tests independently exercise PostgreSQL and the real
+HTTP handlers using the existing test fixture.
+
+Coverage includes stale acknowledgements, crash-safe mutation retries, unseen and
+out-of-order downloads, account isolation, conflicts, empty entries, legacy-cache
+preservation, concurrent server creation, receipt replay, history pagination,
+offline reload with expired credentials, cached calendar navigation, server failure,
+and local storage errors. Browser screenshots are written to `web/test-results/`.

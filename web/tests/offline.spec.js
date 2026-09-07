@@ -174,3 +174,25 @@ test('date navigation preserves edits immediately without waiting for upload', a
   await page.goBack();
   await expect(page.locator('.ProseMirror')).toContainText('before navigation');
 });
+
+
+test('a local storage failure keeps writing visible and blocks navigation until saved', async ({ page, context }) => {
+  await setup(page, context);
+  await context.setOffline(true);
+  await page.evaluate(() => {
+    window.originalPut = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args) {
+      if (this.name === 'entries') throw new DOMException('Storage full', 'QuotaExceededError');
+      return window.originalPut.apply(this, args);
+    };
+  });
+  await typeText(page, ' recover this writing');
+  await expect(page.getByRole('button', { name: 'Retry local save' })).toBeVisible();
+  await page.getByRole('link', { name: 'Calendar', exact: true }).click();
+  await expect(page.locator('.ProseMirror')).toContainText('recover this writing');
+  expect(page.url()).toContain('/view');
+  await page.evaluate(() => { IDBObjectStore.prototype.put = window.originalPut; });
+  await page.getByRole('button', { name: 'Retry local save' }).click();
+  await expect.poll(async () => (await localEntry(page)).note).toContain('recover this writing');
+  await expect(page.getByRole('button', { name: 'Retry local save' })).toHaveCount(0);
+});

@@ -32,12 +32,17 @@ export async function getSyncMeta(account) {
   return (await openLocalDatabase()).get('syncMeta', account);
 }
 
-export async function saveLocalNote(account, noteId, note) {
+export async function saveLocalNote(account, noteId, note, previousNote) {
   const db = await openLocalDatabase();
   const tx = db.transaction('entries', 'readwrite');
   const current = await tx.store.get([account, noteId]);
+  // The editor may still display an older document when a download commits.
+  // Don't silently adopt that unseen document's revision as the edit's base.
+  const unseenRemote = current && !current.dirty && !current.pending && previousNote !== undefined
+    && current.note !== previousNote && current.note !== note;
   const entry = {
     ...current, account, noteId, note, dirty: true,
+    conflict: unseenRemote ? { noteId, note: current.note, revision: current.serverRevision } : current?.conflict,
     localVersion: (current?.localVersion || 0) + 1, updatedAt: Date.now(),
   };
   await tx.store.put(entry);

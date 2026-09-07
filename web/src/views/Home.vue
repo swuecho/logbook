@@ -12,13 +12,13 @@
             <div class="time-display">{{ time }}</div>
           </template>
         </AppTopBar>
-        <DateNavigation v-if="date && diaryIds.size > 0" v-model="date" :diary-ids="diaryIds" />
+        <DateNavigation v-if="date && diaryIds.size > 0" :model-value="date" @update:modelValue="changeDate" :diary-ids="diaryIds" />
         <TodoStrip />
         <el-dialog v-model="dialogVisibleMd" title="Markdown export" class="home-page__dialog" @close="closeModalMd">
           <MDView :note-id="date" />
         </el-dialog>
       </div>
-      <DiaryEditor :date="date"></DiaryEditor>
+      <DiaryEditor ref="diaryEditor" :date="date"></DiaryEditor>
     </div>
   </div>
 </template>
@@ -34,6 +34,10 @@ import DateNavigation from '@/components/DateNavigation.vue';
 import AppTopBar from '@/components/AppTopBar.vue';
 import { getDiaryIds } from '@/services/diary';
 
+const diaryEditor = ref(null);
+async function changeDate(nextDate) {
+  if (!diaryEditor.value || await diaryEditor.value.canLeave()) date.value = nextDate;
+}
 const now = ref(moment());
 const date = ref(moment().format('YYYYMMDD'))
 const dialogVisibleMd = ref(false)

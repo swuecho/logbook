@@ -64,6 +64,23 @@ let getTextFromNote (note: string) =
             // Not JSON (or invalid JSON); index the raw content.
             note
 
+let private containsMedia (note: string) =
+    let rec walk (element: JsonElement) =
+        match element.ValueKind with
+        | JsonValueKind.Object ->
+            let isMedia =
+                match element.TryGetProperty("type") with
+                | true, kind when kind.ValueKind = JsonValueKind.String ->
+                    kind.GetString() = "image" || kind.GetString() = "iframe"
+                | _ -> false
+            isMedia || (element.EnumerateObject() |> Seq.exists (fun property -> walk property.Value))
+        | JsonValueKind.Array -> element.EnumerateArray() |> Seq.exists walk
+        | _ -> false
+    try
+        use document = JsonDocument.Parse(note)
+        walk document.RootElement
+    with _ -> false
+
 /// Returns true if the note has no meaningful user content.
 /// This treats "empty doc skeleton" TipTap JSON (e.g. doc with an empty paragraph)
 /// as empty, so it shouldn't count as a real note.
@@ -72,7 +89,7 @@ let isEffectivelyEmpty (note: string) =
         true
     else
         // If it includes todo/task nodes, keep it as non-empty even if plain text is empty.
-        if containsTodoNodeMarker note then
+        if containsTodoNodeMarker note || containsMedia note then
             false
         else
             String.IsNullOrWhiteSpace(getTextFromNote note)

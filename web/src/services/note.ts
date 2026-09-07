@@ -6,7 +6,7 @@ import type { DiaryEntry } from '../types';
 export async function saveNote(note: DiaryEntry) {
   const account = note.account || activeAccount.value;
   if (!account) throw new Error('Sign in once before saving entries on this device.');
-  const saved = await saveLocalNote(account, note.noteId, note.note);
+  const saved = await saveLocalNote(account, note.noteId, note.note, note.previousNote);
   notifyLocalChange();
   scheduleSync();
   return saved;

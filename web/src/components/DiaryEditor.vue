@@ -68,6 +68,7 @@ const extensions = computed(() => createExtensions({ toolbar: toolbarMode.value 
 let mobileToolbarMediaQuery;
 let applyingContent = false;
 let lastDocument = '';
+let viewedNote = '';
 let writeQueue = Promise.resolve();
 let loadSequence = 0;
 let disposed = false;
@@ -76,7 +77,7 @@ function hasMeaningfulContent(node) {
   if (!node) return false;
   if (Array.isArray(node)) return node.some(hasMeaningfulContent);
   if (node.type === 'text') return Boolean((node.text || '').trim());
-  if (node.type === 'image' || node.type === 'iframe') return true;
+  if (['image', 'iframe', 'taskList', 'taskItem'].includes(node.type)) return true;
   return Array.isArray(node.content) && node.content.some(hasMeaningfulContent);
 }
 
@@ -107,6 +108,7 @@ async function loadLocal() {
     readError.value = false;
     saveError.value = '';
     content.value = doc;
+    viewedNote = next.note;
     lastDocument = payload(doc);
     if (editorRef.value && payload(editorRef.value.getJSON()) !== lastDocument) {
       applyingContent = true;
@@ -134,6 +136,8 @@ function onEditorUpdate(output, editor) {
   const doc = normalizeTiptapDoc(editor?.getJSON ? editor.getJSON() : editorRef.value?.getJSON() || output);
   const note = payload(doc);
   if (note === lastDocument && !saveError.value) return;
+  const previousNote = viewedNote;
+  viewedNote = note;
   lastDocument = note;
   content.value = doc;
   const date = props.date;
@@ -142,7 +146,7 @@ function onEditorUpdate(output, editor) {
   // Capture the document and date now, before navigation or another edit.
   writeQueue = writeQueue.then(async () => {
     try {
-      const saved = await saveNote({ account, noteId: date, note });
+      const saved = await saveNote({ account, noteId: date, note, previousNote });
       if (date === props.date && account === activeAccount.value) {
         entry.value = saved;
         saveError.value = '';
@@ -194,6 +198,7 @@ async function canLeave() {
   await writeQueue;
   return !writeFailed.value;
 }
+defineExpose({ canLeave });
 onBeforeRouteLeave(canLeave);
 onBeforeRouteUpdate(canLeave);
 function downloadWriting() {

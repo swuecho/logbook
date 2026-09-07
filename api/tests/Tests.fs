@@ -581,3 +581,10 @@ let ``queue backed publisher enqueues summary and index updates`` () =
 
     Assert.True(summaryTaken.IsSome)
     Assert.True(indexTaken.IsSome)
+
+[<Theory>]
+[<InlineData("image")>]
+[<InlineData("iframe")>]
+let ``media-only entries are not normalized to empty content`` nodeType =
+    let note = Json.Convert.toJson {| ``type`` = "doc"; content = [| {| ``type`` = nodeType; attrs = {| src = "https://example.test/media" |} |} |] |}
+    Assert.False(TipTap.isEffectivelyEmpty note)

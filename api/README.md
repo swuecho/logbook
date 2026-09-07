@@ -98,3 +98,8 @@ sqlc.arg(separator)
 ```
 
 This avoids generated names like `Column2` and keeps the F# parameter records readable.
+
+## Offline sync
+
+See [offline storage, protocol, and rollout](../docs/offline-sync.md). Apply migration
+`0004_diary_sync.sql` before deploying the updated API and frontend.

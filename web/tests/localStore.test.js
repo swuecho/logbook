@@ -133,3 +133,15 @@ test('out-of-order downloads during upload preserve the highest observed revisio
   assert.equal((await getLocalNote(account, '20260907')).note, 'newest remote');
   assert.equal((await getSyncMeta(account)).cursor, '4');
 });
+
+
+test('typing from an older visible document does not adopt an unseen remote revision', async () => {
+  const account = 'unseen-remote';
+  await applyRemote(account, remote('visible version', '1'));
+  await applyRemote(account, remote('not yet displayed', '2'));
+  await saveLocalNote(account, '20260907', 'visible version plus typing', 'visible version');
+  const saved = await getLocalNote(account, '20260907');
+  assert.equal(saved.note, 'visible version plus typing');
+  assert.equal(saved.conflict.note, 'not yet displayed');
+  assert.equal(await prepareUpload(account, '20260907'), undefined);
+});
