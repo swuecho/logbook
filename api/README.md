@@ -24,6 +24,9 @@ Backend DI wiring is documented in [`docs/dotnet-di-in-fsharp.md`](../docs/dotne
 
 ## Database: DbUp vs `sql/schema.sql`
 
+See [Applying database migrations](../docs/database-migrations.md) for prerequisites,
+local Docker setup, deployment order, verification, and failure recovery.
+
 **Applying schema changes (real databases)**  
 Use **DbUp** from the `Migrations` project. Add new versioned SQL under `Migrations/scripts/`, then run:
 
@@ -40,11 +43,13 @@ dotnet run --project Migrations -- "$DATABASE_URL"
 **sqlc and type-checked queries**  
 `sql/schema.sql` is the **sqlc** schema: it drives generated F# in `queries/` and validation of `sql/query/*.sql`. When you add tables or columns, update **both** a DbUp migration and `sql/schema.sql` (so `sqlc generate` and `dotnet build` match the real database).
 
-**Optional local bootstrap**  
-Set `LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP=true` to run the full `schema.sql` against an empty database (e.g. quick local setup). This does not replace migrations for shared or production databases.
+**Startup behavior**
 
-**Search index (optional on startup)**  
-`LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP=true` refreshes missing search index rows; not enabled by default.
+The API does not run migrations or initialize the schema on startup. Apply DbUp
+migrations before starting it, including for an empty local database.
+`Database.InitDB.init` runs `schema.sql` for the integration-test fixture; the
+current API startup does not read `LOGBOOK_RUN_SCHEMA_INIT_ON_STARTUP` or
+`LOGBOOK_REFRESH_SEARCH_INDEX_ON_STARTUP`.
 
 ## Port
 

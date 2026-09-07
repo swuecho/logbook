@@ -8,6 +8,9 @@
 
 ## How to deploy
 
+Follow [Applying database migrations](docs/database-migrations.md) to prepare the
+database before starting the API. Docker Compose does not run migrations.
+
 ```sh
 # check docker-compose.yaml
 docker-compose up -d
