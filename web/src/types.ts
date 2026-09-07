@@ -1,8 +1,12 @@
-// types.ts
 export interface DiaryEntry {
-        noteId: string;
-        note: string;
-        dirty?: boolean;
-        updatedAt?: number;
-        syncedAt?: number;
+  account?: string;
+  noteId: string;
+  note: string;
+  dirty?: boolean;
+  updatedAt?: number;
+  syncedAt?: number;
+  localVersion?: number;
+  serverRevision?: string;
+  unknown?: boolean;
+  conflict?: { noteId: string; note: string; revision: string };
 }

@@ -43,6 +43,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import router from '@/router';
 import { logoutUser } from '@/services/auth';
+import { clearSession } from '@/services/session';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const done = ref(false);
@@ -59,20 +60,12 @@ const logout = async () => {
   done.value = false;
   loading.value = true;
 
-  try {
-    await logoutUser();
-
-    localStorage.removeItem('JWT_TOKEN');
-    localStorage.removeItem('JWT_EXPIRES_AT');
-
-    done.value = true;
-    startRedirectCountdown();
-  } catch (error) {
-    console.error('Logout failed:', error);
-    errors.value.push(getApiErrorMessage(error, '登出失败，请重试。'));
-  } finally {
-    loading.value = false;
-  }
+  // Local logout works immediately, including when the server is unreachable.
+  void logoutUser().catch(() => {});
+  clearSession();
+  done.value = true;
+  loading.value = false;
+  startRedirectCountdown();
 };
 
 const goLogin = () => router.push({ path: '/login' });

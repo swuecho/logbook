@@ -8,32 +8,30 @@ import router from './router'
 import App from './App.vue'
 import './styles/ui.css'
 
-import { VueQueryPlugin } from '@tanstack/vue-query'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { initTabLock } from '@/services/tabLock';
 import { initTheme } from '@/services/theme';
+import { activeAccount, restoreSession } from '@/services/session';
+import { initSync, onLocalChange } from '@/services/sync';
+import { registerOfflineApp } from '@/services/offline';
 
 initTheme();
 initTabLock();
 
-function IsAuthenticatedValid() {
-  const isAuthenticated = localStorage.getItem('JWT_TOKEN');
-  const expiresAt = localStorage.getItem('JWT_EXPIRES_AT');
-  const expiresAtMs = Number(expiresAt);
-  const expired = !expiresAtMs || expiresAtMs <= Date.now();
-  return Boolean(isAuthenticated) && !expired
-}
-
-router.beforeEach((to, from, next) => {
-  if (to.path !== '/login' && !IsAuthenticatedValid()) {
-    next('/login');
-  } else {
-    next();
-  }
+restoreSession();
+router.beforeEach((to) => {
+  if (to.path !== '/login' && !activeAccount.value) return '/login';
 });
 
 const app = createApp(App)
 app.use(router)
 app.use(ElementPlus)
 app.use(ElementTiptapPlugin)
-app.use(VueQueryPlugin)
+const queryClient = new QueryClient();
+app.use(VueQueryPlugin, { queryClient });
+onLocalChange(() => { queryClient.invalidateQueries({ queryKey: ['diaryIds'] }); });
+window.addEventListener('logbook-session', () => { queryClient.clear(); });
 app.mount('#app')
+
+initSync();
+registerOfflineApp();

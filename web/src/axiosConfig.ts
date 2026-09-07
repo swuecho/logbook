@@ -8,6 +8,7 @@ const getJwtToken = () => localStorage.getItem('JWT_TOKEN');
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 const config = {
+  timeout: 12000,
   headers: {},
 };
 

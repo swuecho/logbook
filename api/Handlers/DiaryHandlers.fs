@@ -82,3 +82,29 @@ let todoLists: HttpHandler =
 
         DiaryService.todoDocument requestContext.DbSession requestContext.UserId
         |> HandlerResponse.json ctx
+
+// Versioned endpoints used by the offline client. Revisions travel as strings.
+let syncChanges: HttpHandler =
+    fun ctx ->
+        let request = HandlerContext.authenticated ctx
+        match Int64.TryParse(HandlerContext.queryValue "cursor" "0" ctx) with
+        | true, cursor when cursor >= 0L ->
+            DiarySyncService.changes request.DbSession request.UserId cursor |> HandlerResponse.json ctx
+        | _ -> HandlerResponse.jsonWithStatus 400 {| Message = "Invalid sync cursor." |} ctx
+
+let syncGet: HttpHandler =
+    fun ctx ->
+        let request = HandlerContext.authenticated ctx
+        withValidNoteId (HandlerContext.routeValue "id" "" ctx) (fun noteId ->
+            DiarySyncService.get request.DbSession request.UserId noteId |> HandlerResponse.jsonHandler) ctx
+
+let syncSave: HttpHandler =
+    fun ctx ->
+        let request = HandlerContext.authenticated ctx
+        let publisher = ctx.RequestServices.GetRequiredService<ApplicationContracts.IBackgroundJobPublisher>()
+        withValidNoteId (HandlerContext.routeValue "id" "" ctx) (fun noteId ->
+            Json.Request.mapJson (fun (mutation: DiarySyncService.Mutation) ->
+                match DiarySyncService.save request.DbSession publisher request.UserId noteId mutation with
+                | DiarySyncService.Saved entry -> HandlerResponse.jsonHandler entry
+                | DiarySyncService.Conflict entry -> HandlerResponse.jsonWithStatus 409 {| Current = entry |}
+                | DiarySyncService.InvalidMutation -> HandlerResponse.jsonWithStatus 400 {| Message = "Invalid sync mutation." |})) ctx
