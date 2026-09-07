@@ -96,6 +96,7 @@ import settingsIcon from '@iconify/icons-mdi/cog-outline';
 import router from '@/router';
 import { parseJwt } from '@/util';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
+import { activeAccount } from '@/services/session';
 import { currentTheme, setTheme, themeOptions } from '@/services/theme';
 
 defineProps({
@@ -133,11 +134,7 @@ defineEmits(['open-markdown']);
 
 const settingsVisible = ref(false);
 
-const isAuthenticated = computed(() => {
-  const token = localStorage.getItem('JWT_TOKEN');
-  const expiresAt = Number(localStorage.getItem('JWT_EXPIRES_AT'));
-  return Boolean(token) && Boolean(expiresAt) && expiresAt > Date.now();
-});
+const isAuthenticated = computed(() => Boolean(activeAccount.value));
 
 const isAdmin = computed(() => {
   const token = localStorage.getItem('JWT_TOKEN');

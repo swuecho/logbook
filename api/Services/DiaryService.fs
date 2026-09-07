@@ -69,7 +69,9 @@ let getOrCreateDiary (db: DbSession) userId noteId =
     db.WithConnection(fun conn ->
         match DiaryRepository.tryGetByUserAndNoteId conn userId noteId with
         | Some diary -> diary
-        | None -> DiaryRepository.addOrUpdate conn noteId userId "")
+        | None ->
+            { Id = 0; UserId = userId; NoteId = noteId; Note = ""
+              SearchText = ""; SearchTerms = [||]; LastUpdated = DateTime.UnixEpoch })
 
 let private hasSearchIndex (diary: Diary) =
     String.IsNullOrEmpty diary.Note
@@ -95,6 +97,9 @@ let saveDiary
 
     let saved, changed =
         db.WithTransaction(fun conn ->
+            use gate = new Npgsql.NpgsqlCommand("INSERT INTO diary_sync_state (user_id) VALUES (@user) ON CONFLICT (user_id) DO UPDATE SET revision = diary_sync_state.revision", conn)
+            gate.Parameters.AddWithValue("user", userId) |> ignore
+            gate.ExecuteNonQuery() |> ignore
             let existing = DiaryRepository.tryGetByUserAndNoteId conn userId note.NoteId
 
             match existing with

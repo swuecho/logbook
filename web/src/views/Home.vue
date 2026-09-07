@@ -44,6 +44,7 @@ let intervalId = null;
 const { data: diaryIdsData } = useQuery({
   queryKey: ['diaryIds'],
   queryFn: getDiaryIds,
+  networkMode: 'always',
 });
 
 watch(diaryIdsData, (ids) => {

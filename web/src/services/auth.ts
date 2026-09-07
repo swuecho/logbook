@@ -1,4 +1,5 @@
 import axios from '../axiosConfig';
+import rawAxios from 'axios';
 
 export const loginUser = async (username: string, password: string) => {
   const response = await axios.post('/api/login', {
@@ -17,5 +18,6 @@ export const registerUser = async (username: string, password: string) => {
 };
 
 export const logoutUser = async () => {
-  await axios.post('/api/logout');
+  const token = localStorage.getItem('JWT_TOKEN');
+  await rawAxios.post('/api/logout', null, { timeout: 3000, headers: { Authorization: `Bearer ${token}` } });
 };

@@ -509,3 +509,109 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
 
             Assert.Equal(HttpStatusCode.Unauthorized, deletedUserResponse.StatusCode)
         }
+
+    [<DatabaseFact>]
+    member _.``sync detects conflicts and retries committed mutations without reverting later writes``() =
+        task {
+            use client = fixture.CreateClient()
+            let! token = ensureUserToken client (uniqueEmail "sync") "password"
+            let noteId = "20260907"
+            let path = $"/api/sync/diary/{noteId}"
+            let first = {| note = tipTapDoc "first"; baseRevision = "0"; mutationId = Guid.NewGuid().ToString() |}
+            let! response = sendWithToken client HttpMethod.Put path token (Some(jsonContent first))
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode)
+            use! firstJson = readJson response
+            let revision = firstJson.RootElement.GetProperty("revision").GetString()
+            let second = {| note = tipTapDoc "second"; baseRevision = revision; mutationId = Guid.NewGuid().ToString() |}
+            let! secondResponse = sendWithToken client HttpMethod.Put path token (Some(jsonContent second))
+            Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode)
+
+            let! retry = sendWithToken client HttpMethod.Put path token (Some(jsonContent first))
+            Assert.Equal(HttpStatusCode.OK, retry.StatusCode)
+            use! retryJson = readJson retry
+            Assert.Equal(revision, retryJson.RootElement.GetProperty("revision").GetString())
+            let! current = sendWithToken client HttpMethod.Get path token None
+            use! currentJson = readJson current
+            Assert.Contains("second", currentJson.RootElement.GetProperty("note").GetString())
+
+            let conflict = {| note = tipTapDoc "other device"; baseRevision = revision; mutationId = Guid.NewGuid().ToString() |}
+            let! rejected = sendWithToken client HttpMethod.Put path token (Some(jsonContent conflict))
+            Assert.Equal(HttpStatusCode.Conflict, rejected.StatusCode)
+            use! rejectedJson = readJson rejected
+            Assert.Contains("second", rejectedJson.RootElement.GetProperty("current").GetProperty("note").GetString())
+
+            let reused = {| first with note = tipTapDoc "different request" |}
+            let! invalid = sendWithToken client HttpMethod.Put path token (Some(jsonContent reused))
+            Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode)
+        }
+
+    [<DatabaseFact>]
+    member _.``sync reads do not create entries and changes include clears and isolate accounts``() =
+        task {
+            use client = fixture.CreateClient()
+            let! token = ensureUserToken client (uniqueEmail "sync-feed") "password"
+            let! otherToken = ensureUserToken client (uniqueEmail "sync-other") "password"
+            let path = "/api/sync/diary/20260906"
+            let! missing = sendWithToken client HttpMethod.Get path token None
+            use! missingJson = readJson missing
+            Assert.Equal("0", missingJson.RootElement.GetProperty("revision").GetString())
+            let! legacyRead = sendWithToken client HttpMethod.Get "/api/diary/20260906" token None
+            Assert.Equal(HttpStatusCode.OK, legacyRead.StatusCode)
+            let! emptyFeed = sendWithToken client HttpMethod.Get "/api/sync/changes" token None
+            use! emptyJson = readJson emptyFeed
+            Assert.Equal(0, emptyJson.RootElement.GetProperty("entries").GetArrayLength())
+
+            let first = {| note = tipTapDoc "clear me"; baseRevision = "0"; mutationId = Guid.NewGuid().ToString() |}
+            let! saved = sendWithToken client HttpMethod.Put path token (Some(jsonContent first))
+            use! savedJson = readJson saved
+            let revision = savedJson.RootElement.GetProperty("revision").GetString()
+            let clear = {| note = ""; baseRevision = revision; mutationId = Guid.NewGuid().ToString() |}
+            let! cleared = sendWithToken client HttpMethod.Put path token (Some(jsonContent clear))
+            Assert.Equal(HttpStatusCode.OK, cleared.StatusCode)
+            let! changes = sendWithToken client HttpMethod.Get $"/api/sync/changes?cursor={revision}" token None
+            use! changesJson = readJson changes
+            Assert.Equal(1, changesJson.RootElement.GetProperty("entries").GetArrayLength())
+            Assert.Equal("", (changesJson.RootElement.GetProperty("entries").[0].GetProperty("note").GetString()))
+            let! other = sendWithToken client HttpMethod.Get "/api/sync/changes" otherToken None
+            use! otherJson = readJson other
+            Assert.Equal(0, otherJson.RootElement.GetProperty("entries").GetArrayLength())
+        }
+
+    [<DatabaseFact>]
+    member _.``simultaneous creation of the same date has exactly one winner``() =
+        task {
+            use client = fixture.CreateClient()
+            let! token = ensureUserToken client (uniqueEmail "sync-race") "password"
+            let writes = [| "phone"; "laptop" |] |> Array.map (fun text ->
+                let mutation = {| note = tipTapDoc text; baseRevision = "0"; mutationId = Guid.NewGuid().ToString() |}
+                sendWithToken client HttpMethod.Put "/api/sync/diary/20260905" token (Some(jsonContent mutation)))
+            let! responses = Task.WhenAll(writes)
+            Assert.Equal(1, responses |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.OK) |> Array.length)
+            Assert.Equal(1, responses |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.Conflict) |> Array.length)
+        }
+
+    [<DatabaseFact>]
+    member _.``sync history pages resume without dropping entries``() =
+        task {
+            use client = fixture.CreateClient()
+            let email = uniqueEmail "sync-pages"
+            let! token = ensureUserToken client email "password"
+            // Seed history without flooding the unrelated summary worker queue.
+            fixture.WithConnection(fun conn ->
+                use cmd = new NpgsqlCommand("INSERT INTO diary (user_id, note_id, note) SELECT u.id, to_char(date '2025-01-01' + day, 'YYYYMMDD'), '' FROM auth_user u CROSS JOIN generate_series(0, 100) day WHERE u.email = @email", conn)
+                cmd.Parameters.AddWithValue("email", email) |> ignore
+                cmd.ExecuteNonQuery() |> ignore)
+            let! first = sendWithToken client HttpMethod.Get "/api/sync/changes" token None
+            use! firstJson = readJson first
+            Assert.Equal(100, firstJson.RootElement.GetProperty("entries").GetArrayLength())
+            Assert.True(firstJson.RootElement.GetProperty("hasMore").GetBoolean())
+            let cursor = firstJson.RootElement.GetProperty("cursor").GetString()
+            let! second = sendWithToken client HttpMethod.Get $"/api/sync/changes?cursor={cursor}" token None
+            use! secondJson = readJson second
+            Assert.Equal(1, secondJson.RootElement.GetProperty("entries").GetArrayLength())
+            Assert.False(secondJson.RootElement.GetProperty("hasMore").GetBoolean())
+            let nextCursor = secondJson.RootElement.GetProperty("cursor").GetString()
+            let! last = sendWithToken client HttpMethod.Get $"/api/sync/changes?cursor={nextCursor}" token None
+            use! lastJson = readJson last
+            Assert.Equal(0, lastJson.RootElement.GetProperty("entries").GetArrayLength())
+        }

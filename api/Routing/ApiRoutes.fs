@@ -7,6 +7,9 @@ let endpoints =
         post ApiPaths.login AuthHandlers.login
         post ApiPaths.register AuthHandlers.register
         post ApiPaths.logout AuthHandlers.logout
+        get "/api/sync/changes" DiaryHandlers.syncChanges
+        get "/api/sync/diary/{id}" DiaryHandlers.syncGet
+        put "/api/sync/diary/{id}" DiaryHandlers.syncSave
         get ApiPaths.diaryIds DiaryHandlers.listDiaryIds
         get ApiPaths.usersWithDiaryCount AdminHandlers.usersWithDiaryCount
         delete ApiPaths.userById AdminHandlers.deleteUser

@@ -79,6 +79,7 @@
 import { ref, reactive } from 'vue';
 import router from '@/router';
 import { loginUser, registerUser } from '@/services/auth';
+import { acceptSession } from '@/services/session';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const activeTab = ref('login');
@@ -129,13 +130,8 @@ const registerRules = {
 };
 
 const saveToken = (data) => {
-  const { accessToken, expiresIn } = data;
-  if (accessToken) {
-    const expiresAt = new Date().getTime() + expiresIn * 1000;
-    localStorage.setItem('JWT_TOKEN', accessToken);
-    localStorage.setItem('JWT_EXPIRES_AT', expiresAt.toString());
-    router.push({ path: '/' });
-  }
+  acceptSession(data);
+  router.push({ path: '/' });
 };
 
 const handleLogin = async () => {

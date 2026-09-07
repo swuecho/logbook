@@ -74,6 +74,7 @@ import moment from 'moment';
 import AppTopBar from '@/components/AppTopBar.vue';
 import router from '@/router';
 import { getDiaryIds, searchDiary } from '@/services/diary';
+import { onLocalChange } from '@/services/sync';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const visibleYear = ref(moment().year());
@@ -212,7 +213,10 @@ watch(searchQuery, () => {
   }, 280);
 });
 
+const unsubscribe = onLocalChange(async () => { diaryIds.value = new Set(await getDiaryIds()); });
+
 onBeforeUnmount(() => {
+  unsubscribe();
   if (searchTimer) {
     clearTimeout(searchTimer);
   }
