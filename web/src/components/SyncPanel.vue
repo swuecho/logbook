@@ -1,12 +1,20 @@
 <template>
   <div class="sync-panel">
-    <div class="sync-bar">
-      <span role="status">{{ label }}</span>
-      <span v-if="!online" class="connection-status">Offline</span>
-      <button class="linkish" :aria-expanded="expanded" aria-controls="sync-details" @click="expanded = !expanded">{{ expanded ? 'Hide' : 'Details' }}</button>
-    </div>
+    <button
+      type="button"
+      class="linkish sync-button"
+      :title="statusLabel"
+      :aria-label="`Sync details: ${statusLabel}`"
+      :aria-expanded="expanded"
+      aria-haspopup="dialog"
+      aria-controls="sync-details"
+      @click="expanded = true"
+    >
+      <Icon :icon="statusIcon" class="sync-icon" aria-hidden="true" />
+    </button>
     <el-dialog v-model="expanded" title="Sync details" width="min(60rem, calc(100vw - 2rem))" append-to-body>
       <div id="sync-details" class="sync-details">
+        <p role="status">{{ statusLabel }}</p>
         <div class="sync-sections">
           <section aria-labelledby="sync-heading">
             <h3 id="sync-heading">Sync</h3>
@@ -45,6 +53,12 @@
 </template>
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { Icon } from '@iconify/vue';
+import cloudCheck from '@iconify/icons-mdi/cloud-check-outline';
+import cloudSync from '@iconify/icons-mdi/cloud-sync-outline';
+import cloudOff from '@iconify/icons-mdi/cloud-off-outline';
+import cloudAlert from '@iconify/icons-mdi/cloud-alert-outline';
+import cloud from '@iconify/icons-mdi/cloud-outline';
 import { syncStatus, syncNow, onLocalChange } from '@/services/sync';
 import { offlineStatus } from '@/services/offline';
 import { activeAccount } from '@/services/session';
@@ -69,6 +83,14 @@ const label = computed(() => {
   if (syncStatus.conflicts) return 'Saved on this device · conflicts need review';
   if (syncStatus.pending) return `Saved on this device · ${entryCount(syncStatus.pending)} waiting to sync`;
   return syncStatus.lastSyncedAt ? 'All changes synced' : 'Entries save on this device';
+});
+const statusLabel = computed(() => online.value ? label.value : `Offline · ${label.value}`);
+const statusIcon = computed(() => {
+  if (storageMessage.value || syncStatus.failedDates.length || syncStatus.conflicts || syncStatus.needsSignIn
+    || (syncStatus.message && !syncStatus.message.startsWith('Offline'))) return cloudAlert;
+  if (!online.value) return cloudOff;
+  if (syncStatus.running || syncStatus.pending) return cloudSync;
+  return syncStatus.lastSyncedAt ? cloudCheck : cloud;
 });
 async function refresh() {
   const account = activeAccount.value;
@@ -110,8 +132,8 @@ async function protectStorage() {
 </script>
 <style scoped>
 .sync-panel { min-width: 0; font-size: 0.78rem; color: var(--lb-text-muted); }
-.sync-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
-.connection-status { border-left: 1px solid var(--lb-border); padding-left: 0.75rem; color: var(--lb-text-subtle); }
+.sync-panel, .sync-button { display: inline-flex; align-items: center; }
+.sync-icon { width: 1.1rem; height: 1.1rem; }
 .sync-details { font-size: 0.78rem; color: var(--lb-text-muted); }
 .sync-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .sync-sections section { min-width: 0; }

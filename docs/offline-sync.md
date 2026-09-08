@@ -204,11 +204,11 @@ writes desktop and mobile comparison screenshots to `web/test-results/`.
 
 ### Sync status and Details
 
-The shared toolbar reports saved local changes, pending uploads, active syncing, or
-completed sync. **Offline** appears separately so a lost connection does not imply
-that local writing was lost. The editor still reports local save failures directly.
+The shared toolbar uses a cloud status icon for synced, pending, offline, or
+attention states. Its tooltip and accessible label describe the current status.
+The editor still reports local save failures directly.
 
-**Details** opens a dialog from the toolbar and separates **Sync** (pending changes, latest completed check in this
+The sync icon opens a **Sync details** dialog from the toolbar and separates **Sync** (pending changes, latest completed check in this
 session, retry, and dates needing attention) from **Offline availability** (app
 readiness, history completion, and the number of locally stored entries with a
 nonzero server revision). The download count is not a percentage or a server total;

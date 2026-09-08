@@ -11,12 +11,12 @@
 
     <div class="app-top-bar__center">
       <slot name="center" />
-      <SyncPanel v-if="activeAccount" :key="activeAccount" />
     </div>
 
     <nav class="app-top-bar__actions" aria-label="Main navigation">
       <slot name="actions-before" />
-      <OnlineStatusIndicator v-if="showStatus" />
+      <SyncPanel v-if="activeAccount" :key="activeAccount" />
+      <OnlineStatusIndicator v-else-if="showStatus" />
       <button
         v-if="showMarkdown"
         type="button"

@@ -125,7 +125,7 @@ test('server failure while the browser is online leaves cached editing usable', 
   await expect.poll(async () => (await localEntry(page)).note).toContain('unavailable server');
   await expect(page.locator('.editor-status')).toContainText('Saved on this device');
   state.fail = false;
-  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await page.getByRole('button', { name: /^Sync details:/ }).click();
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   await expect.poll(() => state.note).toContain('unavailable server');
 });
@@ -160,7 +160,7 @@ test('switching accounts offline never displays or uploads the previous account 
   await expect(page.locator('.ProseMirror')).not.toContainText('private account one');
   expect(await localEntry(page)).toBeUndefined();
   await context.setOffline(false);
-  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await page.getByRole('button', { name: /^Sync details:/ }).click();
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   expect(state.writes.length).toBe(0);
 });
@@ -200,7 +200,7 @@ test('a local storage failure keeps writing visible and blocks navigation until 
 
 test('sync details shows sign-in only when the session needs authentication', async ({ page, context }) => {
   await setup(page, context);
-  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await page.getByRole('button', { name: /^Sync details:/ }).click();
   const signIn = page.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true });
   await expect(signIn).toHaveCount(0);
   await page.evaluate(() => {
@@ -217,9 +217,9 @@ test('sync details shows sign-in only when the session needs authentication', as
 
 test('details separates sync, offline availability, and optional recovery tools', async ({ page, context }) => {
   await setup(page, context);
-  await expect(page.locator('.app-top-bar .sync-bar')).toBeVisible();
+  await expect(page.locator('.app-top-bar__actions .sync-button')).toBeVisible();
   await expect(page.locator('#app > .sync-panel')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await page.getByRole('button', { name: /^Sync details:/ }).click();
   await expect(page.getByRole('region', { name: 'Sync', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Offline availability', exact: true })).toContainText('1 entry downloaded');
   await expect(page.getByRole('button', { name: 'Export device backup', exact: true })).not.toBeVisible();
@@ -229,8 +229,7 @@ test('details separates sync, offline availability, and optional recovery tools'
   await page.getByRole('dialog', { name: 'Sync details' }).getByRole('button', { name: 'Close this dialog' }).click();
   await context.setOffline(true);
   await typeText(page, ' saved offline');
-  await expect(page.locator('.connection-status')).toHaveText('Offline');
-  await expect(page.locator('.sync-bar')).toContainText('Saved on this device');
+  await expect(page.locator('.sync-button')).toHaveAttribute('title', /Offline · Saved on this device/);
   await page.screenshot({ path: 'test-results/sync-details-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'test-results/sync-details-mobile.png', fullPage: true });

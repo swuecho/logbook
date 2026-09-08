@@ -27,10 +27,11 @@ async function edit(page, text) {
   await expect.poll(async () => (await localEntry(page, new URL(page.url()).searchParams.get('date')))?.note).toContain(text);
 }
 async function sync(page) {
-  if (await page.getByRole('button', { name: 'Details', exact: true }).isVisible()) {
-    await page.getByRole('button', { name: 'Details', exact: true }).click();
+  if (!await page.getByRole('dialog', { name: 'Sync details' }).isVisible()) {
+    await page.getByRole('button', { name: /^Sync details:/ }).click();
   }
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Sync details' }).getByRole('button', { name: 'Close this dialog' }).click();
 }
 async function devices(browser, request) {
   const response = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
