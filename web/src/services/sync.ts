@@ -8,6 +8,7 @@ import {
 
 export const syncStatus = reactive({
   running: false, pending: 0, conflicts: 0, historyReady: false,
+  needsSignIn: !syncCredentials(),
   message: '', lastSyncedAt: 0, failedDates: [] as string[],
 });
 let timer: ReturnType<typeof setTimeout>;
@@ -46,6 +47,7 @@ export async function syncNow() {
   clearTimeout(timer);
   const account = activeAccount.value;
   const credentials = syncCredentials();
+  syncStatus.needsSignIn = !credentials;
   try {
     if (!account) return;
     await refreshStatus(account);
@@ -121,8 +123,10 @@ export async function syncNow() {
     }
   } catch (error) {
     failures++;
-    if (account === activeAccount.value) {
-      syncStatus.message = axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0)
+    if (account === activeAccount.value && credentials?.token === syncCredentials()?.token) {
+      const authenticationFailed = axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0);
+      syncStatus.needsSignIn = authenticationFailed || !syncCredentials();
+      syncStatus.message = authenticationFailed
         ? 'Sign in to sync. You can keep writing.'
         : 'Sync unavailable · changes stay on this device';
     }
@@ -157,6 +161,7 @@ export function initSync() {
   window.addEventListener('focus', () => scheduleSync(0));
   window.addEventListener('logbook-session', () => {
     syncStatus.message = '';
+    syncStatus.needsSignIn = !syncCredentials();
     syncStatus.pending = 0;
     syncStatus.conflicts = 0;
     syncStatus.historyReady = false;

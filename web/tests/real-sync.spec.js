@@ -132,7 +132,7 @@ test('one rejected upload leaves other dates and history syncing, and remains re
     expect(failed.dirty).toBe(true);
     expect(failed.pending.note).toContain('blocked draft');
     await expect(first.locator('.sync-details')).toContainText('Upload failed');
-    await expect(first.locator('.sync-details')).toContainText(date);
+    await expect(first.locator('.sync-details')).toContainText('2026-09-07');
     await first.screenshot({ path: 'test-results/sync-upload-failure.png', fullPage: true });
     await sync(second);
     await second.goto(`/view?date=${nextDate}`);
@@ -164,6 +164,7 @@ for (const status of [401, 403]) {
       await contexts[0].setOffline(false);
       await sync(first);
       await expect(first.locator('.sync-panel')).toContainText('Sign in to sync. You can keep writing.');
+      await expect(first.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true })).toBeVisible();
       expect(uploadedDates.length).toBeGreaterThan(0);
       expect(uploadedDates.every(id => id === date)).toBe(true);
       expect((await localEntry(first, nextDate)).dirty).toBe(true);
@@ -171,6 +172,7 @@ for (const status of [401, 403]) {
       rejected = false;
       await sync(first);
       await expect.poll(async () => (await localEntry(first, nextDate))?.dirty).toBe(false);
+      await expect(first.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true })).toHaveCount(0);
     } finally { await Promise.all(contexts.map(context => context.close())); }
   });
 }

@@ -196,3 +196,40 @@ test('a local storage failure keeps writing visible and blocks navigation until 
   await expect.poll(async () => (await localEntry(page)).note).toContain('recover this writing');
   await expect(page.getByRole('button', { name: 'Retry local save' })).toHaveCount(0);
 });
+
+
+test('sync details shows sign-in only when the session needs authentication', async ({ page, context }) => {
+  await setup(page, context);
+  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  const signIn = page.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true });
+  await expect(signIn).toHaveCount(0);
+  await page.evaluate(() => {
+    localStorage.setItem('JWT_EXPIRES_AT', '1');
+    window.dispatchEvent(new Event('logbook-session'));
+  });
+  await expect(signIn).toBeVisible();
+  await page.evaluate(() => {
+    localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + 86400000));
+    window.dispatchEvent(new Event('logbook-session'));
+  });
+  await expect(signIn).toHaveCount(0);
+});
+
+test('details separates sync, offline availability, and optional recovery tools', async ({ page, context }) => {
+  await setup(page, context);
+  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Sync', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Offline availability', exact: true })).toContainText('1 entry downloaded');
+  await expect(page.getByRole('button', { name: 'Export device backup', exact: true })).not.toBeVisible();
+  await page.getByText('Storage and recovery', { exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Export device backup', exact: true })).toBeVisible();
+  await page.getByText('Storage and recovery', { exact: true }).click();
+  await context.setOffline(true);
+  await typeText(page, ' saved offline');
+  await expect(page.locator('.connection-status')).toHaveText('Offline');
+  await expect(page.locator('.sync-bar')).toContainText('Saved on this device');
+  await page.screenshot({ path: 'test-results/sync-details-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/sync-details-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
