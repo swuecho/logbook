@@ -217,6 +217,8 @@ test('sync details shows sign-in only when the session needs authentication', as
 
 test('details separates sync, offline availability, and optional recovery tools', async ({ page, context }) => {
   await setup(page, context);
+  await expect(page.locator('.app-top-bar .sync-bar')).toBeVisible();
+  await expect(page.locator('#app > .sync-panel')).toHaveCount(0);
   await page.getByRole('button', { name: 'Details', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Sync', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Offline availability', exact: true })).toContainText('1 entry downloaded');
@@ -224,6 +226,7 @@ test('details separates sync, offline availability, and optional recovery tools'
   await page.getByText('Storage and recovery', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Export device backup', exact: true })).toBeVisible();
   await page.getByText('Storage and recovery', { exact: true }).click();
+  await page.getByRole('dialog', { name: 'Sync details' }).getByRole('button', { name: 'Close this dialog' }).click();
   await context.setOffline(true);
   await typeText(page, ' saved offline');
   await expect(page.locator('.connection-status')).toHaveText('Offline');

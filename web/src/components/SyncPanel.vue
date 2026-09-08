@@ -5,42 +5,42 @@
       <span v-if="!online" class="connection-status">Offline</span>
       <button class="linkish" :aria-expanded="expanded" aria-controls="sync-details" @click="expanded = !expanded">{{ expanded ? 'Hide' : 'Details' }}</button>
     </div>
-    <div v-if="expanded" id="sync-details" class="sync-details">
-      <div class="sync-sections">
-        <section aria-labelledby="sync-heading">
-          <h3 id="sync-heading">Sync</h3>
-          <p>{{ syncStatus.pending ? `${entryCount(syncStatus.pending)} saved on this device, waiting to sync.` : 'No local changes waiting to sync.' }}</p>
-          <p class="secondary">{{ lastSync }}</p>
-          <p v-if="syncStatus.needsSignIn">Sign in to upload changes. You can keep writing on this device.</p>
-          <p v-else-if="!online">Changes will upload when you reconnect and keep the app open.</p>
-          <p v-if="syncStatus.conflicts">{{ entryCount(syncStatus.conflicts) }} need review: <router-link v-for="id in conflictIds" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
-          <p v-if="syncStatus.failedDates.length">Upload failed; writing is saved on this device. Will retry: <router-link v-for="id in syncStatus.failedDates" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
-          <div class="sync-actions">
-            <button class="linkish" @click="syncNow">Sync now</button>
-            <router-link v-if="syncStatus.needsSignIn" to="/login">Sign in to sync</router-link>
-          </div>
-        </section>
-        <section aria-labelledby="offline-heading">
-          <h3 id="offline-heading">Offline availability</h3>
-          <p>{{ offlineStatus.ready ? 'App ready to reopen offline.' : offlineStatus.message || 'Downloading the app for offline use…' }}</p>
-          <p>{{ syncStatus.historyReady ? 'History downloaded on this device.' : 'History download is incomplete.' }}</p>
-          <p class="secondary">{{ entryCount(downloadedCount) }} downloaded.{{ syncStatus.historyReady ? '' : ' Only downloaded dates are available offline; other dates may already have writing on the server.' }}</p>
-          <p v-if="offlineStatus.updateReady">An app update is ready. Close all Logbook tabs and reopen to update.</p>
-        </section>
-      </div>
-      <details class="recovery-section" :open="Boolean(storageMessage || legacyCount)">
-        <summary>Storage and recovery</summary>
-        <p>Device backups include unsynced writing and copies kept when resolving conflicts.</p>
-        <p v-if="legacyCount">{{ legacyCount }} entries from the old cache are preserved separately because their account is unknown. Export them for recovery before clearing site data.</p>
-        <p class="secondary">Local entries stay on this device after logout. Clearing browser data removes them.</p>
-        <p v-if="storageMessage" role="status">{{ storageMessage }}</p>
-        <div class="sync-actions">
-          <button class="linkish" @click="exportBackup">Export device backup</button>
-          <button v-if="legacyCount" class="linkish" @click="exportLegacy">Export old cache</button>
-          <button class="linkish" @click="protectStorage">Keep offline storage</button>
+    <el-dialog v-model="expanded" title="Sync details" width="min(60rem, calc(100vw - 2rem))" append-to-body>
+      <div id="sync-details" class="sync-details">
+        <div class="sync-sections">
+          <section aria-labelledby="sync-heading">
+            <h3 id="sync-heading">Sync</h3>
+            <p>{{ syncStatus.pending ? `${entryCount(syncStatus.pending)} saved on this device, waiting to sync.` : 'No local changes waiting to sync.' }}</p>
+            <p class="secondary">{{ lastSync }}</p>
+            <p v-if="syncStatus.needsSignIn">Sign in to upload changes. You can keep writing on this device.</p>
+            <p v-else-if="!online">Changes will upload when you reconnect and keep the app open.</p>
+            <p v-if="syncStatus.conflicts">{{ entryCount(syncStatus.conflicts) }} need review: <router-link v-for="id in conflictIds" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
+            <p v-if="syncStatus.failedDates.length">Upload failed; writing is saved on this device. Will retry: <router-link v-for="id in syncStatus.failedDates" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
+            <div class="sync-actions">
+              <button class="linkish" @click="syncNow">Sync now</button>
+              <router-link v-if="syncStatus.needsSignIn" to="/login">Sign in to sync</router-link>
+            </div>
+          </section>
+          <section aria-labelledby="offline-heading">
+            <h3 id="offline-heading">Offline availability</h3>
+            <p>{{ offlineStatus.ready ? 'App ready to reopen offline.' : offlineStatus.message || 'Downloading the app for offline use…' }}</p>
+            <p>{{ syncStatus.historyReady ? 'History downloaded on this device.' : 'History download is incomplete.' }}</p>
+            <p class="secondary">{{ entryCount(downloadedCount) }} downloaded.{{ syncStatus.historyReady ? '' : ' Only downloaded dates are available offline; other dates may already have writing on the server.' }}</p>
+            <p v-if="offlineStatus.updateReady">An app update is ready. Close all Logbook tabs and reopen to update.</p>
+          </section>
         </div>
-      </details>
-    </div>
+        <details class="recovery-section" :open="Boolean(storageMessage)">
+          <summary>Storage and recovery</summary>
+          <p>Device backups include unsynced writing and copies kept when resolving conflicts.</p>
+          <p class="secondary">Local entries stay on this device after logout. Clearing browser data removes them.</p>
+          <p v-if="storageMessage" role="status">{{ storageMessage }}</p>
+          <div class="sync-actions">
+            <button class="linkish" @click="exportBackup">Export device backup</button>
+            <button class="linkish" @click="protectStorage">Keep offline storage</button>
+          </div>
+        </details>
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script setup>
@@ -48,7 +48,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { syncStatus, syncNow, onLocalChange } from '@/services/sync';
 import { offlineStatus } from '@/services/offline';
 import { activeAccount } from '@/services/session';
-import { legacyNotes, listLocalNotes } from '@/services/localStore.js';
+import { listLocalNotes } from '@/services/localStore.js';
 
 const expanded = ref(false);
 const online = ref(navigator.onLine);
@@ -59,7 +59,6 @@ const lastSync = computed(() => syncStatus.lastSyncedAt
   ? `Last completed sync check: ${new Date(syncStatus.lastSyncedAt).toLocaleString()}`
   : 'No completed sync check in this session yet.');
 function updateConnection() { online.value = navigator.onLine; }
-const legacyCount = ref(0);
 const conflictIds = ref([]);
 const storageMessage = ref('');
 const label = computed(() => {
@@ -82,12 +81,11 @@ async function refresh() {
   catch { storageMessage.value = 'Could not access local storage.'; }
 }
 const unsubscribe = onLocalChange(refresh);
-function storageBlocked() { expanded.value = true; storageMessage.value = 'Close older Logbook tabs to finish upgrading local storage. Their old cache will be preserved.'; }
+function storageBlocked() { expanded.value = true; storageMessage.value = 'Close older Logbook tabs to finish upgrading local storage.'; }
 window.addEventListener('logbook-storage-blocked', storageBlocked);
 onMounted(async () => {
   window.addEventListener('online', updateConnection);
   window.addEventListener('offline', updateConnection);
-  try { legacyCount.value = (await legacyNotes()).length; } catch { storageMessage.value = 'Could not access the old cache.'; }
   await refresh();
 });
 onUnmounted(() => { window.removeEventListener('online', updateConnection); window.removeEventListener('offline', updateConnection); unsubscribe(); window.removeEventListener('logbook-storage-blocked', storageBlocked); });
@@ -103,10 +101,6 @@ async function exportBackup() {
   try { download('logbook-device-backup.json', { format: 1, account: activeAccount.value, entries: await listLocalNotes(activeAccount.value) }); }
   catch { storageMessage.value = 'Could not export local storage.'; }
 }
-async function exportLegacy() {
-  try { download('logbook-old-cache.json', { format: 1, account: 'unknown', entries: await legacyNotes() }); }
-  catch { storageMessage.value = 'Could not export the old cache.'; }
-}
 async function protectStorage() {
   try {
     const persisted = await navigator.storage?.persist?.();
@@ -115,10 +109,10 @@ async function protectStorage() {
 }
 </script>
 <style scoped>
-.sync-panel { background: #fff; border-bottom: 1px solid var(--lb-border, #e8eaed); padding: 0.4rem 1rem; font-size: 0.78rem; color: var(--lb-text-muted); }
+.sync-panel { min-width: 0; font-size: 0.78rem; color: var(--lb-text-muted); }
 .sync-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .connection-status { border-left: 1px solid var(--lb-border); padding-left: 0.75rem; color: var(--lb-text-subtle); }
-.sync-details { max-width: 60rem; padding: 0.8rem 0 0.3rem; }
+.sync-details { font-size: 0.78rem; color: var(--lb-text-muted); }
 .sync-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .sync-sections section { min-width: 0; }
 .sync-details h3 { margin: 0 0 0.5rem; font-size: inherit; font-weight: 600; color: var(--lb-text); }

@@ -2,9 +2,9 @@ import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  openLocalDatabase, saveLocalNote, getLocalNote, listLocalNotes,
+  saveLocalNote, getLocalNote, listLocalNotes,
   applyRemote, applyRemotePage, getSyncMeta, prepareUpload,
-  acknowledgeUpload, rejectUpload, resolveLocalConflict, legacyNotes, recordUploadFailure, editCombinedConflict, cancelCombinedConflict,
+  acknowledgeUpload, rejectUpload, resolveLocalConflict, recordUploadFailure, editCombinedConflict, cancelCombinedConflict,
 } from '../src/services/localStore.js';
 
 const remote = (note, revision = '1', noteId = '20260907') => ({ noteId, note, revision });
@@ -113,14 +113,6 @@ test('older downloads cannot roll back acknowledged content', async () => {
   await applyRemote('stale-get', remote('old', '2'));
   assert.equal((await getLocalNote('stale-get', '20260907')).note, 'new');
 });
-
-test('the unscoped legacy cache is retained separately from account data', async () => {
-  const db = await openLocalDatabase();
-  await db.put('notes', { noteId: '20240101', note: 'legacy unsynced', dirty: true });
-  assert.equal((await legacyNotes())[0].note, 'legacy unsynced');
-  assert.equal(await getLocalNote('alice', '20240101'), undefined);
-});
-
 
 test('out-of-order downloads during upload preserve the highest observed revision and cursor', async () => {
   const account = 'out-of-order-download';

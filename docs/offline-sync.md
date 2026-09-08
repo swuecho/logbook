@@ -38,13 +38,10 @@ Database `logbook-db`, version 2:
   includes origin, token issuer/audience, and user ID; a date is `YYYYMMDD` in the
   user's calendar, never converted into a UTC timestamp.
 - `syncMeta`: per-account download cursor and initial-history completion state.
-- `notes`: the original v1 store, preserved unchanged for explicit export/recovery.
 
-The original cache was keyed only by date and cannot reliably establish ownership.
-It is deliberately not uploaded under the next account to sign in. **Export old
-cache** makes its original documents available without changing them. Do not clear
-this store until any unsynced writing has been recovered. If an older tab blocks
-the database upgrade, the sync details ask the user to close it.
+Legacy date-only caches are no longer read, migrated, or exported. Existing
+unused stores are ignored; new databases contain only the stores above.
+If an older tab blocks the database upgrade, the sync details ask the user to close it.
 
 Each edit commits content and dirty state in one transaction. A persisted pending
 mutation contains its UUID, base server revision, document, and local edit counter.
@@ -99,7 +96,7 @@ entry states, not an audit log; this is sufficient to converge diary replicas.
    caches only the app assets, never authenticated API responses. New workers wait
    until older tabs close rather than forcing a reload during writing.
 5. Reopen clients online. Confirm **App ready to reopen offline** and **History
-   downloaded** in Details. Export the legacy cache if the old version left drafts.
+   downloaded** in Details.
 
 The legacy PUT endpoint remains compatible for existing clients and still has
 unconditional replacement semantics; revision conflict protection is provided by
@@ -134,8 +131,8 @@ API; backend integration tests independently exercise PostgreSQL and the real
 HTTP handlers using the existing test fixture.
 
 Coverage includes stale acknowledgements, crash-safe mutation retries, unseen and
-out-of-order downloads, account isolation, conflicts, empty entries, legacy-cache
-preservation, concurrent server creation, receipt replay, history pagination,
+out-of-order downloads, account isolation, conflicts, empty entries,
+concurrent server creation, receipt replay, history pagination,
 offline reload with expired credentials, cached calendar navigation, server failure,
 and local storage errors. Browser screenshots are written to `web/test-results/`.
 
@@ -204,3 +201,19 @@ actions are disabled in a read-only tab or while local storage has a save error.
 The real-API suite also checks combined editing, offline reload, newer server
 changes during review, explicit confirmation, and both-device convergence. It
 writes desktop and mobile comparison screenshots to `web/test-results/`.
+
+### Sync status and Details
+
+The shared toolbar reports saved local changes, pending uploads, active syncing, or
+completed sync. **Offline** appears separately so a lost connection does not imply
+that local writing was lost. The editor still reports local save failures directly.
+
+**Details** opens a dialog from the toolbar and separates **Sync** (pending changes, latest completed check in this
+session, retry, and dates needing attention) from **Offline availability** (app
+readiness, history completion, and the number of locally stored entries with a
+nonzero server revision). The download count is not a percentage or a server total;
+local-only drafts are excluded. Dates that have not downloaded may already contain
+server writing.
+
+**Storage and recovery** is collapsed during normal use and contains backup and
+storage-protection actions. It opens automatically for a storage message. Sign-in is shown only when authentication is needed.

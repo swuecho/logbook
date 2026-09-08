@@ -11,6 +11,7 @@
 
     <div class="app-top-bar__center">
       <slot name="center" />
+      <SyncPanel v-if="activeAccount" :key="activeAccount" />
     </div>
 
     <nav class="app-top-bar__actions" aria-label="Main navigation">
@@ -96,6 +97,7 @@ import settingsIcon from '@iconify/icons-mdi/cog-outline';
 import router from '@/router';
 import { parseJwt } from '@/util';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
+import SyncPanel from '@/components/SyncPanel.vue';
 import { activeAccount } from '@/services/session';
 import { currentTheme, setTheme, themeOptions } from '@/services/theme';
 
@@ -184,6 +186,7 @@ function chooseTheme(theme) {
 
 .app-top-bar__center {
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .app-top-bar__actions {

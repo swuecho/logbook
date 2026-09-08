@@ -6,8 +6,6 @@ export function openLocalDatabase() {
   if (!database) {
     database = openDB('logbook-db', 2, {
       upgrade(db) {
-        // Keep the unscoped v1 notes untouched for explicit recovery/export.
-        if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', { keyPath: 'noteId' });
         const entries = db.createObjectStore('entries', { keyPath: ['account', 'noteId'] });
         entries.createIndex('account', 'account');
         db.createObjectStore('syncMeta', { keyPath: 'account' });
@@ -207,8 +205,4 @@ export async function resolveLocalConflict(account, noteId, choice, expected) {
     });
   }
   await tx.done;
-}
-
-export async function legacyNotes() {
-  return (await openLocalDatabase()).getAll('notes');
 }
