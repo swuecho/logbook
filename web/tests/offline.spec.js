@@ -110,6 +110,9 @@ test('same-date conflict keeps local writing and lets the user choose', async ({
   await context.setOffline(false);
   await expect(page.locator('.conflict-panel')).toBeVisible();
   await expect(page.locator('.ProseMirror')).toContainText('local draft');
+  await page.locator('.sync-button').click();
+  await page.locator('.sync-details').getByRole('link', { name: '2026-09-07' }).click();
+  await expect(page.getByRole('dialog', { name: 'Sync details' })).not.toBeVisible();
   await page.getByRole('button', { name: 'Keep my writing' }).click();
   await expect.poll(() => state.note).toContain('local draft');
   await expect(page.locator('.conflict-panel')).toHaveCount(0);
@@ -234,4 +237,40 @@ test('details separates sync, offline availability, and optional recovery tools'
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'test-results/sync-details-mobile.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('enabling persistent storage keeps the completed sync status', async ({ page, context }) => {
+  await setup(page, context);
+  const button = page.locator('.sync-button');
+  await expect(button).toHaveAttribute('title', 'All changes synced');
+  await page.evaluate(() => {
+    navigator.storage.persist = async () => true;
+  });
+  await button.click();
+  await page.getByText('Storage and recovery', { exact: true }).click();
+  await page.getByRole('button', { name: 'Keep offline storage', exact: true }).click();
+  await expect(page.getByText('Persistent storage enabled. Keep backups of unsynced writing.', { exact: true })).toBeVisible();
+  await expect(button).toHaveAttribute('title', 'All changes synced');
+});
+
+test('incomplete history never reports all changes synced', async ({ page, context }) => {
+  await setup(page, context);
+  await context.route('**/api/sync/changes**', route => route.fulfill({
+    json: { entries: [], cursor: '1', hasMore: true },
+  }));
+  await page.evaluate(async () => {
+    const db = await new Promise(resolve => {
+      const request = indexedDB.open('logbook-db', 2);
+      request.onsuccess = () => resolve(request.result);
+    });
+    const tx = db.transaction('syncMeta', 'readwrite');
+    tx.objectStore('syncMeta').put({
+      account: localStorage.getItem('LOGBOOK_ACCOUNT'), cursor: '1', historyReady: false,
+    });
+    await new Promise(resolve => { tx.oncomplete = resolve; });
+    db.close();
+  });
+  await page.locator('.sync-button').click();
+  await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+  await expect(page.locator('.sync-button')).toHaveAttribute('title', /History download is incomplete|Downloading history/);
 });

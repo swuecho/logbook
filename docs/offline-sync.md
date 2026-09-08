@@ -217,3 +217,9 @@ server writing.
 
 **Storage and recovery** is collapsed during normal use and contains backup and
 storage-protection actions. It opens automatically for a storage message. Sign-in is shown only when authentication is needed.
+
+The sync icon pulses while syncing and stays still when reduced motion is enabled.
+Touch devices get a 44px sync button without enlarging the icon. Successful storage
+protection does not trigger a warning; storage errors and required recovery actions
+do. “All changes synced” requires completed history and no pending changes,
+conflicts, or failed uploads. Selecting a date in Sync details closes the dialog.

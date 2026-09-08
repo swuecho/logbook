@@ -10,7 +10,7 @@
       aria-controls="sync-details"
       @click="expanded = true"
     >
-      <Icon :icon="statusIcon" class="sync-icon" aria-hidden="true" />
+      <Icon :icon="statusIcon" class="sync-icon" :class="{ 'is-syncing': syncStatus.running }" aria-hidden="true" />
     </button>
     <el-dialog v-model="expanded" title="Sync details" width="min(60rem, calc(100vw - 2rem))" append-to-body>
       <div id="sync-details" class="sync-details">
@@ -22,8 +22,8 @@
             <p class="secondary">{{ lastSync }}</p>
             <p v-if="syncStatus.needsSignIn">Sign in to upload changes. You can keep writing on this device.</p>
             <p v-else-if="!online">Changes will upload when you reconnect and keep the app open.</p>
-            <p v-if="syncStatus.conflicts">{{ entryCount(syncStatus.conflicts) }} need review: <router-link v-for="id in conflictIds" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
-            <p v-if="syncStatus.failedDates.length">Upload failed; writing is saved on this device. Will retry: <router-link v-for="id in syncStatus.failedDates" :key="id" :to="{ path: '/view', query: { date: id } }">{{ formatDate(id) }} </router-link></p>
+            <p v-if="syncStatus.conflicts">{{ entryCount(syncStatus.conflicts) }} need review: <router-link v-for="id in conflictIds" :key="id" :to="{ path: '/view', query: { date: id } }" @click="expanded = false">{{ formatDate(id) }} </router-link></p>
+            <p v-if="syncStatus.failedDates.length">Upload failed; writing is saved on this device. Will retry: <router-link v-for="id in syncStatus.failedDates" :key="id" :to="{ path: '/view', query: { date: id } }" @click="expanded = false">{{ formatDate(id) }} </router-link></p>
             <div class="sync-actions">
               <button class="linkish" @click="syncNow">Sync now</button>
               <router-link v-if="syncStatus.needsSignIn" to="/login">Sign in to sync</router-link>
@@ -75,35 +75,46 @@ const lastSync = computed(() => syncStatus.lastSyncedAt
 function updateConnection() { online.value = navigator.onLine; }
 const conflictIds = ref([]);
 const storageMessage = ref('');
+const storageNeedsAttention = ref(false);
+function setStorageMessage(message, needsAttention = false) {
+  storageMessage.value = message;
+  storageNeedsAttention.value = needsAttention;
+}
+const syncComplete = computed(() => Boolean(syncStatus.lastSyncedAt) && syncStatus.historyReady
+  && !syncStatus.pending && !syncStatus.conflicts && !syncStatus.failedDates.length);
+
 const label = computed(() => {
-  if (storageMessage.value === 'Could not access local storage.') return storageMessage.value;
+  if (storageNeedsAttention.value) return storageMessage.value;
   if (syncStatus.message && !syncStatus.message.startsWith('Offline')) return syncStatus.message;
   if (syncStatus.running) return syncStatus.pending ? `Syncing ${entryCount(syncStatus.pending)}…` : syncStatus.historyReady ? 'Checking for changes…' : 'Downloading history…';
   if (syncStatus.failedDates.length) return `${entryCount(syncStatus.failedDates.length)} could not upload · saved on this device`;
   if (syncStatus.conflicts) return 'Saved on this device · conflicts need review';
   if (syncStatus.pending) return `Saved on this device · ${entryCount(syncStatus.pending)} waiting to sync`;
-  return syncStatus.lastSyncedAt ? 'All changes synced' : 'Entries save on this device';
+  if (!syncStatus.historyReady) return 'History download is incomplete';
+  return syncComplete.value ? 'All changes synced' : 'Entries save on this device';
 });
 const statusLabel = computed(() => online.value ? label.value : `Offline · ${label.value}`);
 const statusIcon = computed(() => {
-  if (storageMessage.value || syncStatus.failedDates.length || syncStatus.conflicts || syncStatus.needsSignIn
+  if (storageNeedsAttention.value || syncStatus.failedDates.length || syncStatus.conflicts || syncStatus.needsSignIn
     || (syncStatus.message && !syncStatus.message.startsWith('Offline'))) return cloudAlert;
   if (!online.value) return cloudOff;
   if (syncStatus.running || syncStatus.pending) return cloudSync;
-  return syncStatus.lastSyncedAt ? cloudCheck : cloud;
+  return syncComplete.value ? cloudCheck : cloud;
 });
 async function refresh() {
   const account = activeAccount.value;
   try {
     const entries = await listLocalNotes(account);
     if (account !== activeAccount.value) return;
+    if (storageMessage.value === 'Could not access local storage.'
+      || storageMessage.value === 'Close older Logbook tabs to finish upgrading local storage.') setStorageMessage('');
     conflictIds.value = entries.filter(note => note.conflict).map(note => note.noteId);
     downloadedCount.value = entries.filter(note => note.serverRevision && note.serverRevision !== '0').length;
   }
-  catch { storageMessage.value = 'Could not access local storage.'; }
+  catch { setStorageMessage('Could not access local storage.', true); }
 }
 const unsubscribe = onLocalChange(refresh);
-function storageBlocked() { expanded.value = true; storageMessage.value = 'Close older Logbook tabs to finish upgrading local storage.'; }
+function storageBlocked() { expanded.value = true; setStorageMessage('Close older Logbook tabs to finish upgrading local storage.', true); }
 window.addEventListener('logbook-storage-blocked', storageBlocked);
 onMounted(async () => {
   window.addEventListener('online', updateConnection);
@@ -121,19 +132,24 @@ function download(name, value) {
 }
 async function exportBackup() {
   try { download('logbook-device-backup.json', { format: 1, account: activeAccount.value, entries: await listLocalNotes(activeAccount.value) }); }
-  catch { storageMessage.value = 'Could not export local storage.'; }
+  catch { setStorageMessage('Could not export local storage.', true); }
 }
 async function protectStorage() {
   try {
     const persisted = await navigator.storage?.persist?.();
-    storageMessage.value = persisted ? 'Persistent storage enabled. Keep backups of unsynced writing.' : 'The browser did not grant persistent storage. Export backups of unsynced writing.';
-  } catch { storageMessage.value = 'Persistent storage is unavailable in this browser.'; }
+    setStorageMessage(persisted ? 'Persistent storage enabled. Keep backups of unsynced writing.' : 'The browser did not grant persistent storage. Export backups of unsynced writing.', !persisted);
+  } catch { setStorageMessage('Persistent storage is unavailable in this browser.', true); }
 }
 </script>
 <style scoped>
 .sync-panel { min-width: 0; font-size: 0.78rem; color: var(--lb-text-muted); }
 .sync-panel, .sync-button { display: inline-flex; align-items: center; }
+.sync-button { min-width: 2rem; }
 .sync-icon { width: 1.1rem; height: 1.1rem; }
+.sync-icon.is-syncing { animation: sync-pulse 1.4s ease-in-out infinite; }
+@keyframes sync-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .sync-icon.is-syncing { animation: none; } }
+@media (pointer: coarse) { .sync-button { min-width: 44px; min-height: 44px; } }
 .sync-details { font-size: 0.78rem; color: var(--lb-text-muted); }
 .sync-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .sync-sections section { min-width: 0; }
