@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   openLocalDatabase, saveLocalNote, getLocalNote, listLocalNotes,
   applyRemote, applyRemotePage, getSyncMeta, prepareUpload,
-  acknowledgeUpload, rejectUpload, resolveLocalConflict, legacyNotes, recordUploadFailure,
+  acknowledgeUpload, rejectUpload, resolveLocalConflict, legacyNotes, recordUploadFailure, editCombinedConflict, cancelCombinedConflict,
 } from '../src/services/localStore.js';
 
 const remote = (note, revision = '1', noteId = '20260907') => ({ noteId, note, revision });
@@ -163,4 +163,50 @@ test('failed uploads preserve their mutation and newer writing until acknowledge
   assert.equal(saved.uploadError, undefined);
   assert.equal(saved.dirty, true);
   assert.equal(saved.note, 'newer draft');
+});
+
+
+test('combined drafts preserve both originals and cannot upload until confirmed', async () => {
+  const account = 'combined-draft';
+  const local = JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Local', marks: [{ type: 'bold' }] }] }] });
+  const server = JSON.stringify({ type: 'doc', content: [{ type: 'image', attrs: { src: 'https://example.test/image.png' } }] });
+  await applyRemote(account, remote('original'));
+  await saveLocalNote(account, '20260907', local);
+  await applyRemote(account, remote(server, '2'));
+  await editCombinedConflict(account, '20260907', { note: local, revision: '2' });
+  const combined = await getLocalNote(account, '20260907');
+  assert.deepEqual(JSON.parse(combined.note).content, [...JSON.parse(local).content, ...JSON.parse(server).content]);
+  assert.equal(combined.recovery[0].local, local);
+  assert.equal(combined.recovery[0].remote, server);
+  assert.equal(await prepareUpload(account, '20260907'), undefined);
+  // A matching download must not implicitly approve a draft.
+  await applyRemote(account, remote(combined.note, '3'));
+  assert.ok((await getLocalNote(account, '20260907')).mergeDraft);
+  assert.equal(await prepareUpload(account, '20260907'), undefined);
+  await assert.rejects(resolveLocalConflict(account, '20260907', 'local', { note: combined.note, revision: '2' }), /changed during review/);
+  await resolveLocalConflict(account, '20260907', 'local', { note: combined.note, revision: '3' });
+  const pending = await prepareUpload(account, '20260907');
+  assert.equal(pending.baseRevision, '3');
+  assert.equal(pending.note, combined.note);
+  assert.equal((await getLocalNote(account, '20260907')).mergeDraft, undefined);
+});
+
+test('canceling a combined draft restores local writing and retains edited draft recovery', async () => {
+  const account = 'cancel-combined';
+  const document = text => JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
+  const local = document('Local');
+  const server = document('Remote');
+  await applyRemote(account, remote('original'));
+  await saveLocalNote(account, '20260907', local);
+  await applyRemote(account, remote(server, '2'));
+  await assert.rejects(editCombinedConflict(account, '20260907', { note: 'stale local', revision: '2' }), /changed during review/);
+  await editCombinedConflict(account, '20260907', { note: local, revision: '2' });
+  await saveLocalNote(account, '20260907', document('Edited combined draft'));
+  await cancelCombinedConflict(account, '20260907', { note: document('Edited combined draft'), revision: '2' });
+  const restored = await getLocalNote(account, '20260907');
+  assert.equal(restored.note, local);
+  assert.equal(restored.conflict.note, server);
+  assert.equal(restored.mergeDraft, undefined);
+  assert.equal(restored.recovery.at(-1).local, document('Edited combined draft'));
+  assert.equal(await prepareUpload(account, '20260907'), undefined);
 });

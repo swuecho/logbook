@@ -176,3 +176,31 @@ requests go through the real API and migrated PostgreSQL database.
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can select an existing browser executable. The
 failed-upload UI screenshot is written to `web/test-results/sync-upload-failure.png`.
 The existing `npm run test:e2e` suite continues to use its lightweight mocked API.
+
+### Reviewing conflicting versions
+
+The conflict panel compares **Your writing** and the **Server version** side by
+side (stacked on narrow screens). These are text previews; images and embedded
+content appear as descriptions without downloading media. The editor retains the
+rich document, including formatting and media references.
+
+Choose **Keep my writing** or **Use server version** to resolve directly, or choose
+**Edit combined version** to place both documents, local first, into the editor.
+This is a starting draft: review and remove repeated passages yourself. Both
+originals are saved in device-backup recovery history before the draft is created.
+
+Combined drafts autosave locally and survive navigation or an offline reload.
+They remain blocked from upload until you choose **Use combined version**.
+**Back to my original** restores the original local writing and keeps the conflict
+open; the edited combined draft is also retained in recovery history. Choosing
+**Use server version** retains the combined draft in recovery before resolving.
+
+If the server changes again during review, its latest version appears in the
+comparison with a notice; your draft remains intact. Resolution checks the
+reviewed content and server revision within the local transaction, and normal
+server revision checks still apply when the confirmed draft uploads. Conflict
+actions are disabled in a read-only tab or while local storage has a save error.
+
+The real-API suite also checks combined editing, offline reload, newer server
+changes during review, explicit confirmation, and both-device convergence. It
+writes desktop and mobile comparison screenshots to `web/test-results/`.

@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { combineNotes } from './conflictNotes.js';
 
 let database;
 export function openLocalDatabase() {
@@ -57,6 +58,9 @@ function mergeRemote(current, remote, account) {
   }
   if (current?.conflict && BigInt(current.conflict.revision) > BigInt(remote.revision)) return current;
   if (current?.serverRevision && BigInt(remote.revision) < BigInt(current.serverRevision)) return current;
+  // An explicit merge stays local until the user confirms it, even if its text
+  // happens to match a downloaded version.
+  if (current?.mergeDraft) return { ...current, conflict: remote };
   if (current?.dirty) {
     if (remote.revision === current.serverRevision || (!current.serverRevision && remote.revision === '0')) {
       return { ...current, serverRevision: remote.revision };
@@ -150,15 +154,53 @@ export async function rejectUpload(account, noteId, pending, remote) {
   await tx.done;
 }
 
-export async function resolveLocalConflict(account, noteId, choice) {
+function checkConflict(current, expected) {
+  if (expected && (!current?.conflict || current.conflict.revision !== expected.revision || current.note !== expected.note)) {
+    throw new Error('This entry changed during review. Review the latest versions and try again.');
+  }
+}
+
+export async function editCombinedConflict(account, noteId, expected) {
   const db = await openLocalDatabase();
   const tx = db.transaction('entries', 'readwrite');
   const current = await tx.store.get([account, noteId]);
+  checkConflict(current, expected);
+  if (current?.conflict && !current.mergeDraft) {
+    const original = { local: current.note, remote: current.conflict.note, revision: current.conflict.revision, savedAt: Date.now() };
+    await tx.store.put({
+      ...current, note: combineNotes(original.local, original.remote), mergeDraft: original,
+      dirty: true, localVersion: (current.localVersion || 0) + 1,
+      recovery: [...(current.recovery || []), original],
+    });
+  }
+  await tx.done;
+}
+
+export async function cancelCombinedConflict(account, noteId, expected) {
+  const db = await openLocalDatabase();
+  const tx = db.transaction('entries', 'readwrite');
+  const current = await tx.store.get([account, noteId]);
+  checkConflict(current, expected);
+  if (current?.mergeDraft && current.conflict) {
+    await tx.store.put({
+      ...current, note: current.mergeDraft.local, mergeDraft: undefined,
+      localVersion: (current.localVersion || 0) + 1,
+      recovery: [...(current.recovery || []), { local: current.note, remote: current.conflict.note, savedAt: Date.now() }],
+    });
+  }
+  await tx.done;
+}
+
+export async function resolveLocalConflict(account, noteId, choice, expected) {
+  const db = await openLocalDatabase();
+  const tx = db.transaction('entries', 'readwrite');
+  const current = await tx.store.get([account, noteId]);
+  checkConflict(current, expected);
   if (current?.conflict) {
     const remote = current.conflict;
     await tx.store.put({
       ...current, note: choice === 'remote' ? remote.note : current.note,
-      serverRevision: remote.revision, conflict: undefined, pending: undefined, uploadError: undefined,
+      serverRevision: remote.revision, conflict: undefined, pending: undefined, uploadError: undefined, mergeDraft: undefined,
       localVersion: (current.localVersion || 0) + 1, dirty: choice !== 'remote',
       // Preserve both documents even after the user resolves a conflict.
       recovery: [...(current.recovery || []), { local: current.note, remote: remote.note, savedAt: Date.now() }],

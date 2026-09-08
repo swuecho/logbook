@@ -1,5 +1,5 @@
 import { activeAccount } from './session';
-import { getLocalNote, saveLocalNote, resolveLocalConflict } from './localStore.js';
+import { getLocalNote, saveLocalNote, resolveLocalConflict, editCombinedConflict, cancelCombinedConflict } from './localStore.js';
 import { notifyLocalChange, scheduleSync, refreshRemoteNote } from './sync';
 import type { DiaryEntry } from '../types';
 
@@ -20,8 +20,10 @@ export async function fetchNote(noteId: string): Promise<DiaryEntry> {
   return note || { account, noteId, note: '', dirty: false, unknown: true };
 }
 
-export async function resolveConflict(noteId: string, choice: 'local' | 'remote') {
-  await resolveLocalConflict(activeAccount.value, noteId, choice);
+export async function resolveConflict(account: string, noteId: string, choice: 'local' | 'remote' | 'combine' | 'cancel', expected: { note: string; revision: string }) {
+  if (choice === 'combine') await editCombinedConflict(account, noteId, expected);
+  else if (choice === 'cancel') await cancelCombinedConflict(account, noteId, expected);
+  else await resolveLocalConflict(account, noteId, choice, expected);
   notifyLocalChange();
   scheduleSync(0);
 }

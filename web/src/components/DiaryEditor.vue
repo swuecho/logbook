@@ -8,11 +8,24 @@
       <button class="linkish" @click="downloadWriting">Download this writing</button>
     </div>
     <div v-if="entry?.conflict" class="conflict-panel">
-      <p>This date changed on another device. Your writing is saved here; choose which version to sync.</p>
-      <details><summary>View the server version</summary><pre>{{ readableNote(entry.conflict.note) }}</pre></details>
+      <p v-if="entry.mergeDraft">Edit the combined draft below, remove repeated passages, then choose Use combined version. It stays on this device until you confirm.</p>
+      <p v-else>This date changed on another device. Compare both versions, then choose one or edit a combined draft.</p>
+      <div class="conflict-comparison">
+        <section aria-label="Your writing" class="conflict-version">
+          <h3>{{ entry.mergeDraft ? 'Your original writing' : 'Your writing' }}</h3>
+          <pre>{{ readableNote(entry.mergeDraft ? entry.mergeDraft.local : entry.note) }}</pre>
+        </section>
+        <section aria-label="Server version" class="conflict-version">
+          <h3>Server version</h3>
+          <pre>{{ readableNote(entry.conflict.note) }}</pre>
+        </section>
+      </div>
+      <p v-if="entry.mergeDraft && entry.mergeDraft.revision !== entry.conflict.revision" class="conflict-update">The server version changed again. Review it above before confirming your draft.</p>
       <div class="conflict-actions">
-        <button class="linkish" @click="chooseVersion('local')">Keep my writing</button>
-        <button class="linkish" @click="chooseVersion('remote')">Use server version</button>
+        <button v-if="!entry.mergeDraft" class="linkish" :disabled="conflictDisabled" @click="chooseVersion('combine')">Edit combined version</button>
+        <button class="linkish" :disabled="conflictDisabled" @click="chooseVersion('local')">{{ entry.mergeDraft ? 'Use combined version' : 'Keep my writing' }}</button>
+        <button class="linkish" :disabled="conflictDisabled" @click="chooseVersion('remote')">Use server version</button>
+        <button v-if="entry.mergeDraft" class="linkish" :disabled="conflictDisabled" @click="chooseVersion('cancel')">Back to my original</button>
       </div>
       <small>Both versions remain in the device backup.</small>
     </div>
@@ -25,7 +38,7 @@
         :tooltip="false"
         @onUpdate="onEditorUpdate"
         @onCreate="onCreate"
-        :readonly="!isPrimaryTab || loading || readError"
+        :readonly="!isPrimaryTab || loading || readError || conflictBusy"
       />
     </div>
     <div v-if="!isPrimaryTab" class="lock-warning">
@@ -50,6 +63,7 @@ import { saveNote, fetchNote, resolveConflict, refreshRemoteNote } from '@/servi
 import { activeAccount } from '@/services/session';
 import { onLocalChange } from '@/services/sync';
 import { isPrimaryTab } from '@/services/tabLock';
+import { readableNote } from '@/services/conflictNotes.js';
 import { getApiErrorMessage } from '@/services/apiError';
 
 const props = defineProps({ date: String });
@@ -60,6 +74,8 @@ const loading = ref(true);
 const saveError = ref('');
 const writeFailed = ref(false);
 const readError = ref(false);
+const conflictBusy = ref(false);
+const conflictDisabled = computed(() => conflictBusy.value || loading.value || readError.value || writeFailed.value || !isPrimaryTab.value);
 const pendingWrites = ref(0);
 const isMobileToolbar = ref(false);
 const toolbarMode = computed(() => isMobileToolbar.value ? 'writing' : 'full');
@@ -84,13 +100,6 @@ function hasMeaningfulContent(node) {
 function payload(doc) {
   const normalized = normalizeTiptapDoc(doc);
   return hasMeaningfulContent(normalized) ? JSON.stringify(normalized) : '';
-}
-
-function readableNote(note) {
-  try {
-    const text = node => node?.type === 'text' ? node.text : (node?.content || []).map(text).join(node?.type === 'doc' ? '\n' : '');
-    return text(JSON.parse(note || '{}'));
-  } catch { return note; }
 }
 
 async function loadLocal() {
@@ -125,14 +134,14 @@ async function loadLocal() {
 
 function onCreate({ editor }) {
   editorRef.value = editor;
-  editor.setEditable(!loading.value && !readError.value && isPrimaryTab.value, false);
+  editor.setEditable(!loading.value && !readError.value && !conflictBusy.value && isPrimaryTab.value, false);
   applyingContent = true;
   try { editor.commands.setContent(content.value); }
   finally { applyingContent = false; }
 }
 
 function onEditorUpdate(output, editor) {
-  if (applyingContent || loading.value || readError.value || !isPrimaryTab.value) return;
+  if (applyingContent || loading.value || readError.value || conflictBusy.value || !isPrimaryTab.value) return;
   const doc = normalizeTiptapDoc(editor?.getJSON ? editor.getJSON() : editorRef.value?.getJSON() || output);
   const note = payload(doc);
   if (note === lastDocument && !saveError.value) return;
@@ -165,9 +174,22 @@ function onEditorUpdate(output, editor) {
 }
 
 async function chooseVersion(choice) {
-  await writeQueue;
-  try { await resolveConflict(props.date, choice); await loadLocal(); }
-  catch (error) { saveError.value = getApiErrorMessage(error, 'Could not resolve this entry.'); }
+  if (conflictDisabled.value || !entry.value?.conflict) return;
+  const account = activeAccount.value;
+  const date = props.date;
+  const expected = { note: viewedNote, revision: entry.value.conflict.revision };
+  conflictBusy.value = true;
+  try {
+    await writeQueue;
+    if (writeFailed.value || date !== props.date || account !== activeAccount.value || !isPrimaryTab.value) return;
+    await resolveConflict(account, date, choice, expected);
+    if (date === props.date && account === activeAccount.value) await loadLocal();
+  } catch (error) {
+    if (date === props.date && account === activeAccount.value) {
+      await loadLocal();
+      saveError.value = getApiErrorMessage(error, 'Could not resolve this entry.');
+    }
+  } finally { conflictBusy.value = false; }
 }
 
 const editorStatusText = computed(() => {
@@ -175,6 +197,7 @@ const editorStatusText = computed(() => {
   if (saveError.value) return saveError.value;
   if (loading.value) return 'Opening entry…';
   if (pendingWrites.value) return 'Saving on this device…';
+  if (entry.value?.mergeDraft) return 'Combined draft saved on this device · awaiting confirmation';
   if (entry.value?.conflict) return 'Saved on this device · review conflict';
   if (entry.value?.dirty) return 'Saved on this device · waiting to sync';
   if (entry.value?.unknown) return 'Not downloaded yet · you can write a draft';
@@ -190,13 +213,13 @@ function updateMobileToolbar(event) {
 function beforeUnload(event) {
   if (pendingWrites.value || saveError.value) { event.preventDefault(); event.returnValue = ''; }
 }
-watch([loading, readError, isPrimaryTab], () => {
+watch([loading, readError, isPrimaryTab, conflictBusy], () => {
   // element-tiptap reads readonly only when constructing its editor.
-  editorRef.value?.setEditable(!loading.value && !readError.value && isPrimaryTab.value, false);
+  editorRef.value?.setEditable(!loading.value && !readError.value && !conflictBusy.value && isPrimaryTab.value, false);
 });
 async function canLeave() {
   await writeQueue;
-  return !writeFailed.value;
+  return !writeFailed.value && !conflictBusy.value;
 }
 defineExpose({ canLeave });
 onBeforeRouteLeave(canLeave);
@@ -236,8 +259,13 @@ onUnmounted(() => {
 <style scoped>
 .conflict-panel { border: 1px solid var(--lb-border); padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.85rem; }
 .conflict-panel p { margin: 0 0 0.5rem; }
-.conflict-panel pre { white-space: pre-wrap; max-height: 14rem; overflow: auto; }
-.conflict-actions { display: flex; gap: 1rem; margin: 0.5rem 0; }
+.conflict-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.conflict-version { min-width: 0; border: 1px solid var(--lb-border); border-radius: var(--lb-radius-sm); padding: 0.6rem; background: #fff; }
+.conflict-version h3 { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--lb-text-muted); }
+.conflict-panel pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 12rem; overflow: auto; font: inherit; line-height: 1.5; }
+.conflict-update { margin-top: 0.5rem !important; color: var(--lb-text-muted); }
+@media (max-width: 768px) { .conflict-comparison { grid-template-columns: 1fr; } }
+.conflict-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.5rem 0; }
 
 pre code {
   font-family: var(--lb-font-mono, "Fira Code", Courier, Monaco, monospace);

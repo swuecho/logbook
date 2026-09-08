@@ -174,3 +174,54 @@ for (const status of [401, 403]) {
     } finally { await Promise.all(contexts.map(context => context.close())); }
   });
 }
+
+test('combined conflict draft survives offline reload and syncs only after explicit confirmation', async ({ browser, request }) => {
+  const { contexts, pages: [first, second], headers } = await devices(browser, request);
+  try {
+    await contexts[0].setOffline(true);
+    await edit(first, ' phone writing');
+    await edit(second, ' laptop writing');
+    await expect.poll(async () => (await localEntry(second))?.dirty).toBe(false);
+    await contexts[0].setOffline(false);
+    await sync(first);
+    await expect(first.locator('.conflict-panel')).toBeVisible();
+    await expect(first.getByRole('region', { name: 'Your writing', exact: true })).toContainText('phone writing');
+    await expect(first.getByRole('region', { name: 'Server version', exact: true })).toContainText('laptop writing');
+    await first.getByRole('button', { name: 'Edit combined version', exact: true }).click();
+    await expect(first.locator('.ProseMirror')).toContainText('phone writing');
+    await expect(first.locator('.ProseMirror')).toContainText('laptop writing');
+    await contexts[0].setOffline(true);
+    await edit(first, ' reviewed together');
+    await first.reload();
+    await expect(first.locator('.ProseMirror')).toContainText('reviewed together');
+    await expect(first.getByRole('button', { name: 'Use combined version', exact: true })).toBeVisible();
+    const draft = await localEntry(first);
+    expect(draft.recovery[0].local).toContain('phone writing');
+    expect(draft.recovery[0].remote).toContain('laptop writing');
+
+    // A newer server version must remain visible without replacing the draft.
+    await edit(second, ' another laptop edit');
+    await expect.poll(async () => (await localEntry(second))?.dirty).toBe(false);
+    await contexts[0].setOffline(false);
+    await sync(first);
+    await expect(first.locator('.conflict-update')).toContainText('changed again');
+    await expect(first.getByRole('region', { name: 'Server version', exact: true })).toContainText('another laptop edit');
+    await expect(first.locator('.ProseMirror')).toContainText('reviewed together');
+    const before = await (await request.get(`/api/sync/diary/${date}`, { headers })).json();
+    expect(before.note).not.toContain('reviewed together');
+    await first.screenshot({ path: 'test-results/conflict-comparison-desktop.png', fullPage: true });
+    await first.setViewportSize({ width: 390, height: 844 });
+    await expect(first.locator('.ProseMirror')).toContainText('reviewed together');
+    await first.screenshot({ path: 'test-results/conflict-comparison-mobile.png', fullPage: true });
+    expect(await first.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await first.getByRole('button', { name: 'Use combined version', exact: true }).click();
+    await expect.poll(async () => (await localEntry(first))?.dirty).toBe(false);
+    await expect(first.locator('.conflict-panel')).toHaveCount(0);
+    await sync(second);
+    await expect(second.locator('.ProseMirror')).toContainText('reviewed together');
+    const saved = await localEntry(first);
+    expect(saved.recovery[0].local).toContain('phone writing');
+    expect(saved.recovery[0].remote).toContain('laptop writing');
+    expect(saved.recovery.at(-1).remote).toContain('another laptop edit');
+  } finally { await Promise.all(contexts.map(context => context.close())); }
+});
