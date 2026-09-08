@@ -138,3 +138,41 @@ out-of-order downloads, account isolation, conflicts, empty entries, legacy-cach
 preservation, concurrent server creation, receipt replay, history pagination,
 offline reload with expired credentials, cached calendar navigation, server failure,
 and local storage errors. Browser screenshots are written to `web/test-results/`.
+
+### Upload failures
+
+A failed request for one date leaves its pending mutation intact and lets other
+uploads and history downloads continue. Details lists the failed dates with links
+back to their entries. Retries retain the original mutation ID, including after a
+reload, because the server may have committed a request whose response was lost.
+The existing bounded backoff applies when any upload fails; **Sync now** retries
+immediately. A successful acknowledgement clears that date's failure indicator.
+Authentication failures (401/403) and local storage errors stop the current run.
+
+### Tests with the real API and migrations
+
+From `web/`, with Docker running, the .NET 10 SDK, Node, and dependencies installed:
+
+```sh
+npm run build
+npx playwright install chromium
+npm run test:e2e:real
+```
+
+This suite creates a disposable PostgreSQL 16 container on a randomly assigned
+local port, applies DbUp migrations, runs them again to check the journal is
+unchanged, and starts the real API on port 9197. It generates its own database and
+JWT credentials and does not use your deployment's `DATABASE_URL`. The container
+and its volumes are removed when the server exits normally or receives a stop
+signal. Keep port 9197 free and run this separately from `test:e2e`.
+
+Two independent browser contexts sign into the same test account. Tests cover
+offline editing and reload, conflicting edits, conflict recovery, a committed
+upload with a lost response and retry after reload, entry-specific rejection with
+other uploads and downloads continuing, and account-wide authentication failures.
+Only selected failures are injected at the browser network boundary; successful
+requests go through the real API and migrated PostgreSQL database.
+
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` can select an existing browser executable. The
+failed-upload UI screenshot is written to `web/test-results/sync-upload-failure.png`.
+The existing `npm run test:e2e` suite continues to use its lightweight mocked API.

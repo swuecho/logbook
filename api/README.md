@@ -36,6 +36,14 @@ make migrate
 
 `make migrate` uses `DATABASE_URL`, or you can pass a connection string directly:
 
+```
+fly ssh console -a YOUR_API_APP_NAME -C 'printenv DATABASE_URL'
+# then change the url to localhost:15432, 
+```
+fly ssh console -a YOUR_API_APP_NAME -C 'printenv DATABASE_URL'
+```
+```
+
 ```sh
 dotnet run --project Migrations -- "$DATABASE_URL"
 ```

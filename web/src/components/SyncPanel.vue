@@ -7,6 +7,7 @@
       <p>{{ syncStatus.historyReady ? 'History downloaded on this device.' : 'History download is incomplete. Undownloaded dates may already have an entry on the server.' }}</p>
       <p v-if="offlineStatus.updateReady">An app update is ready. Close all Logbook tabs and reopen to update.</p>
       <p v-if="syncStatus.conflicts">{{ syncStatus.conflicts }} date(s) need review: <router-link v-for="id in conflictIds" :key="id" :to="{ path: '/view', query: { date: id } }">{{ id }} </router-link></p>
+      <p v-if="syncStatus.failedDates.length">Upload failed; writing is saved on this device. Will retry: <router-link v-for="id in syncStatus.failedDates" :key="id" :to="{ path: '/view', query: { date: id } }">{{ id }} </router-link></p>
       <p v-if="legacyCount">{{ legacyCount }} entries from the old cache are preserved separately because their account is unknown. Export them for recovery before clearing site data.</p>
       <p>Local entries stay on this device after logout. Clearing browser data removes them.</p>
       <p v-if="storageMessage">{{ storageMessage }}</p>
@@ -34,6 +35,7 @@ const storageMessage = ref('');
 const label = computed(() => {
   if (syncStatus.message) return syncStatus.message;
   if (syncStatus.running) return syncStatus.historyReady ? 'Syncing…' : 'Syncing and downloading history…';
+  if (syncStatus.failedDates.length) return `${syncStatus.failedDates.length} date(s) could not upload · saved on this device`;
   if (syncStatus.conflicts) return 'Saved on this device · conflicts need review';
   if (syncStatus.pending) return `${syncStatus.pending} entries waiting to sync`;
   return syncStatus.lastSyncedAt ? 'Synced' : 'Entries save on this device';

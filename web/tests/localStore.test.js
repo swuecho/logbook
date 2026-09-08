@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   openLocalDatabase, saveLocalNote, getLocalNote, listLocalNotes,
   applyRemote, applyRemotePage, getSyncMeta, prepareUpload,
-  acknowledgeUpload, rejectUpload, resolveLocalConflict, legacyNotes,
+  acknowledgeUpload, rejectUpload, resolveLocalConflict, legacyNotes, recordUploadFailure,
 } from '../src/services/localStore.js';
 
 const remote = (note, revision = '1', noteId = '20260907') => ({ noteId, note, revision });
@@ -144,4 +144,23 @@ test('typing from an older visible document does not adopt an unseen remote revi
   assert.equal(saved.note, 'visible version plus typing');
   assert.equal(saved.conflict.note, 'not yet displayed');
   assert.equal(await prepareUpload(account, '20260907'), undefined);
+});
+
+
+test('failed uploads preserve their mutation and newer writing until acknowledged', async () => {
+  const account = 'upload-failure';
+  await applyRemote(account, remote('original'));
+  await saveLocalNote(account, '20260907', 'sent draft');
+  const pending = await prepareUpload(account, '20260907');
+  await saveLocalNote(account, '20260907', 'newer draft');
+  await recordUploadFailure(account, '20260907');
+  const failed = await getLocalNote(account, '20260907');
+  assert.ok(failed.uploadError.failedAt);
+  assert.equal(failed.note, 'newer draft');
+  assert.deepEqual(await prepareUpload(account, '20260907'), pending);
+  await acknowledgeUpload(account, '20260907', pending, remote('sent draft', '2'));
+  const saved = await getLocalNote(account, '20260907');
+  assert.equal(saved.uploadError, undefined);
+  assert.equal(saved.dirty, true);
+  assert.equal(saved.note, 'newer draft');
 });

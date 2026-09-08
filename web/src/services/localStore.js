@@ -62,13 +62,13 @@ function mergeRemote(current, remote, account) {
       return { ...current, serverRevision: remote.revision };
     }
     if (remote.note === current.note) {
-      return { ...current, serverRevision: remote.revision, dirty: false, conflict: undefined, syncedAt: Date.now() };
+      return { ...current, serverRevision: remote.revision, dirty: false, conflict: undefined, uploadError: undefined, syncedAt: Date.now() };
     }
-    return { ...current, conflict: remote };
+    return { ...current, conflict: remote, uploadError: undefined };
   }
   return {
     ...current, account, noteId: remote.noteId, note: remote.note,
-    serverRevision: remote.revision, dirty: false, conflict: undefined, syncedAt: Date.now(),
+    serverRevision: remote.revision, dirty: false, conflict: undefined, uploadError: undefined, syncedAt: Date.now(),
   };
 }
 
@@ -118,7 +118,7 @@ export async function acknowledgeUpload(account, noteId, pending, remote) {
     const unchanged = current.localVersion === pending.localVersion;
     let next = {
       ...current, pending: undefined, observedRemote: undefined,
-      serverRevision: remote.revision, syncedAt: Date.now(),
+      serverRevision: remote.revision, syncedAt: Date.now(), uploadError: undefined,
       dirty: !unchanged, note: unchanged ? remote.note : current.note,
     };
     if (current.observedRemote && BigInt(current.observedRemote.revision) > BigInt(remote.revision)) {
@@ -126,6 +126,15 @@ export async function acknowledgeUpload(account, noteId, pending, remote) {
     }
     await tx.store.put(next);
   }
+  await tx.done;
+}
+
+// Keep the pending mutation intact: a timed-out request may already be committed.
+export async function recordUploadFailure(account, noteId) {
+  const db = await openLocalDatabase();
+  const tx = db.transaction('entries', 'readwrite');
+  const current = await tx.store.get([account, noteId]);
+  if (current?.dirty) await tx.store.put({ ...current, uploadError: { failedAt: Date.now() } });
   await tx.done;
 }
 
@@ -149,7 +158,7 @@ export async function resolveLocalConflict(account, noteId, choice) {
     const remote = current.conflict;
     await tx.store.put({
       ...current, note: choice === 'remote' ? remote.note : current.note,
-      serverRevision: remote.revision, conflict: undefined, pending: undefined,
+      serverRevision: remote.revision, conflict: undefined, pending: undefined, uploadError: undefined,
       localVersion: (current.localVersion || 0) + 1, dirty: choice !== 'remote',
       // Preserve both documents even after the user resolves a conflict.
       recovery: [...(current.recovery || []), { local: current.note, remote: remote.note, savedAt: Date.now() }],

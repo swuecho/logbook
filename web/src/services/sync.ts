@@ -3,12 +3,12 @@ import { reactive } from 'vue';
 import { activeAccount, syncCredentials } from './session';
 import {
   listLocalNotes, getSyncMeta, applyRemote, applyRemotePage,
-  prepareUpload, acknowledgeUpload, rejectUpload,
+  prepareUpload, acknowledgeUpload, rejectUpload, recordUploadFailure,
 } from './localStore.js';
 
 export const syncStatus = reactive({
   running: false, pending: 0, conflicts: 0, historyReady: false,
-  message: '', lastSyncedAt: 0,
+  message: '', lastSyncedAt: 0, failedDates: [] as string[],
 });
 let timer: ReturnType<typeof setTimeout>;
 let running = false;
@@ -28,6 +28,7 @@ channel?.addEventListener('message', () => { notifyLocalChange(false); scheduleS
 async function refreshStatus(account: string) {
   const [entries, meta] = await Promise.all([listLocalNotes(account), getSyncMeta(account)]);
   if (account !== activeAccount.value) return;
+  syncStatus.failedDates = entries.filter(entry => entry.dirty && !entry.conflict && entry.uploadError).map(entry => entry.noteId);
   syncStatus.pending = entries.filter(entry => entry.dirty).length;
   syncStatus.conflicts = entries.filter(entry => entry.conflict).length;
   syncStatus.historyReady = Boolean(meta?.historyReady);
@@ -56,25 +57,34 @@ export async function syncNow() {
     const client = axios.create({ timeout: 12000, headers: { Authorization: `Bearer ${credentials.token}` } });
     const stillCurrent = () => activeAccount.value === account && syncCredentials()?.token === credentials.token;
     const run = async () => {
+      let uploadFailed = false;
       for (const entry of await listLocalNotes(account)) {
         if (!stillCurrent()) return;
         if (!entry.dirty || entry.conflict) continue;
-        if (entry.serverRevision === undefined && !entry.pending) {
-          const { data } = await client.get(`/api/sync/diary/${entry.noteId}`);
-          await applyRemote(account, data);
-        }
-        if (!stillCurrent()) return;
-        const pending = await prepareUpload(account, entry.noteId);
-        if (!pending) continue;
         try {
-          const { data } = await client.put(`/api/sync/diary/${entry.noteId}`, {
-            note: pending.note, baseRevision: pending.baseRevision, mutationId: pending.mutationId,
-          });
-          await acknowledgeUpload(account, entry.noteId, pending, data);
+          if (entry.serverRevision === undefined && !entry.pending) {
+            const { data } = await client.get(`/api/sync/diary/${entry.noteId}`);
+            await applyRemote(account, data);
+          }
+          if (!stillCurrent()) return;
+          const pending = await prepareUpload(account, entry.noteId);
+          if (!pending) continue;
+          try {
+            const { data } = await client.put(`/api/sync/diary/${entry.noteId}`, {
+              note: pending.note, baseRevision: pending.baseRevision, mutationId: pending.mutationId,
+            });
+            await acknowledgeUpload(account, entry.noteId, pending, data);
+          } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 409 && error.response.data?.current) {
+              await rejectUpload(account, entry.noteId, pending, error.response.data.current);
+            } else throw error;
+          }
         } catch (error) {
-          if (axios.isAxiosError(error) && error.response?.status === 409 && error.response.data?.current) {
-            await rejectUpload(account, entry.noteId, pending, error.response.data.current);
-          } else throw error;
+          // Authentication and local storage errors affect the whole run. A failed
+          // request for one date must not prevent other uploads or history downloads.
+          if (!axios.isAxiosError(error) || [401, 403].includes(error.response?.status || 0)) throw error;
+          uploadFailed = true;
+          await recordUploadFailure(account, entry.noteId);
         }
         notifyLocalChange();
       }
@@ -97,7 +107,7 @@ export async function syncNow() {
       }
       if (more) rerun = true;
       if (stillCurrent()) {
-        failures = 0;
+        failures = uploadFailed ? failures + 1 : 0;
         syncStatus.lastSyncedAt = Date.now();
         const entries = await listLocalNotes(account);
         if (entries.some(entry => entry.dirty && !entry.conflict)) rerun = true;
@@ -112,7 +122,7 @@ export async function syncNow() {
   } catch (error) {
     failures++;
     if (account === activeAccount.value) {
-      syncStatus.message = axios.isAxiosError(error) && error.response?.status === 401
+      syncStatus.message = axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0)
         ? 'Sign in to sync. You can keep writing.'
         : 'Sync unavailable · changes stay on this device';
     }
@@ -150,6 +160,8 @@ export function initSync() {
     syncStatus.pending = 0;
     syncStatus.conflicts = 0;
     syncStatus.historyReady = false;
+    syncStatus.failedDates = [];
+    syncStatus.lastSyncedAt = 0;
     notifyLocalChange(false);
     scheduleSync(0);
   });
