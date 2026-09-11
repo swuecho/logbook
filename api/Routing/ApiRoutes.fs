@@ -7,6 +7,8 @@ let endpoints =
         post ApiPaths.login AuthHandlers.login
         post ApiPaths.register AuthHandlers.register
         post ApiPaths.logout AuthHandlers.logout
+        get "/api/vault" VaultHandlers.get
+        put "/api/vault" VaultHandlers.save
         get "/api/sync/changes" DiaryHandlers.syncChanges
         get "/api/sync/diary/{id}" DiaryHandlers.syncGet
         put "/api/sync/diary/{id}" DiaryHandlers.syncSave

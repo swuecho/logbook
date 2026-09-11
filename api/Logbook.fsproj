@@ -41,10 +41,12 @@
     <Compile Include="Background/Workers/BackgroundJobsService.fs" />
     <Compile Include="Services/ExportService.fs" />
     <Compile Include="Services/AdminService.fs" />
+    <Compile Include="Services/VaultService.fs" />
     <Compile Include="Handlers/AuthHandlers.fs" />
     <Compile Include="Handlers/DiaryHandlers.fs" />
     <Compile Include="Handlers/ExportHandlers.fs" />
     <Compile Include="Handlers/AdminHandlers.fs" />
+    <Compile Include="Handlers/VaultHandlers.fs" />
     <Compile Include="Routing/ApiRoutes.fs" />
     <Compile Include="Startup/RequestLogging.fs" />
     <Compile Include="Startup/GlobalErrorHandler.fs" />

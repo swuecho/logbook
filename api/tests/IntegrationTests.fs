@@ -615,3 +615,41 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             use! lastJson = readJson last
             Assert.Equal(0, lastJson.RootElement.GetProperty("entries").GetArrayLength())
         }
+
+    [<DatabaseFact>]
+    member _.``vault is private, no-store, versioned and excluded from diary export``() =
+        task {
+            use client = fixture.CreateClient()
+            let! owner = ensureUserToken client (uniqueEmail "vault-owner") "password"
+            let! other = ensureUserToken client (uniqueEmail "vault-other") "password"
+            let value = VaultTests.envelope ()
+            let mutation revision envelope = Some(jsonContent {| envelope = envelope; baseRevision = revision |})
+            let! anonymous = client.GetAsync("/api/vault")
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode)
+            let! created = sendWithToken client HttpMethod.Put "/api/vault" owner (mutation "0" value)
+            Assert.Equal(HttpStatusCode.OK, created.StatusCode)
+            Assert.True(created.Headers.CacheControl.NoStore)
+            let! retry = sendWithToken client HttpMethod.Put "/api/vault" owner (mutation "0" value)
+            Assert.Equal(HttpStatusCode.OK, retry.StatusCode)
+            let! hidden = sendWithToken client HttpMethod.Get "/api/vault" other None
+            Assert.Equal(HttpStatusCode.NotFound, hidden.StatusCode)
+            let! rejected = sendWithToken client HttpMethod.Put "/api/vault" other (mutation "1" value)
+            Assert.Equal(HttpStatusCode.Conflict, rejected.StatusCode)
+            let! read = sendWithToken client HttpMethod.Get "/api/vault" owner None
+            use! stored = readJson read
+            Assert.Equal(value, stored.RootElement.GetProperty("envelope").GetString())
+            Assert.Equal("1", stored.RootElement.GetProperty("revision").GetString())
+            let! invalid = sendWithToken client HttpMethod.Put "/api/vault" owner (mutation "1" "{}")
+            Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode)
+            let! nullBody = sendWithToken client HttpMethod.Put "/api/vault" owner (Some(new StringContent("null", Encoding.UTF8, "application/json")))
+            Assert.Equal(HttpStatusCode.BadRequest, nullBody.StatusCode)
+            let! oversized = sendWithToken client HttpMethod.Put "/api/vault" owner (Some(new StringContent(String('x', 1600001), Encoding.UTF8, "application/json")))
+            Assert.Equal(HttpStatusCode.RequestEntityTooLarge, oversized.StatusCode)
+            let! exported = sendWithToken client HttpMethod.Get ApiPaths.exportAll owner None
+            let! exportedText = exported.Content.ReadAsStringAsync()
+            Assert.DoesNotContain("logbook-vault", exportedText)
+            let writes = [| VaultTests.envelope (); VaultTests.envelope () |] |> Array.map (fun e -> sendWithToken client HttpMethod.Put "/api/vault" owner (mutation "1" e))
+            let! results = Task.WhenAll(writes)
+            Assert.Equal(1, results |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.OK) |> Array.length)
+            Assert.Equal(1, results |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.Conflict) |> Array.length)
+        }

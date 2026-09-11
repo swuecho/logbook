@@ -6,6 +6,12 @@
 
 ![todo](https://github.com/user-attachments/assets/bd5cae57-5f82-4cf1-9f50-c45073364075)
 
+## Password and secret vault
+
+Open the lock icon to create a browser-encrypted vault with a separate master
+passphrase and recovery key. See the [vault guide](docs/password-vault.md) for
+backup, recovery, limits and deployment steps.
+
 ## How to deploy
 
 Follow [Applying database migrations](docs/database-migrations.md) to prepare the

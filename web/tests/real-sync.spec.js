@@ -164,7 +164,9 @@ for (const status of [401, 403]) {
       const previousFailure = (await localEntry(first)).uploadError;
       await contexts[0].setOffline(false);
       await sync(first);
-      await expect(first.locator('.sync-panel')).toContainText('Sign in to sync. You can keep writing.');
+      const needsSignIn = first.getByRole('button', { name: 'Sync details: Sign in to sync. You can keep writing.', exact: true });
+      await expect(needsSignIn).toBeVisible();
+      await needsSignIn.click();
       await expect(first.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true })).toBeVisible();
       expect(uploadedDates.length).toBeGreaterThan(0);
       expect(uploadedDates.every(id => id === date)).toBe(true);

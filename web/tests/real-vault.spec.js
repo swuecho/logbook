@@ -1,0 +1,52 @@
+import { test, expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { openVault, parseBackup } from '../src/services/vault/crypto.js';
+
+test('real migrated API round-trips browser encryption and isolates accounts', async ({ page, context, request }) => {
+  const response = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
+  expect(response.status()).toBe(201);
+  const session = await response.json();
+  await context.addInitScript(session => {
+    localStorage.setItem('JWT_TOKEN', session.accessToken);
+    localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + session.expiresIn * 1000));
+  }, session);
+  const passphrase = 'synthetic browser vault passphrase';
+  const secret = 'synthetic-secret-' + randomUUID();
+  await page.goto('/vault');
+  await page.getByLabel('Master passphrase', { exact: true }).fill(passphrase);
+  await page.getByLabel('Confirm master passphrase', { exact: true }).fill(passphrase);
+  await page.getByRole('button', { name: 'Create vault', exact: true }).click();
+  const recovery = await page.getByTestId('recovery-key').innerText();
+  await page.getByLabel('I saved this recovery key outside Logbook.').check();
+  await page.getByRole('button', { name: 'Finish and save' }).click();
+  await page.getByRole('button', { name: 'New item', exact: true }).click();
+  await page.getByLabel('Title', { exact: true }).fill('Real API example');
+  await page.getByLabel('Password', { exact: true }).fill(secret);
+  await page.getByRole('button', { name: 'Save item', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Item saved');
+  const headers = { Authorization: `Bearer ${session.accessToken}` };
+  const saved = await request.get('/api/vault', { headers });
+  expect(saved.headers()['cache-control']).toBe('no-store');
+  const snapshot = await saved.json();
+  expect(snapshot.envelope).not.toContain(secret);
+  expect(snapshot.envelope).not.toContain(passphrase);
+  expect((await openVault(parseBackup(snapshot.envelope), recovery, true)).items[0].secret).toBe(secret);
+  const otherResponse = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
+  const otherSession = await otherResponse.json();
+  const other = await request.get('/api/vault', { headers: { Authorization: `Bearer ${otherSession.accessToken}` } });
+  expect(other.status()).toBe(404);
+  const exported = await request.get('/api/export_all', { headers });
+  expect(await exported.text()).not.toContain('logbook-vault');
+  await page.reload();
+  await page.getByLabel('Use recovery key', { exact: true }).check();
+  await page.getByLabel('Recovery key', { exact: true }).fill(recovery);
+  await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Real API example/ })).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  const cachedUrls = await page.evaluate(async () => {
+    const urls = [];
+    for (const name of await caches.keys()) for (const request of await (await caches.open(name)).keys()) urls.push(request.url);
+    return urls;
+  });
+  expect(cachedUrls.some(url => new URL(url).pathname.startsWith('/api/'))).toBe(false);
+});
