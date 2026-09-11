@@ -43,8 +43,6 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import router from '@/router';
 import { logoutUser } from '@/services/auth';
-import { clearSession } from '@/services/session';
-import { getApiErrorMessage } from '@/services/apiError';
 
 const done = ref(false);
 const loading = ref(false);
@@ -60,12 +58,15 @@ const logout = async () => {
   done.value = false;
   loading.value = true;
 
-  // Local logout works immediately, including when the server is unreachable.
-  void logoutUser().catch(() => {});
-  clearSession();
-  done.value = true;
-  loading.value = false;
-  startRedirectCountdown();
+  try {
+    await logoutUser();
+    done.value = true;
+    startRedirectCountdown();
+  } catch {
+    errors.value.push('设备上的登录状态已清除，但服务器登出尚未完成。请连接网络后重试。');
+  } finally {
+    loading.value = false;
+  }
 };
 
 const goLogin = () => router.push({ path: '/login' });
@@ -91,11 +92,21 @@ const startRedirectCountdown = () => {
   }, 3000);
 };
 
+function finishQueuedLogout() {
+  if (!loading.value && !localStorage.getItem('LOGBOOK_LOGOUT_PENDING')) {
+    errors.value = [];
+    done.value = true;
+    startRedirectCountdown();
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('logbook-session', finishQueuedLogout);
   logout();
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('logbook-session', finishQueuedLogout);
   clearTimers();
 });
 </script>

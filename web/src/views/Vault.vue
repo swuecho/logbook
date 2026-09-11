@@ -228,7 +228,7 @@ async function run(action) {
   try {
     const credentials = session();
     const valid = () => epoch === generation && credentials.account === activeAccount.value;
-    const api = vaultApi(credentials.token, controller.signal);
+    const api = vaultApi(credentials, controller.signal);
     await action(api, valid);
   } catch (e) {
     if (epoch === generation && e.name !== 'AbortError') error.value = e instanceof TypeError ? 'Connection failed. Check your connection and try again.' : e.message;

@@ -4,6 +4,7 @@ open Falco.Routing
 
 let endpoints =
     [
+        get ApiPaths.session AuthHandlers.session
         post ApiPaths.login AuthHandlers.login
         post ApiPaths.register AuthHandlers.register
         post ApiPaths.logout AuthHandlers.logout

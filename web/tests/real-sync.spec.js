@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { registerSession } from './session-helpers.js';
 
 const date = '20260907';
 const nextDate = '20260908';
@@ -34,21 +35,15 @@ async function sync(page) {
   await page.getByRole('dialog', { name: 'Sync details' }).getByRole('button', { name: 'Close this dialog' }).click();
 }
 async function devices(browser, request) {
-  const response = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
-  expect(response.status()).toBe(201);
-  const session = await response.json();
+  const { cookie, headers } = await registerSession(request);
   const contexts = [];
   const pages = [];
   for (let i = 0; i < 2; i++) {
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
     contexts.push(context);
-    await context.addInitScript(session => {
-      localStorage.setItem('JWT_TOKEN', session.accessToken);
-      localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + session.expiresIn * 1000));
-    }, session);
+    await context.addCookies([cookie]);
     pages.push(await context.newPage());
   }
-  const headers = { Authorization: `Bearer ${session.accessToken}` };
   const seed = await request.put(`/api/sync/diary/${date}`, { headers, data: { note: doc('Original'), baseRevision: '0', mutationId: randomUUID() } });
   expect(seed.ok()).toBe(true);
   for (const page of pages) {

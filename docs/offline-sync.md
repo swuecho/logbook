@@ -25,6 +25,8 @@ use, although the document references are preserved.
    **Keep offline storage** requests persistent browser storage, which the browser
    may decline. Clearing site data removes local writing. Logout clears the login
    immediately, even offline, but retains each account's separate local partition.
+   Offline logout remains pending until the server confirms revocation; the app
+   retries while open after reconnecting and remembers that intent across reloads.
 
 Sync runs on startup, reconnect, focus, an explicit retry, and periodically while
 the app is open. It uses 12-second request timeouts and bounded exponential
@@ -54,7 +56,7 @@ make duplicate uploads safe when locks are unavailable.
 
 ## Server protocol
 
-All endpoints require the existing bearer authentication and validate dates.
+All endpoints require the JWT session cookie and session-bound CSRF header, and validate dates. See [authentication](authentication.md).
 Revisions and cursors are decimal strings to avoid JavaScript integer rounding.
 
 | Endpoint | Request | Response |

@@ -99,10 +99,9 @@ import logoutIcon from '@iconify/icons-mdi/logout';
 import adminIcon from '@iconify/icons-mdi/shield-account-outline';
 import settingsIcon from '@iconify/icons-mdi/cog-outline';
 import router from '@/router';
-import { parseJwt } from '@/util';
 import OnlineStatusIndicator from '@/components/OnlineStatusIndicator.vue';
 import SyncPanel from '@/components/SyncPanel.vue';
-import { activeAccount } from '@/services/session';
+import { activeAccount, sessionRole } from '@/services/session';
 import { currentTheme, setTheme, themeOptions } from '@/services/theme';
 
 defineProps({
@@ -142,18 +141,7 @@ const settingsVisible = ref(false);
 
 const isAuthenticated = computed(() => Boolean(activeAccount.value));
 
-const isAdmin = computed(() => {
-  const token = localStorage.getItem('JWT_TOKEN');
-  if (!token || !isAuthenticated.value) return false;
-
-  try {
-    const claims = parseJwt(token);
-    return claims.role === 'admin';
-  } catch (error) {
-    console.error('Failed to parse auth token:', error);
-    return false;
-  }
-});
+const isAdmin = computed(() => sessionRole.value === 'admin');
 
 function goHome() {
   router.push('/');

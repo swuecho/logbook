@@ -151,7 +151,6 @@ const handleLogin = async () => {
     const data = await loginUser(form.name, form.pwd);
     saveToken(data);
   } catch (error) {
-    console.error('Login failed:', error);
     errors.value.push(getApiErrorMessage(error, '登录失败，请检查邮箱和密码。'));
   } finally {
     submitting.value = false;
@@ -175,7 +174,6 @@ const handleRegister = async () => {
     const data = await registerUser(form.name, form.pwd);
     saveToken(data);
   } catch (error) {
-    console.error('Registration failed:', error);
     errors.value.push(getApiErrorMessage(error, '注册失败，请稍后重试。'));
   } finally {
     submitting.value = false;

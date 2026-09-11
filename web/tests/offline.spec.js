@@ -2,22 +2,16 @@ import { test, expect } from '@playwright/test';
 
 const date = '20260907';
 const doc = text => JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
-const token = user => `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ user_id: user, iss: 'test', aud: 'logbook', role: 'user' })).toString('base64url')}.test`;
-
 async function setup(page, context) {
-  const state = { note: doc('From server'), revision: 1, writes: [], hold: null, fail: false };
-  await context.addInitScript(({ accessToken }) => {
-    if (!localStorage.getItem('JWT_TOKEN')) {
-      localStorage.setItem('JWT_TOKEN', accessToken);
-      localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + 86400000));
-    }
-  }, { accessToken: token('1') });
+  const state = { note: doc('From server'), revision: 1, writes: [], hold: null, fail: false, authenticated: true, userId: 1 };
   await context.route('**/api/**', async route => {
     if (state.fail) { await route.abort('failed'); return; }
     const url = new URL(route.request().url());
     let data;
     let status = 200;
-    if (url.pathname === '/api/sync/changes') {
+    if (url.pathname === '/api/session') {
+      data = { authenticated: state.authenticated, userId: state.userId, issuer: 'test', audience: 'logbook', role: 'user', csrfToken: 'test-session-' + state.userId, expiresAt: new Date(Date.now() + 86400000).toISOString() };
+    } else if (url.pathname === '/api/sync/changes') {
       const entries = Number(url.searchParams.get('cursor')) < state.revision ? [{ noteId: date, note: state.note, revision: String(state.revision) }] : [];
       data = { entries, cursor: String(state.revision), hasMore: false };
     } else if (url.pathname.startsWith('/api/sync/diary/')) {
@@ -88,7 +82,6 @@ test('typing remains durable while a previous upload is delayed', async ({ page,
 test('cached app reopens and saves offline with an expired token', async ({ page, context }) => {
   await setup(page, context);
   await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.evaluate(() => localStorage.setItem('JWT_EXPIRES_AT', '1'));
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.ProseMirror')).toContainText('From server');
@@ -141,7 +134,7 @@ test('offline calendar navigation opens a new date and retains its draft after r
   await page.getByRole('link', { name: 'Calendar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Calendar', exact: true })).toBeVisible();
   await page.goto('/view?date=20260908');
-  await expect(page.locator('.ProseMirror')).toBeEditable();
+  await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', 'true');
   await typeText(page, 'A new offline date');
   await expect.poll(async () => (await localEntry(page, '20260908'))?.note).toContain('A new offline date');
   await page.reload();
@@ -154,12 +147,12 @@ test('switching accounts offline never displays or uploads the previous account 
   await context.setOffline(true);
   await typeText(page, ' private account one');
   await expect.poll(async () => (await localEntry(page)).dirty).toBe(true);
-  await page.evaluate(accessToken => {
-    localStorage.setItem('JWT_TOKEN', accessToken);
-    localStorage.setItem('JWT_EXPIRES_AT', '1');
-  }, token('2'));
+  state.authenticated = false;
+  await page.evaluate(() => {
+    localStorage.setItem('LOGBOOK_ACCOUNT', JSON.stringify([location.origin, 'test', 'logbook', '2']));
+  });
   await page.reload();
-  await expect(page.locator('.ProseMirror')).toBeEditable();
+  await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', 'true');
   await expect(page.locator('.ProseMirror')).not.toContainText('private account one');
   expect(await localEntry(page)).toBeUndefined();
   await context.setOffline(false);
@@ -202,19 +195,15 @@ test('a local storage failure keeps writing visible and blocks navigation until 
 
 
 test('sync details shows sign-in only when the session needs authentication', async ({ page, context }) => {
-  await setup(page, context);
+  const state = await setup(page, context);
   await page.getByRole('button', { name: /^Sync details:/ }).click();
   const signIn = page.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true });
   await expect(signIn).toHaveCount(0);
-  await page.evaluate(() => {
-    localStorage.setItem('JWT_EXPIRES_AT', '1');
-    window.dispatchEvent(new Event('logbook-session'));
-  });
+  state.authenticated = false;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(signIn).toBeVisible();
-  await page.evaluate(() => {
-    localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + 86400000));
-    window.dispatchEvent(new Event('logbook-session'));
-  });
+  state.authenticated = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(signIn).toHaveCount(0);
 });
 

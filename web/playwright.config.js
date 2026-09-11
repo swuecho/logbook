@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
-  testMatch: process.env.LOGBOOK_REAL_SYNC_TEST ? ['**/real-sync.spec.js', '**/real-vault.spec.js'] : ['**/offline.spec.js', '**/vault.spec.js'],
+  testMatch: process.env.LOGBOOK_REAL_SYNC_TEST ? ['**/real-sync.spec.js', '**/real-vault.spec.js', '**/real-session.spec.js'] : ['**/offline.spec.js', '**/vault.spec.js'],
   fullyParallel: false,
   workers: 1,
   timeout: 30000,

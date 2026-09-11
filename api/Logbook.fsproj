@@ -9,6 +9,7 @@
     <Compile Include="Common/ApiPaths.fs" />
     <Compile Include="Common/TipTap.fs" />
     <Compile Include="Common/Auth.fs" />
+    <Compile Include="Common/SessionToken.fs" />
     <Compile Include="Common/Token.fs" />
     <Compile Include="Common/Json.fs" />
     <Compile Include="Common/LogbookError.fs" />
@@ -25,8 +26,8 @@
     <Compile Include="Repositories/SummaryRepository.fs" />
     <Compile Include="Repositories/TodoRepository.fs" />
     <Compile Include="Repositories/JwtSecretRepository.fs" />
+    <Compile Include="Repositories/SessionRepository.fs" />
     <Compile Include="Infrastructure/Database.fs" />
-    <Compile Include="Infrastructure/UserRevocationCache.fs" />
     <Compile Include="Common/HandlerContext.fs" />
     <Compile Include="Services/ApplicationContracts.fs" />
     <Compile Include="Services/TextAnalysis.fs" />
@@ -34,6 +35,8 @@
     <Compile Include="Background/Queues/SummaryQueue.fs" />
     <Compile Include="Background/Queues/IndexQueue.fs" />
     <Compile Include="Infrastructure/JwtService.fs" />
+    <Compile Include="Services/SessionService.fs" />
+    <Compile Include="Common/SessionHttp.fs" />
     <Compile Include="Services/AuthService.fs" />
     <Compile Include="Services/DiaryService.fs" />
     <Compile Include="Services/DiarySyncService.fs" />

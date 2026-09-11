@@ -18,9 +18,10 @@ import { registerOfflineApp } from '@/services/offline';
 initTheme();
 initTabLock();
 
-restoreSession();
-router.beforeEach((to) => {
-  if (to.path !== '/login' && !activeAccount.value) return '/login';
+const sessionReady = restoreSession();
+router.beforeEach(async (to) => {
+  await sessionReady;
+  if (!['/login', '/logout'].includes(to.path) && !activeAccount.value) return '/login';
 });
 
 const app = createApp(App)

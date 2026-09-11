@@ -1,23 +1,14 @@
-import axios from '../axiosConfig';
-import rawAxios from 'axios';
+import { logoutSession, sessionRequest } from './session';
 
-export const loginUser = async (username: string, password: string) => {
-  const response = await axios.post('/api/login', {
-    username,
-    password,
+async function authenticate(path: string, username: string, password: string) {
+  if (localStorage.getItem('LOGBOOK_LOGOUT_PENDING')) await logoutSession();
+  const bootstrap = await sessionRequest('/api/session');
+  return sessionRequest(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': bootstrap.csrfToken },
+    body: JSON.stringify({ username, password }),
   });
-  return response.data;
-};
-
-export const registerUser = async (username: string, password: string) => {
-  const response = await axios.post('/api/register', {
-    username,
-    password,
-  });
-  return response.data;
-};
-
-export const logoutUser = async () => {
-  const token = localStorage.getItem('JWT_TOKEN');
-  await rawAxios.post('/api/logout', null, { timeout: 3000, headers: { Authorization: `Bearer ${token}` } });
-};
+}
+export const loginUser = (username: string, password: string) => authenticate('/api/login', username, password);
+export const registerUser = (username: string, password: string) => authenticate('/api/register', username, password);
+export const logoutUser = logoutSession;

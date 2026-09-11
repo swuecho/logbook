@@ -1,41 +1,13 @@
 import axios from 'axios';
+import { syncCredentials } from './services/session';
 
-const getJwtToken = () => localStorage.getItem('JWT_TOKEN');
-
-// Full config:  https://github.com/axios/axios#request-config
-// axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
-// axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
-// axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
-
-const config = {
-  timeout: 12000,
-  headers: {},
-};
-
-const instance = axios.create(config);
-
-instance.interceptors.request.use(
-  function (config) {
-    config.headers.Authorization = `Bearer ${getJwtToken()}`;
-    return config;
-  },
-  function (error) {
-    // Do something with request error
-    return Promise.reject(error);
-  }
-);
-
-// Add a response interceptor
-instance.interceptors.response.use(
-  function (response) {
-    // Do something with response data
-    return response;
-  },
-  function (error) {
-    // Do something with response error
-    return Promise.reject(error);
-  }
-);
-
-
+const instance = axios.create({ timeout: 12000 });
+instance.interceptors.request.use(config => {
+  const credentials = syncCredentials();
+  if (!credentials) throw new Error('Sign in to continue.');
+  const url = new URL(config.url || '', config.baseURL || location.origin);
+  if (url.origin !== location.origin) throw new Error('Only same-origin API requests are allowed.');
+  config.headers['X-CSRF-Token'] = credentials.csrfToken;
+  return config;
+});
 export default instance;

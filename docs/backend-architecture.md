@@ -138,7 +138,7 @@ Use these constants instead of repeating role or JWT strings in handlers, servic
 
 ## Auth Semantics
 
-`AuthService.loginOrRegister` intentionally preserves the current product behavior: existing users are authenticated, and unknown emails are created as new users before returning a token. Keep that behavior explicit in names and docs so the `/api/login` route is not mistaken for a strict login-only endpoint.
+`AuthService.login` authenticates an existing active user; `AuthService.register` explicitly creates an account. Both issue an HttpOnly JWT cookie backed by a revocable database session. See [authentication](authentication.md).
 
 ## API Paths
 

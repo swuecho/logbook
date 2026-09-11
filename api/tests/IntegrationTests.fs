@@ -151,37 +151,27 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             return JsonDocument.Parse(body)
         }
 
-    let login (client: HttpClient) username password =
+    let authenticate (client: HttpClient) (path: string) username password =
         task {
-            let credentials =
-                {| username = username
-                   password = password |}
-
-            let! response = client.PostAsync(ApiPaths.login, jsonContent credentials)
-
-            if response.StatusCode <> HttpStatusCode.OK then
-                return response, None
+            let! bootstrap = client.GetAsync(ApiPaths.session)
+            use! bootstrapJson = readJson bootstrap
+            let csrf = bootstrapJson.RootElement.GetProperty("csrfToken").GetString()
+            let cookie = bootstrap.Headers.GetValues("Set-Cookie") |> Seq.head |> fun s -> s.Split(';')[0]
+            use req = new HttpRequestMessage(HttpMethod.Post, path)
+            req.Headers.Add("Cookie", cookie)
+            req.Headers.Add("Origin", "http://localhost")
+            req.Headers.Add(SessionToken.csrfHeader, csrf)
+            req.Content <- jsonContent {| username = username; password = password |}
+            let! response = client.SendAsync(req)
+            if not response.IsSuccessStatusCode then return response, None
             else
-                use! json = readJson response
-                let token = json.RootElement.GetProperty("accessToken").GetString()
-                return response, Some token
+                let jwtCookie = response.Headers.GetValues("Set-Cookie") |> Seq.find (fun s -> s.StartsWith(SessionToken.cookieName + "="))
+                let jwt = (jwtCookie.Split(';')[0]).Substring(SessionToken.cookieName.Length + 1)
+                return response, Some jwt
         }
 
-    let register (client: HttpClient) username password =
-        task {
-            let credentials =
-                {| username = username
-                   password = password |}
-
-            let! response = client.PostAsync(ApiPaths.register, jsonContent credentials)
-
-            if response.StatusCode <> HttpStatusCode.Created then
-                return response, None
-            else
-                use! json = readJson response
-                let token = json.RootElement.GetProperty("accessToken").GetString()
-                return response, Some token
-        }
+    let login client username password = authenticate client ApiPaths.login username password
+    let register client username password = authenticate client ApiPaths.register username password
 
     /// Register a new user; if already registered, log in instead.
     let ensureUserToken (client: HttpClient) username password =
@@ -198,7 +188,9 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
     let sendWithToken (client: HttpClient) (method: HttpMethod) (path: string) token content =
         task {
             use request = new HttpRequestMessage(method, path)
-            request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", token)
+            request.Headers.Add("Cookie", SessionToken.cookieName + "=" + token)
+            request.Headers.Add("Origin", "http://localhost")
+            request.Headers.Add(SessionToken.csrfHeader, SessionToken.csrf token)
 
             match content with
             | Some requestContent -> request.Content <- requestContent
@@ -652,4 +644,116 @@ type IntegrationTests(fixture: IntegrationTestFixture) =
             let! results = Task.WhenAll(writes)
             Assert.Equal(1, results |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.OK) |> Array.length)
             Assert.Equal(1, results |> Array.filter (fun r -> r.StatusCode = HttpStatusCode.Conflict) |> Array.length)
+        }
+
+    [<DatabaseFact>]
+    member _.``JWT cookie is HttpOnly and logout revokes copied JWT immediately``() =
+        task {
+            use client = fixture.CreateClient()
+            let! registered, tokenOption = register client (uniqueEmail "session") "password"
+            let token = tokenOption.Value
+            let cookie = registered.Headers.GetValues("Set-Cookie") |> Seq.find (fun s -> s.StartsWith(SessionToken.cookieName + "="))
+            Assert.Contains("httponly", cookie.ToLowerInvariant())
+            Assert.Contains("secure", cookie.ToLowerInvariant())
+            Assert.Contains("samesite=strict", cookie.ToLowerInvariant())
+            Assert.DoesNotContain("domain=", cookie.ToLowerInvariant())
+            use! responseJson = readJson registered
+            Assert.False(responseJson.RootElement.TryGetProperty("accessToken") |> fst)
+            let parsed = System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(token)
+            Assert.True(parsed.Claims |> Seq.exists (fun c -> c.Type = "jti"))
+            Assert.True(parsed.ValidTo - parsed.ValidFrom <= TimeSpan.FromHours(12.0))
+            let! before = sendWithToken client HttpMethod.Get ApiPaths.diaryIds token None
+            Assert.Equal(HttpStatusCode.OK, before.StatusCode)
+            let! logout = sendWithToken client HttpMethod.Post ApiPaths.logout token None
+            Assert.Equal(HttpStatusCode.OK, logout.StatusCode)
+            let! copied = sendWithToken client HttpMethod.Get ApiPaths.diaryIds token None
+            Assert.Equal(HttpStatusCode.Unauthorized, copied.StatusCode)
+            let storedHash = fixture.WithConnection(fun conn ->
+                use cmd = new NpgsqlCommand("SELECT token_hash FROM auth_session WHERE token_hash = @hash", conn)
+                cmd.Parameters.AddWithValue("hash", SessionToken.hash token) |> ignore
+                cmd.ExecuteScalar() :?> string)
+            Assert.Equal(SessionToken.hash token, storedHash)
+            Assert.NotEqual<string>(token, storedHash)
+        }
+
+    [<DatabaseFact>]
+    member _.``session rejects bearer bypass, missing CSRF, cross origin and old tab credentials``() =
+        task {
+            use client = fixture.CreateClient()
+            let! first = ensureUserToken client (uniqueEmail "csrf-first") "password"
+            let! second = ensureUserToken client (uniqueEmail "csrf-second") "password"
+            let send (path: string) (method: HttpMethod) cookieToken csrf origin bearer =
+                task {
+                    use request = new HttpRequestMessage(method, path)
+                    if cookieToken <> "" then request.Headers.Add("Cookie", SessionToken.cookieName + "=" + cookieToken)
+                    if csrf <> "" then request.Headers.Add(SessionToken.csrfHeader, csrf)
+                    if origin <> "" then request.Headers.Add("Origin", origin)
+                    if bearer <> "" then request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", bearer)
+                    return! client.SendAsync(request)
+                }
+            let! bearer = send ApiPaths.diaryIds HttpMethod.Get "" "" "http://localhost" first
+            Assert.Equal(HttpStatusCode.Unauthorized, bearer.StatusCode)
+            let! missing = send ApiPaths.logout HttpMethod.Post first "" "http://localhost" ""
+            Assert.Equal(HttpStatusCode.Forbidden, missing.StatusCode)
+            let! crossOrigin = send ApiPaths.logout HttpMethod.Post first (SessionToken.csrf first) "https://evil.example" ""
+            Assert.Equal(HttpStatusCode.Forbidden, crossOrigin.StatusCode)
+            let! noOrigin = send ApiPaths.logout HttpMethod.Post first (SessionToken.csrf first) "" ""
+            Assert.Equal(HttpStatusCode.Forbidden, noOrigin.StatusCode)
+            let! switchedRead = send ApiPaths.diaryIds HttpMethod.Get second (SessionToken.csrf first) "http://localhost" ""
+            Assert.Equal(HttpStatusCode.Forbidden, switchedRead.StatusCode)
+            let! switchedWrite = send "/api/vault" HttpMethod.Put second (SessionToken.csrf first) "http://localhost" ""
+            Assert.Equal(HttpStatusCode.Forbidden, switchedWrite.StatusCode)
+            let! loginCsrf = send ApiPaths.login HttpMethod.Post "" "" "http://localhost" ""
+            Assert.Equal(HttpStatusCode.Forbidden, loginCsrf.StatusCode)
+            let! intact = sendWithToken client HttpMethod.Get ApiPaths.diaryIds first None
+            Assert.Equal(HttpStatusCode.OK, intact.StatusCode)
+        }
+
+    [<DatabaseFact>]
+    member _.``sessions enforce idle and absolute expiry and live account status and role``() =
+        task {
+            use client = fixture.CreateClient()
+            let email = uniqueEmail "session-status"
+            let! token = ensureUserToken client email "password"
+            let update sql = fixture.WithConnection(fun conn ->
+                use cmd = new NpgsqlCommand(sql, conn)
+                cmd.Parameters.AddWithValue("hash", SessionToken.hash token) |> ignore
+                cmd.Parameters.AddWithValue("email", email) |> ignore
+                cmd.ExecuteNonQuery() |> ignore)
+            update "UPDATE auth_session SET last_seen_at = now() - interval '31 minutes' WHERE token_hash = @hash"
+            let! idle = sendWithToken client HttpMethod.Get ApiPaths.diaryIds token None
+            Assert.Equal(HttpStatusCode.Unauthorized, idle.StatusCode)
+            update "UPDATE auth_session SET last_seen_at = now(), expires_at = now() - interval '1 second' WHERE token_hash = @hash"
+            let! expired = sendWithToken client HttpMethod.Get ApiPaths.diaryIds token None
+            Assert.Equal(HttpStatusCode.Unauthorized, expired.StatusCode)
+            update "UPDATE auth_session SET expires_at = now() + interval '1 hour' WHERE token_hash = @hash"
+            update "UPDATE auth_user SET is_superuser = true WHERE email = @email"
+            let! promoted = sendWithToken client HttpMethod.Get ApiPaths.usersWithDiaryCount token None
+            Assert.Equal(HttpStatusCode.OK, promoted.StatusCode)
+            update "UPDATE auth_user SET is_superuser = false WHERE email = @email"
+            let! demoted = sendWithToken client HttpMethod.Get ApiPaths.usersWithDiaryCount token None
+            Assert.Equal(HttpStatusCode.Forbidden, demoted.StatusCode)
+            // Direct DB change simulates deactivation by another server instance.
+            update "UPDATE auth_user SET is_active = false WHERE email = @email"
+            let! inactive = sendWithToken client HttpMethod.Get ApiPaths.diaryIds token None
+            Assert.Equal(HttpStatusCode.Unauthorized, inactive.StatusCode)
+            let! rejectedLogin, _ = login client email "password"
+            Assert.Equal(HttpStatusCode.Unauthorized, rejectedLogin.StatusCode)
+        }
+
+    [<DatabaseFact>]
+    member _.``logging in rotates and revokes previous cookie session``() =
+        task {
+            use client = fixture.CreateClient()
+            let email = uniqueEmail "session-rotate"
+            let! previous = ensureUserToken client email "password"
+            let! rotated = sendWithToken client HttpMethod.Post ApiPaths.login previous (Some(jsonContent {| username = email; password = "password" |}))
+            Assert.Equal(HttpStatusCode.OK, rotated.StatusCode)
+            let cookie = rotated.Headers.GetValues("Set-Cookie") |> Seq.find (fun s -> s.StartsWith(SessionToken.cookieName + "="))
+            let next = (cookie.Split(';')[0]).Substring(SessionToken.cookieName.Length + 1)
+            Assert.NotEqual<string>(previous, next)
+            let! old = sendWithToken client HttpMethod.Get ApiPaths.diaryIds previous None
+            Assert.Equal(HttpStatusCode.Unauthorized, old.StatusCode)
+            let! current = sendWithToken client HttpMethod.Get ApiPaths.diaryIds next None
+            Assert.Equal(HttpStatusCode.OK, current.StatusCode)
         }

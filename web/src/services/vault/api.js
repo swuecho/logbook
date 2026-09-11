@@ -1,9 +1,9 @@
 // Dedicated online-only transport. No query cache, diary sync or Axios error logging.
-export function vaultApi(token, signal) {
+export function vaultApi(credentials, signal) {
   async function request(method, body) {
     const response = await fetch('/api/vault', {
-      method, signal, cache: 'no-store', credentials: 'omit', redirect: 'error',
-      headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      method, signal, cache: 'no-store', credentials: 'same-origin', redirect: 'error',
+      headers: { 'X-CSRF-Token': credentials.csrfToken, ...(body ? { 'Content-Type': 'application/json' } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
     if (method === 'GET' && response.status === 404) return null;

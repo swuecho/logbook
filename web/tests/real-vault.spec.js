@@ -1,15 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { registerSession } from './session-helpers.js';
 import { openVault, parseBackup } from '../src/services/vault/crypto.js';
 
 test('real migrated API round-trips browser encryption and isolates accounts', async ({ page, context, request }) => {
-  const response = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
-  expect(response.status()).toBe(201);
-  const session = await response.json();
-  await context.addInitScript(session => {
-    localStorage.setItem('JWT_TOKEN', session.accessToken);
-    localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + session.expiresIn * 1000));
-  }, session);
+  const { cookie, headers } = await registerSession(request);
+  await context.addCookies([cookie]);
   const passphrase = 'synthetic browser vault passphrase';
   const secret = 'synthetic-secret-' + randomUUID();
   await page.goto('/vault');
@@ -24,16 +20,14 @@ test('real migrated API round-trips browser encryption and isolates accounts', a
   await page.getByLabel('Password', { exact: true }).fill(secret);
   await page.getByRole('button', { name: 'Save item', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Item saved');
-  const headers = { Authorization: `Bearer ${session.accessToken}` };
   const saved = await request.get('/api/vault', { headers });
   expect(saved.headers()['cache-control']).toBe('no-store');
   const snapshot = await saved.json();
   expect(snapshot.envelope).not.toContain(secret);
   expect(snapshot.envelope).not.toContain(passphrase);
   expect((await openVault(parseBackup(snapshot.envelope), recovery, true)).items[0].secret).toBe(secret);
-  const otherResponse = await request.post('/api/register', { data: { username: `${randomUUID()}@example.test`, password: randomUUID() } });
-  const otherSession = await otherResponse.json();
-  const other = await request.get('/api/vault', { headers: { Authorization: `Bearer ${otherSession.accessToken}` } });
+  const otherSession = await registerSession(request);
+  const other = await request.get('/api/vault', { headers: otherSession.headers });
   expect(other.status()).toBe(404);
   const exported = await request.get('/api/export_all', { headers });
   expect(await exported.text()).not.toContain('logbook-vault');

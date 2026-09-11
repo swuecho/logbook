@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { reactive } from 'vue';
-import { activeAccount, syncCredentials } from './session';
+import { activeAccount, syncCredentials, restoreSession } from './session';
 import {
   listLocalNotes, getSyncMeta, applyRemote, applyRemotePage,
   prepareUpload, acknowledgeUpload, rejectUpload, recordUploadFailure,
@@ -45,6 +45,7 @@ export async function syncNow() {
   if (running) { rerun = true; return; }
   running = true;
   clearTimeout(timer);
+  if (navigator.onLine && !syncCredentials()) await restoreSession();
   const account = activeAccount.value;
   const credentials = syncCredentials();
   syncStatus.needsSignIn = !credentials;
@@ -56,8 +57,8 @@ export async function syncNow() {
     syncStatus.running = true;
     syncStatus.message = '';
     // Capture credentials for this run. An account switch must never retarget uploads.
-    const client = axios.create({ timeout: 12000, headers: { Authorization: `Bearer ${credentials.token}` } });
-    const stillCurrent = () => activeAccount.value === account && syncCredentials()?.token === credentials.token;
+    const client = axios.create({ timeout: 12000, headers: { 'X-CSRF-Token': credentials.csrfToken } });
+    const stillCurrent = () => activeAccount.value === account && syncCredentials()?.csrfToken === credentials.csrfToken;
     const run = async () => {
       let uploadFailed = false;
       for (const entry of await listLocalNotes(account)) {
@@ -123,7 +124,7 @@ export async function syncNow() {
     }
   } catch (error) {
     failures++;
-    if (account === activeAccount.value && credentials?.token === syncCredentials()?.token) {
+    if (account === activeAccount.value && credentials?.csrfToken === syncCredentials()?.csrfToken) {
       const authenticationFailed = axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0);
       syncStatus.needsSignIn = authenticationFailed || !syncCredentials();
       syncStatus.message = authenticationFailed
@@ -147,7 +148,7 @@ export async function refreshRemoteNote(noteId: string) {
   if (!credentials || !navigator.onLine) return;
   try {
     const { data } = await axios.get(`/api/sync/diary/${noteId}`, {
-      timeout: 12000, headers: { Authorization: `Bearer ${credentials.token}` },
+      timeout: 12000, headers: { 'X-CSRF-Token': credentials.csrfToken },
     });
     await applyRemote(credentials.account, data);
     notifyLocalChange();

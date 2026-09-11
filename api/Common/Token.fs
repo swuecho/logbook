@@ -6,7 +6,7 @@ open System.IdentityModel.Tokens.Jwt
 open Microsoft.IdentityModel.Tokens
 
 let generateToken (userId: int) (role: string) (secret: string) (audience: string) (issuer: string) =
-    let expires = Nullable(DateTime.UtcNow.AddHours 168.0)
+    let expires = Nullable(DateTime.UtcNow.Add(SessionToken.lifetime))
     let notBefore = Nullable DateTime.UtcNow
 
     let securityKey =
@@ -22,11 +22,12 @@ let generateToken (userId: int) (role: string) (secret: string) (audience: strin
         JwtSecurityToken(
             issuer = issuer,
             audience = audience,
-            claims = [ roleClaim; userIdClaim ],
+            claims = [ roleClaim; userIdClaim; Claim(JwtRegisteredClaimNames.Jti, SessionToken.random ()) ],
             expires = expires,
             notBefore = notBefore,
             signingCredentials = signingCredentials
         )
 
     {| AccessToken = JwtSecurityTokenHandler().WriteToken(token)
-       ExpiresIn = 604800 |}
+       ExpiresIn = int SessionToken.lifetime.TotalSeconds
+       ExpiresAt = expires.Value |}

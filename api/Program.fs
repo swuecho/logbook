@@ -6,9 +6,6 @@ let private startupTimeout = TimeSpan.FromSeconds(10.0)
 
 let dataSource = Database.Connection.createDataSource Database.Config.connStr
 
-Util.runWithTimeout startupTimeout "loading user revocation cache" (fun () ->
-    UserRevocationCache.initialize dataSource)
-
 let jwtConfig =
     Util.runWithTimeout startupTimeout "initializing JWT config" (fun () ->
         AppStartup.initializeJwtConfig dataSource)

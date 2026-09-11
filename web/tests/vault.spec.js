@@ -1,14 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 const pass = 'synthetic master passphrase';
-const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ user_id: 1, iss: 'test', aud: 'logbook', role: 'user' })).toString('base64url')}.test`;
 async function setup(page, context) {
   const state = { snapshot: null, writes: [], fail: false, conflict: false, hold: null };
-  await context.addInitScript(token => {
-    localStorage.setItem('JWT_TOKEN', token);
-    localStorage.setItem('JWT_EXPIRES_AT', String(Date.now() + 86400000));
-  }, token);
   await context.route('**/api/**', async route => {
+    if (new URL(route.request().url()).pathname === '/api/session') { await route.fulfill({ json: { authenticated: true, userId: 1, issuer: 'test', audience: 'logbook', role: 'user', csrfToken: 'test-session', expiresAt: new Date(Date.now() + 86400000).toISOString() } }); return; }
     if (new URL(route.request().url()).pathname !== '/api/vault') { await route.fulfill({ json: { entries: [], cursor: '0', hasMore: false } }); return; }
     if (state.fail) { await route.abort(); return; }
     if (state.hold) await state.hold;

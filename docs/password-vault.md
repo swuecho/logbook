@@ -1,6 +1,6 @@
 # Password and secret vault
 
-Implemented September 2026. Authentication hardening from `password-vault-plan.md` is deferred at the user's request.
+Implemented September 2026. JWT session hardening is implemented; see [authentication](authentication.md). Further account hardening remains separate.
 
 ## Use
 
@@ -49,6 +49,6 @@ On this macOS environment, .NET required `DOTNET_EnableWriteXorExecute=0`; local
 
 ## Remaining boundaries
 
-Encryption protects stored content against database/backup disclosure subject to passphrase strength. It does not protect an unlocked vault from XSS, malicious extensions, a compromised device, or a server delivering malicious JavaScript. Existing account sessions still use week-long localStorage JWTs and lack real logout revocation; stolen account access can retrieve ciphertext or overwrite it, even without decrypting it. Authentication hardening remains a separate task.
+Encryption protects stored content against database/backup disclosure subject to passphrase strength. It does not protect an unlocked vault from XSS, malicious extensions, a compromised device, or a server delivering malicious JavaScript. Account sessions now use HttpOnly JWT cookies with database revocation and CSRF protection. Stolen account access can still retrieve ciphertext or overwrite it without decrypting it. Password hashing upgrades, sign-in throttling, and MFA remain separate work.
 
 The implementation has automated coverage, not an independent cryptographic audit or production penetration test. Tests currently report an existing high-severity SSH.NET advisory in the backend test dependency graph; the application build itself does not report that dependency warning. No dependency upgrades are included here.
