@@ -179,3 +179,36 @@ test('multiline secrets survive masking, saving and reload', async ({ page, cont
   await page.getByRole('button', { name: 'Reveal', exact: true }).click();
   await expect(page.getByLabel('Secret value', { exact: true })).toHaveValue(secret);
 });
+
+
+test('password generation preserves the existing value until explicitly applied', async ({ page, context }) => {
+  const state = await setup(page, context);
+  await create(page);
+  await add(page);
+  await page.getByRole('button', { name: /Private example/ }).click();
+  const password = page.getByLabel('Password', { exact: true });
+  const writes = state.writes.length;
+  await page.getByRole('button', { name: 'Generate password', exact: true }).click();
+  await expect(password).toHaveValue('SYNTHETIC-SECRET');
+  await expect(page.getByLabel('Generated password', { exact: true })).not.toHaveValue('');
+  await page.getByRole('button', { name: 'Cancel generation', exact: true }).click();
+  await expect(password).toHaveValue('SYNTHETIC-SECRET');
+  await expect(page.getByLabel('Generated password', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Generate password', exact: true }).click();
+  const generated = await page.getByLabel('Generated password', { exact: true }).inputValue();
+  await page.getByRole('button', { name: 'Replace password', exact: true }).click();
+  await expect(password).toHaveValue(generated);
+  expect(state.writes.length).toBe(writes);
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: /Private example/ }).click();
+  await expect(password).toHaveValue('SYNTHETIC-SECRET');
+  await page.getByRole('button', { name: 'Generate password', exact: true }).click();
+  await page.getByLabel('Type', { exact: true }).selectOption('secret');
+  await expect(page.getByRole('button', { name: 'Generate password', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Generated password', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'New item', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate password', exact: true }).click();
+  await expect(password).toHaveValue('');
+  await page.getByRole('button', { name: 'Use password', exact: true }).click();
+  await expect(password).not.toHaveValue('');
+});

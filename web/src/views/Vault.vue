@@ -140,7 +140,15 @@
                     <div class="vault-secret-actions">
                       <el-button text @click="revealed = !revealed">{{ revealed ? 'Hide' : 'Reveal' }}</el-button>
                       <el-button text @click="copy(draft.secret)">Copy secret</el-button>
-                      <el-button text @click="draft.secret = generatePassword()">Generate password</el-button>
+                      <el-button v-if="draft.kind === 'login'" text :disabled="busy" @click="generatedPassword = generatePassword()">Generate password</el-button>
+                    </div>
+                  </div>
+                  <div v-if="generatedPassword && draft.kind === 'login'" class="vault-generator">
+                    <label class="vault-field">Generated password<input :value="generatedPassword" readonly spellcheck="false" autocomplete="off"></label>
+                    <p>{{ draft.secret ? 'Your current password is unchanged. Replace it only if you intend to change this login.' : 'Use this password to fill the empty password field.' }} Changes are saved only when you save the item.</p>
+                    <div class="vault-secret-actions">
+                      <el-button plain :disabled="busy" @click="applyGeneratedPassword">{{ draft.secret ? 'Replace password' : 'Use password' }}</el-button>
+                      <el-button text @click="generatedPassword = ''">Cancel generation</el-button>
                     </div>
                   </div>
                   <label class="vault-field">{{ draft.kind === 'note' ? 'Secure note' : 'Notes' }}<textarea v-model="draft.notes" :rows="draft.kind === 'note' ? 8 : 4" maxlength="100000" spellcheck="false" placeholder="Anything else to keep with this item"></textarea></label>
@@ -191,7 +199,15 @@ const supported = Boolean(globalThis.crypto?.subtle);
 const loading = ref(false), busy = ref(false), error = ref(''), message = ref('');
 const exists = ref(true), unlocked = ref(false), pending = ref(false), recoveryKey = ref(''), recoverySaved = ref(false);
 const credential = ref(''), confirmation = ref(''), useRecovery = ref(false), search = ref(''), panel = ref('');
+const generatedPassword = ref('');
+function applyGeneratedPassword() {
+  if (!busy.value && draft.value?.kind === 'login' && generatedPassword.value) {
+    draft.value.secret = generatedPassword.value;
+    generatedPassword.value = '';
+  }
+}
 const items = ref([]), draft = ref(null), revealed = ref(false), deleteConfirmed = ref(false);
+watch(() => [draft.value?.id, draft.value?.kind, draft.value?.secret], () => { generatedPassword.value = ''; });
 const backupCredential = ref(''), backupRecovery = ref(false), replaceConfirmed = ref(false), fileInput = ref(null);
 let envelope = null, dataKey = null, pendingKeys = null, revision = '0', generation = 0, controller = new AbortController();
 const locks = installVaultLock(clear);
@@ -206,6 +222,7 @@ const safeUrl = computed(() => {
 const kindIcon = kind => ({ login: keyIcon, secret: lockIcon, note: noteIcon })[kind];
 const kindLabel = kind => ({ login: 'Login', secret: 'Secret', note: 'Secure note' })[kind];
 function clear() {
+  generatedPassword.value = '';
   generation++;
   controller.abort(); controller = new AbortController();
   envelope = null; dataKey = null; pendingKeys = null; revision = '0';
@@ -341,6 +358,18 @@ onBeforeUnmount(() => { locks.lock(); locks.dispose(); });
 </script>
 
 <style scoped>
+.vault-generator {
+  border: 1px solid var(--el-border-color);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.vault-generator p {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin: 8px 0;
+}
+
 .vault-page { background: var(--lb-bg-elevated); }
 .vault-main { padding-top: 16px; padding-bottom: 32px; }
 .vault-main :deep(.el-button) { font-family: inherit; font-size: 12px; }
