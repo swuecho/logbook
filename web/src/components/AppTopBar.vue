@@ -36,6 +36,9 @@
       <router-link v-if="showContent" to="/content" class="linkish" title="Browse entries" aria-label="Browse entries">
         <Icon :icon="tableOfContents" class="app-top-bar__icon" />
       </router-link>
+      <router-link v-if="isAuthenticated" to="/vault" class="linkish" title="Vault" aria-label="Vault">
+        <Icon :icon="vaultIcon" class="app-top-bar__icon" />
+      </router-link>
       <router-link v-if="isAdmin" to="/admin" class="linkish" title="Admin" aria-label="Admin">
         <Icon :icon="adminIcon" class="app-top-bar__icon" />
       </router-link>
@@ -87,6 +90,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Icon } from '@iconify/vue';
+import vaultIcon from '@iconify/icons-mdi/lock-outline';
 import homeIcon from '@iconify/icons-mdi/home-outline';
 import tableOfContents from '@iconify/icons-mdi/table-of-contents';
 import calendarMonth from '@iconify/icons-mdi/calendar-month';

@@ -12,6 +12,7 @@ export default createRouter({
       name: 'home',
       component: Home
     },
+    { path: '/vault', name: 'vault', component: () => import('./views/Vault.vue') },
     { path: '/admin', component: Admin, name: 'admin' },
     { path: '/login', component: Login, name: 'login' },
     { path: '/logout', component: Logout },

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "rsbuild dev",
     "build": "rsbuild build",
-    "test": "node --test tests/localStore.test.js",
+    "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "test:e2e:real": "LOGBOOK_REAL_SYNC_TEST=1 playwright test"
   },
