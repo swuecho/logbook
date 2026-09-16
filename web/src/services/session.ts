@@ -9,6 +9,7 @@ type SessionData = { authenticated: boolean; userId?: number; issuer?: string; a
 type Credentials = { account: string; csrfToken: string; expiresAt: number };
 let credentials: Credentials | null = null;
 let generation = 0;
+let expiryTimer: ReturnType<typeof setTimeout>;
 let logoutFlight: Promise<void> | null = null;
 let logoutRetry: ReturnType<typeof setTimeout>;
 function retryPendingLogout() {
@@ -69,6 +70,8 @@ export function acceptSession(data: SessionData, broadcast = true) {
   const changed = credentials?.csrfToken !== data.csrfToken || activeAccount.value !== account || sessionRole.value !== data.role;
   generation++;
   credentials = { account, csrfToken: data.csrfToken, expiresAt };
+  clearTimeout(expiryTimer);
+  expiryTimer = setTimeout(() => requireSignIn(data.csrfToken), expiresAt - Date.now());
   sessionRole.value = data.role || '';
   localStorage.setItem(ACCOUNT_KEY, account);
   activeAccount.value = account;
@@ -76,6 +79,7 @@ export function acceptSession(data: SessionData, broadcast = true) {
 }
 
 export function clearSession(broadcast = true) {
+  clearTimeout(expiryTimer);
   generation++;
   credentials = null;
   sessionRole.value = '';
@@ -89,6 +93,22 @@ export function clearSession(broadcast = true) {
 export function syncCredentials() {
   if (localStorage.getItem(LOGOUT_KEY) || !credentials || credentials.account !== activeAccount.value || credentials.expiresAt <= Date.now()) return null;
   return credentials;
+}
+
+// Keep the account namespace and IndexedDB writing when authentication is lost.
+export function requireSignIn(expectedToken?: string) {
+  if (expectedToken && credentials?.csrfToken !== expectedToken) return;
+  clearTimeout(expiryTimer);
+  generation++;
+  credentials = null;
+  sessionRole.value = '';
+  window.dispatchEvent(new Event('logbook-sign-in-required'));
+}
+
+export function handleSessionFailure(status?: number, code?: string, expectedToken?: string) {
+  if (status === 401 || (status === 403 && code === 'session_changed')) {
+    requireSignIn(expectedToken);
+  }
 }
 
 export async function logoutSession() {
@@ -127,7 +147,8 @@ export async function restoreSession() {
       // Session expiry does not discard the account's offline diary workspace.
       if (changed) { generation++; notify(); }
     }
-  } catch { /* Cached writing remains usable offline. No credentials are persisted. */ }
+  } catch { /* A network failure does not invalidate an existing usable session. */ }
+  finally { if (!syncCredentials()) requireSignIn(); }
 }
 
 window.addEventListener('storage', event => {

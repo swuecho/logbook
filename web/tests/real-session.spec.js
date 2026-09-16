@@ -84,7 +84,8 @@ test('legacy token cleanup preserves existing offline diary account and unsynced
   }, account.jwt);
   await context.clearCookies();
   await page.reload();
-  await expect(page.locator('.ProseMirror')).toContainText('Legacy offline writing');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.locator('.ProseMirror')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('LOGBOOK_ACCOUNT'))).toBe(namespace);
   expect(await page.evaluate(() => localStorage.getItem('JWT_TOKEN'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('JWT_EXPIRES_AT'))).toBeNull();

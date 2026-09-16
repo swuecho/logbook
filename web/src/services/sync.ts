@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { reactive } from 'vue';
-import { activeAccount, syncCredentials, restoreSession } from './session';
+import { activeAccount, syncCredentials, restoreSession, handleSessionFailure } from './session';
 import {
   listLocalNotes, getSyncMeta, applyRemote, applyRemotePage,
   prepareUpload, acknowledgeUpload, rejectUpload, recordUploadFailure,
@@ -124,6 +124,9 @@ export async function syncNow() {
     }
   } catch (error) {
     failures++;
+    if (axios.isAxiosError(error)) {
+      handleSessionFailure(error.response?.status, error.response?.data?.code, credentials?.csrfToken);
+    }
     if (account === activeAccount.value && credentials?.csrfToken === syncCredentials()?.csrfToken) {
       const authenticationFailed = axios.isAxiosError(error) && [401, 403].includes(error.response?.status || 0);
       syncStatus.needsSignIn = authenticationFailed || !syncCredentials();
@@ -152,7 +155,11 @@ export async function refreshRemoteNote(noteId: string) {
     });
     await applyRemote(credentials.account, data);
     notifyLocalChange();
-  } catch { /* The durable queue retries; reads never block local editing. */ }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      handleSessionFailure(error.response?.status, error.response?.data?.code, credentials.csrfToken);
+    }
+  }
 }
 
 export function initSync() {

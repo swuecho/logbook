@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const date = '20260907';
 const doc = text => JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
-async function setup(page, context) {
+async function setup(page, context, expiresAt) {
   const state = { note: doc('From server'), revision: 1, writes: [], hold: null, fail: false, authenticated: true, userId: 1 };
   await context.route('**/api/**', async route => {
     if (state.fail) { await route.abort('failed'); return; }
@@ -10,7 +10,7 @@ async function setup(page, context) {
     let data;
     let status = 200;
     if (url.pathname === '/api/session') {
-      data = { authenticated: state.authenticated, userId: state.userId, issuer: 'test', audience: 'logbook', role: 'user', csrfToken: 'test-session-' + state.userId, expiresAt: new Date(Date.now() + 86400000).toISOString() };
+      data = { authenticated: state.authenticated, userId: state.userId, issuer: 'test', audience: 'logbook', role: 'user', csrfToken: 'test-session-' + state.userId, expiresAt: expiresAt || new Date(Date.now() + 86400000).toISOString() };
     } else if (url.pathname === '/api/sync/changes') {
       const entries = Number(url.searchParams.get('cursor')) < state.revision ? [{ noteId: date, note: state.note, revision: String(state.revision) }] : [];
       data = { entries, cursor: String(state.revision), hasMore: false };
@@ -79,18 +79,17 @@ test('typing remains durable while a previous upload is delayed', async ({ page,
   await expect(page.locator('.ProseMirror')).toContainText('newer edit');
 });
 
-test('cached app reopens and saves offline with an expired token', async ({ page, context }) => {
-  await setup(page, context);
+test('offline reload requires login and preserves the saved draft', async ({ page, context }) => {
+  const state = await setup(page, context);
   await page.evaluate(() => navigator.serviceWorker.ready);
   await context.setOffline(true);
-  await page.reload();
-  await expect(page.locator('.ProseMirror')).toContainText('From server');
   await typeText(page, ' airplane writing');
   await expect.poll(async () => (await localEntry(page)).note).toContain('airplane writing');
+  state.fail = true;
   await page.reload();
-  await expect(page.locator('.ProseMirror')).toContainText('airplane writing');
-  await expect(page.locator('.editor-status')).toContainText('Saved on this device');
-  await page.screenshot({ path: 'test-results/offline-editor.png', fullPage: true });
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await localEntry(page)).note).toContain('airplane writing');
+  await expect(page.locator('.ProseMirror')).toHaveCount(0);
 });
 
 test('same-date conflict keeps local writing and lets the user choose', async ({ page, context }) => {
@@ -112,18 +111,12 @@ test('same-date conflict keeps local writing and lets the user choose', async ({
   expect((await localEntry(page)).recovery[0].remote).toContain('Changed on laptop');
 });
 
-test('server failure while the browser is online leaves cached editing usable', async ({ page, context }) => {
+test('failed session restoration redirects instead of showing cached editing', async ({ page, context }) => {
   const state = await setup(page, context);
   state.fail = true;
   await page.reload();
-  await expect(page.locator('.ProseMirror')).toContainText('From server');
-  await typeText(page, ' unavailable server');
-  await expect.poll(async () => (await localEntry(page)).note).toContain('unavailable server');
-  await expect(page.locator('.editor-status')).toContainText('Saved on this device');
-  state.fail = false;
-  await page.getByRole('button', { name: /^Sync details:/ }).click();
-  await page.getByRole('button', { name: 'Sync now', exact: true }).click();
-  await expect.poll(() => state.note).toContain('unavailable server');
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await localEntry(page)).note).toContain('From server');
 });
 
 
@@ -133,10 +126,12 @@ test('offline calendar navigation opens a new date and retains its draft after r
   await context.setOffline(true);
   await page.getByRole('link', { name: 'Calendar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Calendar', exact: true })).toBeVisible();
-  await page.goto('/view?date=20260908');
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await page.evaluate(() => { history.pushState({}, '', '/view?date=20260908'); window.dispatchEvent(new PopStateEvent('popstate')); });
   await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', 'true');
   await typeText(page, 'A new offline date');
   await expect.poll(async () => (await localEntry(page, '20260908'))?.note).toContain('A new offline date');
+  await context.setOffline(false);
   await page.reload();
   await expect(page.locator('.ProseMirror')).toContainText('A new offline date');
 });
@@ -152,12 +147,10 @@ test('switching accounts offline never displays or uploads the previous account 
     localStorage.setItem('LOGBOOK_ACCOUNT', JSON.stringify([location.origin, 'test', 'logbook', '2']));
   });
   await page.reload();
-  await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', 'true');
-  await expect(page.locator('.ProseMirror')).not.toContainText('private account one');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.locator('.ProseMirror')).toHaveCount(0);
   expect(await localEntry(page)).toBeUndefined();
   await context.setOffline(false);
-  await page.getByRole('button', { name: /^Sync details:/ }).click();
-  await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   expect(state.writes.length).toBe(0);
 });
 
@@ -194,17 +187,19 @@ test('a local storage failure keeps writing visible and blocks navigation until 
 });
 
 
-test('sync details shows sign-in only when the session needs authentication', async ({ page, context }) => {
+test('session revocation redirects an open editor and retains its data', async ({ page, context }) => {
   const state = await setup(page, context);
-  await page.getByRole('button', { name: /^Sync details:/ }).click();
-  const signIn = page.locator('.sync-details').getByRole('link', { name: 'Sign in to sync', exact: true });
-  await expect(signIn).toHaveCount(0);
   state.authenticated = false;
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await expect(signIn).toBeVisible();
-  state.authenticated = true;
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await expect(signIn).toHaveCount(0);
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await localEntry(page)).note).toContain('From server');
+});
+
+test('todo authentication failure redirects the main page to login', async ({ page, context }) => {
+  await setup(page, context);
+  await context.route('**/api/todo', route => route.fulfill({ status: 401, json: { message: 'Unauthorized' } }));
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
 });
 
 test('details separates sync, offline availability, and optional recovery tools', async ({ page, context }) => {
@@ -262,4 +257,14 @@ test('incomplete history never reports all changes synced', async ({ page, conte
   await page.locator('.sync-button').click();
   await page.getByRole('button', { name: 'Sync now', exact: true }).click();
   await expect(page.locator('.sync-button')).toHaveAttribute('title', /History download is incomplete|Downloading history/);
+});
+
+
+test('absolute session expiry redirects without waiting for an API request', async ({ page, context }) => {
+  await page.clock.install();
+  await setup(page, context, new Date(Date.now() + 60000).toISOString());
+  await context.setOffline(true);
+  await page.clock.fastForward(61000);
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await localEntry(page)).note).toContain('From server');
 });
